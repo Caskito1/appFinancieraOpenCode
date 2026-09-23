@@ -1,6 +1,6 @@
 # HANDOFF — Etapa 0: Relevamiento + construcción del contexto interno (AppFinanciera)
 
-**Repo objetivo:** `C:\Users\Usuario\Desktop\Proyectos Personales\AppFinanciera`
+**Repo objetivo:** `~/Desktop/Proyectos Personales/opencode-AppFinanciera` (la aplicación Next.js vive anidada en su propio repo, `AppFinanciera/`)
 **Remitente:** Organizador Personal (personal-system) — planifica y coordina.
 **Recipiente:** OpenCode del repo de AppFinanciera. Debes poder trabajar sin que te expliquen la aplicación: tu contexto está en este repo y lo construís en esta etapa.
 
