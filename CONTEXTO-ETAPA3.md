@@ -1,5 +1,7 @@
 # Contexto para continuar AppFinanciera — cierre de sesión y preparación de Stage 3
 
+> **SEMILLA ABSORBIDA (Etapa 0, 23/09/2026):** el contenido de este documento fue integrado en `context/dominio.md` como fuente del modelo funcional. Se conserva como referencia histórica; no es la fuente de trabajo. La secuencia "Stage 3/Stage 2" quedó reemplazada por el roadmap de etapas 0–4 (`ROADMAP.md`).
+
 > Respaldo del documento de contexto producido el 19/09/2026. Fuente de verdad sobre **uso real y visión** de AppFinanciera. La auditoría (`REPORT-02.md`) describe el código; este documento describe la realidad. Se consulta junto con `context/AppFinanciera-Stage3.md` de `personal-system` (coordinador del proyecto).
 
 Posible cadena de recuperación: `REPORT-02.md` (auditoría, repo) → este documento (uso real y visión) → `context/AppFinanciera-Stage3.md` (coordinador: borrador de diseño + preguntas pendientes P1–P8).

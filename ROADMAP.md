@@ -1,26 +1,49 @@
 # Roadmap - AppFinanciera
 
-Roadmap operativo de este repositorio. Fuente global del sistema: `personal-system\context\finanzas.md` (sección *Roadmap financiero*). La fuente de decisión y estado está en el Vault de Obsidian (`03-Programacion/Proyectos Personales\Indice de Proyectos.md` y la nota del proyecto).
+Roadmap operativo de este repositorio, alineado a las etapas 0–4 definidas en `HANDOFF-ETAPA-0-MAPA-CONTEXTO.md`. Fuente global del sistema: `personal-system\context\finanzas.md` (sección *Roadmap financiero*). La fuente de decisión y estado está en el Vault de Obsidian.
 
 ## Objetivo
 
-Alcanzar el **mínimo funcional** necesario para que Finanzas del Organizador pueda LEER → ANALIZAR → PROPONER con datos reales y validar el sistema. NO es terminar la aplicación como producto.
+Alcanzar el **mínimo funcional** necesario para que Finanzas del Organizador pueda LEER → ANALIZAR → PROPONER con datos reales y validar el sistema. **NO es terminar la aplicación como producto.**
 
-> El cierre de Finanzas no equivale al cierre de AppFinanciera. El objetivo actual es el mínimo funcional; una vez alcanzado y validado con datos reales, Finanzas puede considerarse cerrada aunque la aplicación conserve funcionalidades futuras por desarrollar. El endpoint y la automatización tampoco son el "final" de la aplicación: son una posible etapa posterior del sistema de integración.
+> El cierre de Finanzas no equivale al cierre de AppFinanciera. El objetivo actual es el mínimo funcional; el endpoint y la automatización no son el "final" de la aplicación: son una posible etapa posterior del sistema de integración.
 
-## Etapas
+## Etapas (0–4)
 
-1. **Etapa 2 — Auditoría (próxima):** revisar cómo registra la app gastos, tarjeta, ingresos y cómo calcula totales y balances; identificar dónde se distorsiona el resultado con **gastos de terceros y reintegros** (ej. parte de la tarjeta que paga la pareja). Entregable: `REPORT-02.md`.
-2. **Etapa 3 — Diseño:** proponer el cambio mínimo para distinguir ingreso real / gasto propio / gasto de terceros (adelanto) / reintegro / dinero a recuperar, y su efecto en gastos, ingresos, balance, deuda pendiente y reportes. No implementar.
-3. **Etapa 4 — Implementación:** solo después de aprobar el diseño (Etapa 3).
+- **Etapa 0 — Relevamiento + contexto interno (realizada / en curso):** comprender AppFinanciera (código y comportamiento real) y construir el sistema de contexto persistente (`context/`, `AGENTS.md`, `.opencode/`, `ROADMAP.md`). Entregable: `REPORT-ETAPA-0.md`. **NO implementa funcionalidades.** (read-only sobre la aplicación)
+- **Etapa 1 — Base estructural:** modelos de gastos, gastos compartidos, gastos fijos, balances, preparación para porcentajes configurables, relaciones usuarios/grupos, modelo de recuperaciones/reintegros, compatibilidad futura con tarjeta, otras decisiones estructurales. **Diseño/estructura.**
+- **Etapa 2 — Correcciones y limpieza:** solo lo que la Etapa 0 justifique — código obsoleto, transferencias antiguas, código muerto, bugs (incluido freelance/bandas), taxonomías, `Otros`, robustez, schemas/types, inconsistencias.
+- **Etapa 3 — Nuevas funcionalidades financieras:** dinero a recuperar, reintegros, adelantos, liquidación de saldos, personas externas, integración futura con tarjeta. **Regla fundamental: reintegro/recuperación ≠ ingreso.**
+- **Etapa 4 — Evolución general del producto:** múltiples grupos, configuración por grupo, porcentajes configurables, configuración general, módulo de tarjeta, estadísticas, productos, UX, aplicación para terceros.
+
+**No avanzar más allá de la etapa en curso sin orden explícita.** Cada etapa sigue: LEER → ANALIZAR → DISEÑAR → PROPONER → el usuario decide → planificar → el usuario aprueba → ejecutar.
+
+## Decisiones funcionales cerradas (fuente: context/dominio.md)
+
+1. `/gastos`: comportamiento actual como referencia deseada; `/gastos-fijos` = administrador. NO corregir divergencias sin decisión.
+2. Gastos compartidos diarios: **no generan deuda ni balance**.
+3. Gastos fijos compartidos: **sí generan balance**; el balance puede liquidarse pero **el historial permanece**.
+4. Recuperaciones/reintegros: **no son ingreso real**; categoría conceptual propia.
+5. Tarjeta: **módulo futuro**; el modelo de recuperaciones debe poder usarse desde ahí.
+6. `Otros`: debe seguir existiendo y funcionando.
+7. Porcentajes de fijos compartidos: hoy 50/50; el modelo **no debe quedar limitado a 50/50** (modelo flexible, interfaz sencilla).
+8. Firestore: **sin acceso por ahora** (solo lectura si se justifica).
+9. Datos históricos: **no se modifican** en esta etapa.
+
+## Metodología de trabajo
+
+- Auditar antes de diseñar, diseñar antes de implementar.
+- Cambio mínimo; no refactorizar innecesariamente.
+- Hallazgos clasificados (`#actual | #deseado | #problema | #propuesta`) + etapa futura.
+- Toda modificación sigue: **Local → Staging → Producción → Verificación**. No modificar producción directamente.
+- Lo que requiera datos reales y no pueda resolverse con código se marca `REQUIERE_VALIDACIÓN_FIRESTORE`.
 
 ## Fuera de alcance de estas etapas
 
 - Terminar todas las funcionalidades de la aplicación.
-- Endpoint / API.
-- Automatización de transferencia de datos al Organizador.
+- Endpoint / API / automatización de transferencia de datos al Organizador.
 - Integración automática con Obsidian/Planner.
-- Etapa 7 de automatización del roadmap financiero global.
+- Etapas de automatización del roadmap financiero global.
 
 La obtención de datos para Finanzas puede ser manual al inicio. Lo importante es que los datos existan, sean confiables y puedan ser utilizados por el Organizador.
 
@@ -36,8 +59,6 @@ La obtención de datos para Finanzas puede ser manual al inicio. Lo importante e
 
 Funcionalidades propias futuras (estadísticas de gastos, visualizaciones, mejoras de UX u otros módulos) son **ejemplos conceptuales**: quedan como backlog de la aplicación y se deciden posteriormente, sin incorporarlas al alcance de estas etapas salvo que sean necesarias para alcanzar el mínimo funcional.
 
-## Pendientes conocidos (contexto)
+## Histórico de cambios
 
-- Los ingresos freelance no se ven correctamente en la vista de ingresos.
-- Agregar productos faltantes.
-- (Futuro) sección de balance/analytics.
+- **23/09/2026 — Etapa 0:** roadmap reescrito y alineado a las etapas 0–4 (antes estaba el esquema anterior "Stage 2/3/4"). El contexto técnico-funcional vive ahora en `context/` (`MAPA-APPFINANCIERA.md`, `dominio.md`, `arquitectura.md`). `REPORT-ETAPA-0.md` `REQUIERE_VALIDACIÓN_FIRESTORE` y hallazgos por revisar cuando se apruebe la Etapa 1.
