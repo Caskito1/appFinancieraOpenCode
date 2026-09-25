@@ -20,9 +20,8 @@ AppFinanciera/                           → aplicación (repo git propio)
 │   ├── AuthContext.jsx                  → contexto de sesión ({ user })
 │   ├── GroupContext.jsx                 → contexto de grupos (lista + loading)
 │   ├── taxonomia.js                     → catálogo de productos/categorías gastos
-│   ├── fixedExpensesTaxonomia.js        → catálogo de gastos fijos (modelo activo)
+│   ├── fixedExpensesTaxonomia.js        → catálogo de gastos fijos (modelo activo, incluye "Otros")
 │   ├── fixedExpensesConfig.js           → configuración legacy de gastos fijos (usado por ModoGastosFijos)
-│   ├── temp.js                          → COPIA de taxonomía fijos + "Otros" (sin importadores)
 │   └── ingresos.js                      → TIPOS_INGRESO / BANDAS (sin importadores)
 ├── app/
 │   ├── layout.jsx, page.jsx             → layout raíz y redirección
@@ -97,7 +96,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 | Cálculo de ingresos totales | `app/ingresos/hooks/useIngresos.js:85-110` |
 | Suscripciones Firestore | `app/{gastos,gastos-fijos,ingresos}/services/*` |
 | Registro de movimientos | `app/agregar/components/{unico,compra,ingresos,transferencia,gastos-fijos}/helpers/*.js` + `hooks/*.js` |
-| Catálogos / taxonomías | `lib/taxonomia.js`, `lib/fixedExpensesTaxonomia.js`, `app/agregar/components/gastos-fijos/helpers/fixedExpensesConfig.js`, `lib/temp.js` |
+| Catálogos / taxonomías | `lib/taxonomia.js`, `lib/fixedExpensesTaxonomia.js` (canónico), `app/agregar/components/gastos-fijos/helpers/fixedExpensesConfig.js` (legacy) |
 | Sesión y grupos | `lib/AuthContext.jsx`, `lib/GroupContext.jsx` |
 | Protección de rutas | `app/components/layout/RouteGuard.jsx` (inconsistencia `loading` con AuthContext) |
 | Queries de mes | `app/gastos/helpers/dateHelpers.js` (`getMonthRange`) |
@@ -110,7 +109,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 - **Gastos fijos con doble modelo** (en **código**: esquema activo + helper legacy; en **Firestore**: solo esquema activo — legacy sin documentos, validado 25/09/2026).
 - **Módulo de transferencias deshabilitado en UI** (`app/agregar/page.jsx:82-107`) pero lógica y lecturas activas.
 - **Bug de visualización de ingresos freelance/bandas** (`FilaIngreso.jsx` busca keys `la_ventolera`/`la_imbailable` mientras `useModoIngreso.js` guarda `laventolera`/`laimbailable`).
-- **Código muerto significativo** (temp.js, ingresos.js, gastosCalculations.js, fixedExpensesService.jsx, carritoHelpers.js, Transferenciassections.jsx, EmptyState.jsx, Acordeon.jsx, storage de firebase.js, helpers de taxonomia, `origenCompra`).
+- **Código muerto significativo** (ingresos.js, gastosCalculations.js, fixedExpensesService.jsx, carritoHelpers.js, Transferenciassections.jsx, EmptyState.jsx, Acordeon.jsx, storage de firebase.js, helpers de taxonomia, `origenCompra`). `lib/temp.js` se eliminó en 2.1.
 - **RouteGuard espera `loading` que AuthContext no expone** (`RouteGuard.jsx:13` vs `AuthContext.jsx`).
 - `REPORT-02.md` cita rutas `organizador-app/...` inexistentes; el código real está en `AppFinanciera/`.
 
@@ -127,7 +126,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 9. Históricos: no se modifican.
 10. `transferencias`: **fuera del modelo funcional** (6.1 cerrada); colección ausente en Firestore.
 11. Gastos fijos: **Disney+ = PERSONAL** (6.3, decisión cerrada).
-12. "Otros" disponible en gastos fijos **personales y compartidos** (6.4, decisión cerrada).
+12. "Otros" disponible en gastos fijos **personales y compartidos** (6.4, decisión cerrada). **Implementada en 2.1** (25/09/2026): personal `otros` y compartido `otros_compartido`, ambos `Otros` 📦 mensual.
 
 ## Convenciones del repo
 

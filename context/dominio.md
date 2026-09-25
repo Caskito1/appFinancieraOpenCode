@@ -70,13 +70,12 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 | Catálogo | Archivo | Usado por | Notas |
 |---|---|---|---|
 | Contextos/categorías/productos de gastos | `lib/taxonomia.js` | `useModoUnico`, `useModoCompra` | Incluye "Otros" como producto `__otros__` (`useModoUnico.js:43-53`). |
-| Gasto fijo compartido + personales (activo) | `lib/fixedExpensesTaxonomia.js` | `/gastos-fijos` (via `useFixedExpenses`) | Compartidos: alquiler, luz, gastos comunes, internet, tributos. Personales: OCA, celular, Drive, fondo solidaridad, Disney+, Spotify, Candombe. **No incluye "Otros"** (`fixedExpensesTaxonomia.js:10-19`). |
-| Gasto fijo (legacy alta) | `app/agregar/components/gastos-fijos/helpers/fixedExpensesConfig.js` | `useFixedExpense` (ModoGastosFijos, deshabilitado en UI) | Disney+ figura como **compartido** (`fixedExpensesConfig.js:72-76`), mientras la taxonomía activa lo tiene **personal** (`fixedExpensesTaxonomia.js:15`). |
-| Copia duplicada | `lib/temp.js` | — | Misma taxonomía fijos + "Otros" (`temp.js:10-18`), sin importadores. |
+| Gasto fijo compartido + personales (activo) | `lib/fixedExpensesTaxonomia.js` | `/gastos-fijos` (via `useFixedExpenses`) | Compartidos: alquiler, luz, gastos comunes, internet, tributos, **Otros** (`otros_compartido`). Personales: OCA, celular, Drive, fondo solidaridad, Disney+, Spotify, Candombe, **Otros** (`otros`). **Incluye "Otros" desde 2.1** (`fixedExpensesTaxonomia.js:1-23`). Disney+ = **personal** (6.3). |
+| Gasto fijo (legacy alta) | `app/agregar/components/gastos-fijos/helpers/fixedExpensesConfig.js` | `useFixedExpense` (ModoGastosFijos, deshabilitado en UI) | Disney+ figura como **compartido** (`fixedExpensesConfig.js:72-76`), mientras la taxonomía activa lo tiene **personal** (`fixedExpensesTaxonomia.js:16`). |
 
 **Hallazgos:**
-- `#problema` El gasto fijo **"Otros" se perdió** en el catálogo activo (solo está en `temp.js:18`). La decisión funcional 6 exige que "Otros" exista y funcione. → Etapa 2.
-- `#problema` Doble taxonomía de fijos con discrepancias (Disney compartido vs personal) — riesgo de datos inconsistentes. → Etapa 2.
+- `#problema` ~~El gasto fijo **"Otros" se perdió** en el catálogo activo~~ → **RESUELTO en 2.1** (Etapa 2, 25/09/2026): "Otros" existe en el catálogo activo de personales (`otros`) y de compartidos (`otros_compartido`). Decisión funcional 6 cumplida también en gastos fijos.
+- `#problema` Doble taxonomía de fijos con discrepancias (Disney compartido vs personal) — **parcialmente resuelto en 2.1**: la copia duplicada `lib/temp.js` fue eliminada (0 importadores verificados) y `fixedExpensesTaxonomia.js` queda como única taxonomía canónica. La discrepancia de Disney+ en el helper **legacy** sigue vigente → 2.5.
 - `#deseado` La tarjeta (OCA) hoy es un fijo personal; cuando exista el módulo tarjeta (Etapa 4) el modelo debe reubicarse.
 
 ## 5. Recuperaciones / dinero a recuperar (Decisión funcional 4 y 5)
@@ -96,7 +95,7 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 ## 7. Tarjeta (Decisión funcional 5)
 
 - **No está implementada como módulo.** Uso real hoy: se usa la tarjeta → se revisan gastos → se determina la parte de la otra persona → **ajuste manual** (sin representación en la app).
-- Modelado parcial/impreciso: OCA como gasto fijo personal (`fixedExpensesTaxonomia.js:11`) y/o transferencia con concepto "tarjeta" (`useModoTransferencia.jsx:27`, `submitTransferencia.jsx:21`).
+- Modelado parcial/impreciso: OCA como gasto fijo personal (`fixedExpensesTaxonomia.js:12`) y/o transferencia con concepto "tarjeta" (`useModoTransferencia.jsx:27`, `submitTransferencia.jsx:21`).
 - Futuro (Etapa 4): módulo propio — gastos con tarjeta, quién lo pagó, parte del otro, cuánto queda por recuperar, pagos/ajustes. **La devolución de la parte no es ingreso** (pertenece al modelo de recuperaciones).
 
 ## 8. Porcentajes de gastos fijos compartidos (Decisión funcional 7)
@@ -132,11 +131,11 @@ Lo que el visualizador debe respetar:
 | D4 | `#problema` | Transferencias recibidas como ingreso; enviadas como gasto; sin concepto recuperación | 3 |
 | D5 | `#actual` | Tarjeta = fijo personal/transferencia; sin módulo | 4 |
 | D6a | `#actual` | "Otros" existe en gastos (único y compra) e ingreso | 2 |
-| D6b | `#problema` | "Otros" perdido en taxonomía de gastos fijos | 2 |
+| D6b | `#problema` → resuelto 2.1 | ~~"Otros" perdido en taxonomía de gastos fijos~~ → presente en personal (`otros`) y compartido (`otros_compartido`) | — (cerrado 25/09/2026) |
 | D6c | `#problema` | Ingreso "otros" se registra pero no se visualiza en sección | 2 |
 | D7 | `#problema` | 50/50 hardcodeado; participantes=2 | 1/4 |
 | Freelance | `#problema` | Bug visualización bandas (ids subtipo) | 2 |
-| Fijos | `#problema` | Doble taxonomía + doble esquema en `fixed_expenses` (config activo vs legacy ModoGastosFijos) | 2 |
+| Fijos | `#problema` | Doble taxonomía **resuelta en 2.1** (se eliminó `lib/temp.js`); sigue el doble esquema en `fixed_expenses` (config activo vs legacy ModoGastosFijos) | 2.5 |
 | Transferencias | `#problema` | Legacy leído pero alta deshabilitada | 2 |
 
 Detalle completo con evidencia `archivo:línea`: `REPORT-ETAPA-0.md` (sección hallazgos).

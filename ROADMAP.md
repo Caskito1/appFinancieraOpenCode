@@ -12,7 +12,7 @@ Alcanzar el **mínimo funcional** necesario para que Finanzas del Organizador pu
 
 - **Etapa 0 — Relevamiento + contexto interno (realizada / en curso):** comprender AppFinanciera (código y comportamiento real) y construir el sistema de contexto persistente (`context/`, `AGENTS.md`, `.opencode/`, `ROADMAP.md`). Entregable: `REPORT-ETAPA-0.md`. **NO implementa funcionalidades.** (read-only sobre la aplicación)
 - **Etapa 1 — Base estructural:** modelos de gastos, gastos compartidos, gastos fijos, balances, preparación para porcentajes configurables, relaciones usuarios/grupos, modelo de recuperaciones/reintegros, compatibilidad futura con tarjeta, otras decisiones estructurales. **Diseño/estructura.**
-- **Etapa 2 — Correcciones y limpieza:** solo lo que la Etapa 0 justifique — código obsoleto, transferencias antiguas, código muerto, bugs (incluido freelance/bandas), taxonomías, `Otros`, robustez, schemas/types, inconsistencias.
+- **Etapa 2 — Correcciones y limpieza (en curso):** solo lo que la Etapa 0 justifique — código obsoleto, transferencias antiguas, código muerto, bugs (incluido freelance/bandas), taxonomías, `Otros`, robustez, schemas/types, inconsistencias. **2.1 (taxonomía de gastos fijos + "Otros") cerrada el 25/09/2026** (`b46b570` en Producción). Siguiente pendiente: **2.2, bloqueada hasta definir la regla funcional de estados de pago y su efecto en los totales**.
 - **Etapa 3 — Nuevas funcionalidades financieras:** dinero a recuperar, reintegros, adelantos, liquidación de saldos, personas externas, integración futura con tarjeta. **Regla fundamental: reintegro/recuperación ≠ ingreso.**
 - **Etapa 4 — Evolución general del producto:** múltiples grupos, configuración por grupo, porcentajes configurables, configuración general, módulo de tarjeta, estadísticas, productos, UX, aplicación para terceros.
 
@@ -25,7 +25,7 @@ Alcanzar el **mínimo funcional** necesario para que Finanzas del Organizador pu
 3. Gastos fijos compartidos: **sí generan balance**; el balance puede liquidarse pero **el historial permanece**.
 4. Recuperaciones/reintegros: **no son ingreso real**; categoría conceptual propia.
 5. Tarjeta: **módulo futuro**; el modelo de recuperaciones debe poder usarse desde ahí.
-6. `Otros`: debe seguir existiendo y funcionando.
+6. `Otros`: debe seguir existiendo y funcionando. **Restaurado en gastos fijos en 2.1** (personal `otros`, compartido `otros_compartido`).
 7. Porcentajes de fijos compartidos: hoy 50/50; el modelo **no debe quedar limitado a 50/50** (modelo flexible, interfaz sencilla).
 8. Firestore: **sin acceso por ahora** (solo lectura si se justifica).
 9. Datos históricos: **no se modifican** en esta etapa.
@@ -61,4 +61,5 @@ Funcionalidades propias futuras (estadísticas de gastos, visualizaciones, mejor
 
 ## Histórico de cambios
 
+- **25/09/2026 — Etapa 2 / 2.1 (cerrada):** taxonomía de gastos fijos unificada (`lib/fixedExpensesTaxonomia.js` como canónico) con **"Otros" en personales (`otros`) y compartidos (`otros_compartido`)**; `lib/temp.js` eliminado. Disney+ permanece **personal** (6.3). Validada en Local (build + 27 invariantes), Staging y Producción (funcional). Commit `b46b570`. **2.2 pendiente: bloqueada hasta definir la regla funcional de "pagado" y su reflejo en los totales.** Sin cambios en Firestore.
 - **23/09/2026 — Etapa 0:** roadmap reescrito y alineado a las etapas 0–4 (antes estaba el esquema anterior "Stage 2/3/4"). El contexto técnico-funcional vive ahora en `context/` (`MAPA-APPFINANCIERA.md`, `dominio.md`, `arquitectura.md`). `REPORT-ETAPA-0.md` `REQUIERE_VALIDACIÓN_FIRESTORE` y hallazgos por revisar cuando se apruebe la Etapa 1.
