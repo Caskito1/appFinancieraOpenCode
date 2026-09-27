@@ -40,7 +40,7 @@ Documento de **dominio**: qué representa cada cosa en la aplicación, independi
 
 → **Cumple la fórmula** salvo dos matices (documentados como hallazgos):
 - `#actual` "Tu parte" en la UI = lo que pagó el usuario, no "su parte" de la división (`GroupSection.jsx:18`).
-- `#problema` Un fijo compartido en estado `pendiente_pago` (nadie lo pagó) **igualmente suma su 50%** del mes (`useGastos.js:110-114` + `registrarGasto` crea la entry con `paidByUid:null` en `useFixedExpenses.js:222`).
+- `#problema` Un fijo compartido en estado `pendiente_pago` (nadie lo pagó) **igualmente suma su 50%** del mes (`useGastos.js:110-114` + `registrarGasto` crea la entry con `paidByUid:null` en `useFixedExpenses.js:222`). → **Decisión tomada en 2.2 (25/09/2026): el criterio de inclusión en los totales es `paidByUid` (pagado), nunca `estado`; pendiente de ejecución** (`PROPUESTA-2.2.md`). Sin corregir hasta entonces.
 
 ### 3.2 Gastos compartidos diarios (Decisión funcional 2)
 
