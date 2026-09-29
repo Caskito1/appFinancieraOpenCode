@@ -8,13 +8,14 @@
 > Aprobado por el usuario como estructura candidata de Etapa 2 (25/09/2026). El alcance y el
 > contenido de cada subetapa se definen y aprueban por separado, en orden, antes de implementar.
 
-## 0. Estado de las subetapas (actualizado 25/09/2026)
-
+## 0. Estado de las subetapas (actualizado 29/09/2026)
 | Subetapa | Estado | Commit | Validación |
 |---|---|---|---|
 | **2.1 — Taxonomía fijos unificada + "Otros"** | ✅ **CERRADA** | `b46b570` (Producción) | Local (build + 27 invariantes) · Staging (funcional) · Producción (funcional) |
-| 2.2 — Totales del mes con gastos fijos | 🟡 **PENDIENTE — definición funcional CERRADA (25/09/2026), no implementada**; plan en `PROPUESTA-2.2.md` | — | — |
+| 2.2 — Totales del mes con gastos fijos | 🟡 **VALIDADA EN RUNTIME (6/6 PASS), sin commit** — criterio `esPagado` y labels cerrados 29/09/2026, gate histórico **PASS**, build+lint OK, prueba funcional en sandbox **PASS**, sandbox **limpiado y verificado** | — | Lógica (fixtures 24/24) · **Runtime: 6/6 PASS** · Limpieza: 40 → 34, 0 sandbox |
 | 2.3 · 2.4 · 2.5 · 2.6 | Sin empezar | — | — |
+| 2.7 — Guard de integridad `groupId` (surgió de la validación de 2.2) | ⏳ **NO IMPLEMENTADA** — pendiente de aprobación | — | — |
+| 2.8 — Header `Personal` / `Total registrado` en `/gastos-fijos` | ✅ **IMPLEMENTADA** junto al cierre de 2.2, sin commit | — | Lógica (build+lint) · **Visual: validada por el usuario** |
 
 **2.1 — qué se hizo (resumen):** en `lib/fixedExpensesTaxonomia.js` (canónico) se agregó
 "Otros" al catálogo **personal** (`id: otros`) y al mapa **compartidos** (`id: otros_compartido`),
@@ -56,11 +57,15 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
 - **PROD:** verificar `/gastos-fijos` y `/gastos` intactos tras merge.
 - **Evidencia de cierre:** `grep` 0 referencias, build OK, flujo de gastos fijos operativo.
 
-### D3 — Totales del mes con gastos fijos (`useGastos`) — ✅ **DEFINICIÓN FUNCIONAL CERRADA (25/09/2026)**
-- **Archivo:** `app/gastos/hooks/useGastos.js` (`fixedCompartidos` `:93-98`, `totalFixed` `:110-114`, `totalGastos` `:120`).
-- **Comportamiento observado (sigue vigente, sin corregir):** hoy suma `montoTotal/2` de TODAS las entries con `groupId`, sin mirar estado. Una entry `pendiente_pago` (nadie pagó) **infla el mes**. También `fixedCompartidos`/`montoPersonal` sin leer estados.
-- **ESTADO: NO IMPLEMENTAR todavía — definición cerrada, pendiente de ejecución.** Regla acordada: los totales de `/gastos` incluyen **solo gastos fijos efectivamente pagados**, con criterio **`paidByUid`** (no `estado`: `saldado` es balance, y `pagado_hasta` se calcula antes de verificar el pago en `useFixedExpenses.js:120-121`). Total del mes = personal pagado 100% / compartido pagado 50%. Total real = ambos 100%. Impago no entra en ninguno. Saldar **no** altera los totales.
-- **Plan completo, sandbox pendiente, auditoría read-only y gate previo:** `PROPUESTA-2.2.md`.
+### D3 — Totales del mes con gastos fijos (`useGastos`) — ✅ **DEFINICIÓN CERRADA · IMPLEMENTADA (29/09/2026), sin commit**
+- **Archivo:** `app/gastos/hooks/useGastos.js` (`fixedCompartidos` `:93-98`, `totalFixed` `:110-114`, `totalGastos` `:120`) y `app/gastos/sections/GastosFijosSection.jsx` (labels).
+- **Comportamiento observado (CORREGIDO el 29/09/2026):** antes suma `montoTotal/2` de TODAS las entries con `groupId`, sin mirar estado; una entry `pendiente_pago` (nadie pagó) **inflaba el mes**.
+- **Regla implementada:** los totales de `/gastos` incluyen **solo gastos fijos con `esPagado === true`**, donde `esPagado = !!e.paidByUid || (!!e.pagoHasta && e.pagoHasta > e.periodo)` (nunca `estado`: `saldado` es balance, y `pagado_hasta` se calcula antes de verificar el pago en `useFixedExpenses.js:120-121`). Total del mes = personal pagado 100% / compartido pagado 50%. Total real = ambos 100%. Impago no entra en ninguno. Saldar **no** altera los totales. `esPagado` **duplicado** en los 2 archivos por decisión de alcance.
+- **Labels:** registrado y sin pagar → `Registrado · Pendiente de pago` · anual vigente → `Al día ✓` · pagado → estado crudo. Invariante: lo que suma, nunca dice "Pendiente".
+- **Gate previo: PASS** (34 entries, 0 inconsistentes, 0 sin `paidByUid`). Build + lint OK.
+- **Prueba runtime en sandbox: 6/6 PASS (29/09/2026).** Casos verificados: (1) compartido registrado sin pago, con una **anomalía preexistente de `groupId: null`** documentada abajo; (2) compartido pagado por el usuario B ⇒ `Compartidos $6.000` / `Total compartido $12.000`, `/gastos` Total `$6.000` / Total real `$12.000`; (3) saldar ⇒ pasa a **Saldado**, totales **sin cambio**, **sin gasto adicional**; (4) anual personal Drive `$12.000` con `Pago hasta` vigente y **sin `paidByUid`** ⇒ **Al día**, Total `$18.000` / Total real `$24.000`; (5) personal Otros `$1.000` sin pago ni `pagoHasta` ⇒ visible, `Registrado · Pendiente de pago`, **fuera** de los totales; (6) extender el `Pago hasta` del anual ⇒ actualiza el detalle **sin** sumar un gasto nuevo.
+- **Anomalía del caso 1 — preexistente, NO de 2.2 (→ 2.7):** el primer alta del compartido dejó el doc `NvZIq62l39BWigZW5KpA` con `fixedExpenseId: otros_compartido` + **`groupId: null`** + `estado: pendiente_pago`, y apareció **como personal** en `/gastos`. **Ya fue eliminado en la limpieza del sandbox**; se conserva el registro porque el **defecto de código sigue vigente**. Causa: `registrarGasto` (`useFixedExpenses.js:231`) deriva `groupId` de `groups[0]` **sin validar que exista** (`:43`), y el `updateDoc` (`:238-246`) **no incluye `groupId`**, así que no repara un entry corrupto. 2.2 **no** escribe en Firestore ni toca `groupId` ⇒ **relación nula**. **Guard propuesto: `if (esCompartido && !grupo?.id) return;`. NO implementado, NO dentro de 2.2.**
+- **Plan completo y detalle del gate:** `PROPUESTA-2.2.md`.
 - **Alcance:** solo lectura/cálculo; **no toca históricos ni estructura de datos.**
 
 ### D8/D9 — Taxonomía de gastos fijos unificada + "Otros" — ✅ **RESUELTO EN 2.1** (`b46b570`)
@@ -119,31 +124,51 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
 ## 4. Estructura de subetapas (candidata, aprobada)
 
 - **2.1 — Taxonomía fijos unificada + "Otros"** (D8/D9; eliminó `temp.js`). ✅ **CERRADA 25/09/2026** — commit `b46b570` en Staging, Staging y Producción. Sin dependencias. Riesgo bajo.
-- **2.2 — Totales del mes con gastos fijos** (D3). 🟡 **PENDIENTE, NO BLOQUEADA POR DEFINICIÓN:** la definición funcional está **cerrada** (25/09/2026) y el plan completo está en `PROPUESTA-2.2.md`. La implementación **no está aprobada**. Orden de ejecución: sandbox (2 usuarios de test + grupo `TEST 2.2`, **aún no creados**) → auditoría Firestore read-only (gate) → implementación → build+lint → prueba funcional → aprobación. Riesgo bajo.
+- **2.2 — Totales del mes con gastos fijos** (D3). 🟡 **VALIDADA EN RUNTIME, SIN COMMIT (29/09/2026).** Definición funcional **cerrada** (25/09/2026), criterio técnico `esPagado` y labels **cerrados** (29/09/2026), **gate histórico PASS** (34 entries, 0 inconsistentes, 0 sin `paidByUid`), **prueba funcional 6/6 PASS**. Plan y detalle en `PROPUESTA-2.2.md`. Queda pendiente: revisión del usuario, commit y el flujo Local→Staging→Producción de §1. Riesgo bajo.
 - **2.3 — Ingresos: ids de bandas + sección "Otros"** (P4). Independiente. Riesgo bajo.
 - **2.4 — Robustez de sesión/redirección** (RouteGuard/AuthContext). Riesgo medio.
 - **2.5 — Retirar flujo legacy de gastos fijos** (D1). Requiere 2.1 consolidada (canónica fija). Riesgo medio bajo.
 - **2.6 — Limpieza de código muerto** (archivos + `storage` + `origenCompra`). Riesgo cero/bajo.
+- **2.7 — Guard de integridad `groupId` en el alta de compartidos** (surgió de la validación runtime de 2.2, §2 D3). ⏳ **NO IMPLEMENTADA — requiere aprobación propia.** Archivos: `app/gastos-fijos/hooks/useFixedExpenses.js`. Riesgo bajo.
+- **2.8 — Header `Personal` cubierto / `Total registrado` en `/gastos-fijos`** (surgió de la validación runtime de 2.2). ✅ **IMPLEMENTADA** en el mismo lote de cierre, sin commit. Archivos: `app/gastos-fijos/hooks/useFixedExpenses.js`, `app/gastos-fijos/page.jsx`, `app/gastos-fijos/sections/BalanceMesCard.jsx`.
 
-Orden lógico por dependencias y riesgo: 2.1 (base) → 2.5 (necesita 2.1); 2.2, 2.3 y 2.4 son
+Orden lógico por dependencias y riesgo: 2.1 (base) → 2.5 (necesita 2.1); 2.2, 2.3, 2.4, 2.7 y 2.8 son
 independientes y pueden planificarse en cualquier orden. Cada 2.x respeta el flujo de §1.
-**No hay subetapa 2.7 en Etapa 2** (transferencias quedan para Etapa 3).
+**2.7 y 2.8 nacen de la validación de 2.2 y no desplazan a 2.3–2.6**, que siguen intactas.
+Las transferencias continúan fuera de Etapa 2 (van a Etapa 3).
 
-## 5. Definición funcional de 2.2 (cerrada 25/09/2026)
+## 5. Definición funcional de 2.2 (cerrada 25/09/2026 · ampliada 29/09/2026)
 
 **2.2 ya no está bloqueada por falta de definición.** La regla funcional quedó acordada:
 
 - **Total del mes** (`/gastos`): personal **efectivamente pagado** → 100%; compartido **efectivamente pagado** → mi parte (50%); fijo registrado **impago** → **no entra**.
 - **Total real** (`/gastos`): personal y compartido **efectivamente pagados** → 100% del monto; fijo impago → **no entra**.
 - **Pagado ≠ saldado:** *pagado* = el gasto ocurrió y suma a los totales; *saldado* = se resolvió el balance y **no** modifica los totales. Ejemplo de referencia (compartido de $100.000): registrada/nadie paga → $0/$0; paga el otro → $50.000/$100.000 con $50.000 de deuda; al saldar → **$50.000/$100.000 sin cambio** y balance $0.
-- **Criterio técnico:** `paidByUid`. **No usar `estado`** — `saldado` es balance, y `pagado_hasta` se calcula **antes** de verificar el pago (`useFixedExpenses.js:120-121`), con `pagoHasta` seteable al registrar con `paidByUid: null`.
-- **Sin cambios en:** 50/50, anuales (sin prorrateo), gastos diarios, `getEstado`, `/gastos-fijos`.
+- **Criterio técnico definitivo (29/09/2026) — `esPagado`:**
 
-**Pendiente previo a implementar:** sandbox de pruebas (2 usuarios de test + grupo `TEST 2.2`, **no creados**) y **auditoría Firestore read-only** sobre `fixed_expense_entries` como **gate**: si hay entries **sin** `paidByUid` → STOP y redefinir criterio; si `paidByUid` ausente = 0 → implementar.
+  ```js
+  const esPagado = (e) => !!e.paidByUid || (!!e.pagoHasta && e.pagoHasta > e.periodo);
+  ```
 
-**Estado actual de referencia:** `useGastos.js:110-120` sigue sumando `montoTotal/2` (compartido) o `montoTotal` (personal) **sin mirar si fue pagado**. **2.1 no modificó este comportamiento y 2.2 no lo modificó todavía.**
+  Es decir **pagado, o anual con período de pago vigente**. **Nunca usar `estado`:** `saldado` es balance, y `pagado_hasta` se calcula **antes** de verificar el pago (`useFixedExpenses.js:120-121`).
+  La segunda rama es obligatoria porque `registrarGasto` (`useFixedExpenses.js:201-244`) resetea `paidByUid: null` al registrar **y al actualizar** un anual: sin ella, un anual que figura "Al día ✓" dejaría de contabilizarse.
+  **Consecuencia asumida:** registrar un anual con `pagoHasta` futuro lo hace contar como pagado de inmediato. Es lo pedido y coincide con `getEstado`.
+- **Labels en `/gastos` (definitivos 29/09/2026):** registrado y sin pagar → `Registrado · Pendiente de pago` · anual con `pagoHasta > periodo` → `Al día ✓` · pagado → estado crudo (`Sin saldar` / `Saldado ✓`).
+  **Invariante:** `esPagado(e) === true` ⇒ nunca "Pendiente"; y toda fila "Pendiente" ⇒ queda fuera de ambos totales.
+- **Duplicación aceptada:** `esPagado` queda **duplicado** en `useGastos.js` y `GastosFijosSection.jsx` por decisión explícita del usuario, para no ampliar el alcance a un tercer archivo. Si divergen, hay que sincronizarlos. La mejora 2.8 del header de `/gastos-fijos` agrega una **tercera copia** en `useFixedExpenses.js`, por la misma regla de no extraer un helper compartido.
+- **Sin cambios en:** 50/50, anuales (sin prorrateo), gastos diarios, `getEstado`, la lógica de `/gastos-fijos`, y `BalanceMesCard` **salvo el bloque `Personal`** aprobado como 2.8 en el cierre.
 
-Detalle completo (código previsto, casos de prueba, fuera de alcance y flujo de 12 pasos): `PROPUESTA-2.2.md`.
+**Gate histórico: EJECUTADO y PASS (29/09/2026).** Auditoría read-only desde Cloud Shell sobre `fixed_expense_entries`: **34 entries**, `paidByUid` ausente = **0**, `pagoHasta` vigente sin pago = 2, `pagoHasta` vencido = 0, compartidas = 18, `pendiente_pago` = 3, y **0 entries inconsistentes** (estado o participantes de pago sin `paidByUid`) ⇒ **no se requiere migración ni redefinición de criterio**. Efecto esperado: **1 sola entry** real deja de sumar; las 2 anuales vigentes siguen sumando y pasan a `Al día ✓`; las otras 31 no cambian. Detalle y script en `PROPUESTA-2.2.md` §6.
+
+**Prueba runtime: EJECUTADA y PASS (29/09/2026), 6/6 casos** sobre la app local con el `.env.local` del proyecto (misma base Firebase que Producción, ver `PROPUESTA-2.2.md` §8). **Sí hubo escrituras**, contra datos de sandbox temporales y reales. El **gate read-only no escribió nada** (solo `.get()`). Fixtures lógicos 24/24. Build 9/9. Lint: 0 problemas nuevos (persisten 2 errores + 3 warnings preexistentes ajenos a 2.2). Informe completo en `PROPUESTA-2.2.md` §7.1–7.3.
+
+**Limpieza del sandbox: EJECUTADA y VERIFICADA (29/09/2026).** Se eliminaron las **6 `fixed_expense_entries` temporales**, incluido el huérfano `NvZIq62l39BWigZW5KpA`. Conteo verificado: `fixed_expense_entries` **40 → 34**, sandbox **6 → 0**, reales **34 → 34**. Estado real posterior: `saldado: 31` · `pendiente_pago: 3`; por periodo `2026-06: 10` · `2026-07: 8` · `2026-08: 9` · `2026-09: 7` — **idéntico al gate histórico**, luego ninguna entry real fue alterada. **Se conservaron a propósito** los 2 usuarios de prueba (`doVj0bxHqjdtV2N88FuLiyaeCK12`, `IJWQmtR1z2Z29xrGsXhMe9OAUtA2`), el grupo `groups/TEST-2-2` y las configs `fixed_expenses/TEST-2-2-drive-A` / `TEST-2-2-drive-B`, para reutilizar el andamiaje en pruebas futuras. Detalle en `PROPUESTA-2.2.md` §5.1.
+
+**Pendiente:** revisión del usuario, commit, y el flujo Local→Staging→Producción de §1. La limpieza de datos temporales **ya no** está pendiente.
+
+**2.8 — header de `/gastos-fijos` (implementada en el cierre y validada visualmente):** el bloque `Personal` de `BalanceMesCard` ahora muestra dos valores. `Personal` = fijos personales **cubiertos** por la **misma** `esPagado` de 2.2 (un anual con `pagoHasta` vigente cuenta aunque `paidByUid` sea `null`); `Total registrado` = todos los personales registrados, cubiertos + pendientes. **Validado por el usuario en la app local:** `Personal: $12.000` · `Total registrado: $13.000` (Drive anual `$12.000` cubierto + Otros personal `$1.000` pendiente). **Compartidos sin cambios.** El resto de `BalanceMesCard` y `useGastos.js` **no** se tocaron.
+
+Detalle completo (código, casos de prueba, fuera de alcance y flujo de 12 pasos): `PROPUESTA-2.2.md`.
 
 ## 6. Restricciones
 
