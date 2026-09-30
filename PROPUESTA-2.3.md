@@ -1,10 +1,10 @@
 # PROPUESTA — Subetapa 2.3: Ingresos (labels de bandas + filas + sección "Otros")
 
-> **Naturaleza: VALIDADA EN LOCAL Y STAGING, y PROMOVIDA A PRODUCCIÓN el 30/09/2026. CERRADA pendiente solo la
-> verificación funcional del usuario en Producción** (§7, paso 12).
+> **Naturaleza: SUBETAPA CERRADA (30/09/2026).** Promovida a Producción y **validada funcionalmente en
+> Producción** con la cuenta real: los 8 casos de §6.3 dieron PASS en **Local**, en **Staging** y en **Producción**.
 > El gate read-only dio **PASS** (§5.4); la implementación quedó aprobada, aplicada y verificada estáticamente
-> (`build` OK, `lint` sin problemas nuevos), validada funcionalmente en **Local** y después en **Staging** por el
-> usuario, y promovida a `main` por **fast-forward limpio**. `main` == `staging` == `7d71fb5`.
+> (`build` OK, `lint` sin problemas nuevos) y promovida a `main` por **fast-forward limpio**.
+> `main` == `staging` == `7d71fb5`. No queda nada pendiente de 2.3.
 > Documento redactado el 30/09/2026, después del cierre de 2.2 y 2.8 (`PROPUESTA-2.2.md` §10).
 
 **Repo objetivo:** opencode-AppFinanciera (app anidada `AppFinanciera/`, repo git propio)
@@ -27,9 +27,10 @@
 | Promoción a `staging` | ✅ **HECHA** (30/09/2026) — `git push origin main:staging`, **fast-forward limpio, 0 commits de merge**. `origin/main` **no** se tocó |
 | Verificación funcional en **Staging** | ✅ **PASS** (30/09/2026) — el usuario confirmó que los cambios se ven reflejados y son correctos |
 | Promoción a `main` / Producción | ✅ **HECHA** (30/09/2026) — `git push origin main`, **FF limpio**. Deploy automático desde `main` (integración Git de Vercel) |
-| Verificación funcional en **Producción** | 🟡 **PENDIENTE** — el usuario debe confirmar contra la cuenta real (el deploy es automático, pero la verificación es manual) |
+| Verificación funcional en **Producción** | ✅ **PASS** (30/09/2026) — los 8 casos de §6.3 con la cuenta real |
 | Firestore | ⛔ **SIN CAMBIOS** — **0 escrituras** en 2.3 (no se crearon datos de prueba) |
 | Estado de ambientes | ✅ **ALINEADOS**: `origin/main` == `origin/staging` == **`7d71fb5`** (2.1+2.2+2.8+**2.3**) |
+| Cierre | ✅ **CERRADA** (30/09/2026) — flujo completo Local → Staging → Producción → verificación |
 
 ## 1. Diagnóstico corregido (30/09/2026)
 
@@ -420,7 +421,7 @@ Ejecutado por el usuario desde Firebase Console → Cloud Shell con `inventario-
 
 ### 6.3 Resultado de la validación funcional (30/09/2026)
 
-**PASS 8/8 en Local y PASS en Staging.** Confirmado por el usuario en ambos ambientes, con la cuenta real y en **modo solo lectura**. **Pendiente**: repetir los mismos 8 casos en Producción (§7, paso 12).
+**PASS 8/8 en Local, PASS en Staging y PASS en Producción.** Confirmado por el usuario en los tres ambientes, con la cuenta real y en **modo solo lectura**.
 
 | # | Caso | Resultado |
 |---|---|---|
@@ -434,7 +435,7 @@ Ejecutado por el usuario desde Firebase Console → Cloud Shell con `inventario-
 | 8 | **Regresión** | ✅ `/gastos` · `/gastos-fijos` · `/home` · selector de mes — todos OK |
 
 > **0 escrituras en Firebase** en toda la subetapa: no se creó ningún dato de prueba, así que no hubo limpieza que verificar.
-> **Ambientes:** Local → `origin/staging` = `7d71fb5` (validado) → `origin/main` = `7d71fb5` (deploy automático, pendiente la verificación del usuario).
+> **Ambientes:** Local → `origin/staging` = `7d71fb5` (validado) → `origin/main` = `7d71fb5` (deploy automático y **verificado en Producción, 30/09/2026**).
 
 ## 7. Flujo de ejecución
 
@@ -453,9 +454,9 @@ Ejecutado por el usuario desde Firebase Console → Cloud Shell con `inventario-
 | 9 | Commit `7d71fb5` + `git push origin main:staging` | ✅ **HECHO** (30/09/2026) — **FF limpio, 0 merges**; `origin/main` intacto en `66ba009` | ✅ |
 | 10 | Test en **Staging** | ✅ **PASS** (30/09/2026) — el usuario confirmó los cambios correctos en Staging | ✅ |
 | 11 | `git push origin main` (dispara deploy a Producción) | ✅ **HECHO** (30/09/2026) — **FF limpio**, pre-check con `main` en `66ba009`; deploy automático desde `main` | ✅ |
-| 12 | Test en Producción + cierre de 2.3 | 🟡 **PENDIENTE SOLO LA VERIFICACIÓN DEL USUARIO** — `main` == `staging` == `7d71fb5`; el deploy es automático, la prueba es manual | 👈 **se pide al usuario** |
+| 12 | Test en Producción + cierre de 2.3 | ✅ **HECHO** (30/09/2026) — **PASS** de los 8 casos con la cuenta real; `main` == `staging` == `7d71fb5`. **2.3 cerrada** | ✅ |
 
-> **No encadenar:** terminar el paso 11 **no** habilita el 12. Falta la confirmación del usuario.
+> **No encadenar:** cada paso esperó su propia aprobación explícita; ninguno se dio por heredado del anterior.
 > **Verificar antes de cada promoción** que `main`, `staging` y Producción siguen en el mismo commit (lo que falló en 2.2 y se corrigió en `PROPUESTA-2.2.md` §10.1). **Cumplido en los pasos 9 y 11.**
 > **Alcance achieved:** `origin/main` == `origin/staging` == `7d71fb5` (2.1+2.2+2.8+2.3). **Alineación correcta**, a diferencia del incidente de 2.2: acá `staging` ya tenía el commit, así que el push a `main` fue un **FF limpio sin merge** y no hizo falta la corrección posterior de `staging`.
 > **Sin regresión de 2.1/2.2/2.8:** los cuatro commits siguen en la historia lineal de `origin/main` (`b46b570` → `119cc4a` → `66ba009` → `7d71fb5`), **0 commits de merge**.

@@ -26,6 +26,8 @@ Aplicación de finanzas personales (Next.js 16 + React 19 + Firebase). La aplica
 
 ## Pendientes conocidos (contexto)
 
-- Los ingresos freelance/bandas no se ven correctamente en la vista de ingresos (bug de ids de subtipo — ver `context/dominio.md` §3.4).
+- **Deuda del módulo de ingresos** (no son bugs resueltos; ninguna tiene subetapa asignada):
+  - **CRUD incompleto:** no hay flujo para editar ni eliminar un ingreso existente, solo el alta (`app/agregar/components/ingresos/helpers/submitIngreso.js`). Un ingreso mal cargado no se corrige desde la app. Detalle en `PROPUESTA-2.3.md` §9.1 y `context/dominio.md` §3.4.
+  - **Errores no manejados:** `subscribeIngresos.js` no maneja errores y solo emite cuando cargan ambas queries, así que una query fallida deja `/ingresos` en loading infinito. Fuera del alcance de 2.3. Detalle en `context/dominio.md` §3.4.
 - Agregar productos faltantes.
 - (Futuro) sección de balance/analytics.
