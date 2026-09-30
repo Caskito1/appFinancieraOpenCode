@@ -1,6 +1,9 @@
 # PROPUESTA — Subetapa 2.3: Ingresos (labels de bandas + filas + sección "Otros")
 
-> **Naturaleza: PLANIFICACIÓN. NO IMPLEMENTADA. El gate read-only es el próximo paso; la implementación espera aprobación explícita del usuario.**
+> **Naturaleza: IMPLEMENTADA EN LOCAL el 30/09/2026. NO promovida a `staging` ni a Producción.**
+> El gate read-only se ejecutó y dio **PASS** (§5.4); la implementación local quedó aprobada, aplicada y verificada
+> estáticamente (`build` OK, `lint` sin problemas nuevos). **Falta la revisión funcional del usuario en el navegador**
+> y el resto del flujo (§7, pasos 8–12), cada uno con su propia aprobación explícita.
 > Documento redactado el 30/09/2026, después del cierre de 2.2 y 2.8 (`PROPUESTA-2.2.md` §10).
 
 **Repo objetivo:** opencode-AppFinanciera (app anidada `AppFinanciera/`, repo git propio)
@@ -15,11 +18,13 @@
 | Alcance funcional | ✅ **DEFINIDO Y APROBADO** (30/09/2026) — un solo lote |
 | Origen de labels de bandas | ✅ **DECIDIDO** — importar `BANDAS` de `useModoIngreso` (opción A, mínima) |
 | Título de la fila | ✅ **DECIDIDO** — `detalle ?? "Ingreso"` (opción A) |
-| Gate read-only de `ingresos` | ⏳ **PENDIENTE** — script preparado en §5, a ejecutar por el usuario |
-| Aprobación de implementación | ⏳ **NO OTORGADA** — se pide después del gate |
-| Implementación | ❌ **NO IMPLEMENTADA** — ningún archivo de `AppFinanciera/` fue tocado |
-| Firestore | ⛔ **SIN CAMBIOS** — 0 escrituras previstas en 2.3 |
-| `main` / `staging` / Producción | ✅ **Alineados en `66ba009`** (`PROPUESTA-2.2.md` §10.1) |
+| Gate read-only de `ingresos` | ✅ **EJECUTADO Y PASS** (30/09/2026) — ver §5.4 |
+| Aprobación de implementación | ✅ **OTORGADA** (30/09/2026) — alcance y condiciones definidos por el usuario |
+| Implementación | 🟡 **HECHO EN LOCAL** (30/09/2026) — 4 modificados + 1 nuevo, **sin commitear ni pushear** |
+| Verificación estática | ✅ **build OK** (9/9 rutas) · **lint: 0 problemas nuevos** (persisten 2 errores + 3 warnings preexistentes) |
+| Verificación funcional | 🟡 **PENDIENTE** — requiere la revisión del usuario en el navegador con la cuenta real |
+| Firestore | ⛔ **SIN CAMBIOS** — **0 escrituras** en 2.3 (se descartó crear datos de prueba) |
+| `main` / `staging` / Producción | ✅ **Alineados en `66ba009`** — 2.3 **no** los toca todavía (`PROPUESTA-2.2.md` §10.1) |
 
 ## 1. Diagnóstico corregido (30/09/2026)
 
@@ -246,7 +251,7 @@ totalTransacciones={
 - Cualquier escritura en Firestore, migración o corrección de históricos.
 - El importe o la estructura de los subtipos de banda (no se agregan bandas nuevas).
 
-## 5. Gate read-only previo — PENDIENTE
+## 5. Gate read-only previo — ✅ EJECUTADO Y PASS (30/09/2026)
 
 **Read-only estricto: solo `.get()`, sin escrituras, sin migraciones.** Imprime únicamente agregados: **sin montos, sin UIDs, sin `detalle`.**
 
@@ -350,6 +355,24 @@ const LEGACY = ["la_ventolera", "la_imbailable"];
 
 No lee ni escribe `gastos`, `fixed_expense_entries`, `groups` ni `users`. No verifica los índices de `subscribeIngresos.js` (eso requeriría una escritura o unLogging de error, y queda fuera). No valida los `usuarios` UIDs contra `users`.
 
+### 5.4 Resultado del gate (30/09/2026)
+
+Ejecutado por el usuario desde Firebase Console → Cloud Shell con `inventario-sandbox-2.3.js`. **Read-only estricto: 1 sola llamada `.get()` sobre `ingresos`, 0 escrituras.**
+
+| Señal | Valor | Veredicto |
+|---|---|---|
+| `idsLegacy` | **0** | ✅ **PASS** — el fix es 100 % lado lectura. **No se necesita alias ni migración** |
+| `subtiposDesconocidos` | `[]` (subtipos sin label = 0) | ✅ **PASS** — todas las bandas tienen label |
+| `otros` | **5** | ✅ Hay datos reales: la sección nueva se puede validar **sin crear nada** |
+| `sinTipo` | 0 | ✅ Sin documentos huérfanos |
+| `sinUsuario` | 0 | ✅ Todos los ingresos tienen dueño |
+| `montoInvalido` | 0 | ✅ Todos los montos son numéricos |
+| `subtiposBanda` | `laventolera: 5` · `laimbailable: 3` · `tapelao: 1` | ✅ 9 bandas, los tres ids canónicos |
+
+⇒ **Ninguna condición de STOP.** Se cumple el único criterio bloqueante de §5.2.
+
+**Hallazgo derivado del gate + del código (relevante para el alcance):** `subscribeIngresos.js:30-48` filtra por `usuario` + rango de `createdAt`, **no por `tipo`**. Por lo tanto las 5 entradas de `otros` **ya entraban** en `ingresos` y **ya sumaban** en `totalIngresos`: eran *contadas pero invisibles*. De ahí se sigue, por construcción y no por promesa, que **agregar la sección no mueve ni un peso de `totalIngresos`** (requisito del usuario) y que el caso de prueba puede hacerse **con la cuenta real, en modo solo lectura**.
+
 ## 6. Verificación
 
 ### 6.1 Estática
@@ -369,25 +392,28 @@ No lee ni escribe `gastos`, `fixed_expense_entries`, `groups` ni `users`. No ver
 | `freelance` | `null` | `x` | — | `x` (una vez, **no dos**) |
 | `otros` | `null` | `x` | — | `x` |
 
-### 6.2 Runtime local
+### 6.2 Runtime local — **SOLO LECTURA** (decisión del usuario, 30/09/2026)
 
-Requiere `.env.local` con las 6 variables `NEXT_PUBLIC_FIREBASE_*` (`lib/firebase.js:7-12`). **Ojo: el `.env.local` del proyecto apunta a la misma base que Producción** (`PROPUESTA-2.2.md` §8) ⇒ la prueba **escribe datos reales**. Por eso:
+**Decisión:** no crear ingresos de prueba. El gate confirmó que hay datos reales suficientes (9 bandas, 5 `otros`, freelance con detalle), así que **toda la validación es de lectura** ⇒ **0 escrituras en Firestore** y **0 cambios en datos reales**.
 
-- Usar el **sandbox ya construido** en 2.2 (conservado a propósito): usuario de prueba A `doVj0bxHqjdtV2N88FuLiyaeCK12`, usuario de prueba B `IJWQmtR1z2Z29xrGsXhMe9OAUtA2`, grupo `groups/TEST-2-2`.
-- **Nunca** registrar un ingreso real de prueba en la cuenta real.
-- **Limpiar** los documentos temporales al terminar y **verificar** el conteo antes/después, como en `PROPUESTA-2.2.md` §5.1.
+> El `.env.local` del proyecto apunta a la misma base que Producción (`PROPUESTA-2.2.md` §8). Leer no escribe: no se registra nada, no se borra nada, no se navega a `/agregar`. La validación "es escribir datos reales" **quedó anulada** por decisión explícita del usuario.
 
-> La app no tiene registro de usuarios ni creación de grupos desde la UI (`context/arquitectura.md:24`) ⇒ el andamiaje se preparó a mano desde Firebase Console y se conserva.
+**Cómo se toma el baseline:** los datos no cambian y `totalIngresos` no se toca, así que el valor de partida es el que muestra **Producción** en **el mismo mes**. La comprobación es: `Total ingresos` local **idéntico** al de Producción, y `N ingresos` local **= baseline + 5** (los 5 `otros` que antes no se contaban).
 
-| # | Caso | Resultado esperado |
-|---|---|---|
-| 1 | Banda **La Ventolera** con detalle | Header del grupo: **"La Ventolera"** (no "Laventolera"). Total del grupo correcto |
-| 2 | Bandas **La Imbailable** y **Tapelao** | **"La Imbailable"** y **"Tapelao"**. Sin regresión en el id que ya se veía bien |
-| 3 | **Freelance** con detalle "Diseño web" | La fila muestra **"Diseño web" una sola vez** + fecha + monto. **No aparece repetido** |
-| 4 | **Otros** con detalle "Venta" | Aparece la **sección "Otros"** con su monto, y "N ingresos" **suma +1** ⇒ invariante de §1.5 cumplida |
-| 5 | Mes **sin** ingresos `otros` | La sección colapsa a "Sin movimientos este mes"; el total no cambia; no rompe el render |
-| 6 | **Regresión global** | **`totalIngresos` es idéntico antes y después** de la implementación en todos los casos. Si cambia un peso, es un error |
-| 7 | **Regresión de `/gastos`** | `/gastos` intacto (2.3 no lo toca, pero comparten base) |
+> `totalIngresos` agrupa por mes vía `subscribeIngresos.js:35-48`, así que el mes comparado tiene que ser **el mismo** en las dos lecturas.
+
+| # | Caso | Dato real disponible | Resultado esperado |
+|---|---|---|---|
+| 1 | Banda **La Ventolera** | 5 ingresos | Header del grupo: **"La Ventolera"** (no "Laventolera"). Total del grupo correcto |
+| 2 | Bandas **La Imbailable** / **Tapelao** | 3 / 1 ingresos | **"La Imbailable"** y **"Tapelao"**. Sin regresión en el id que ya se veía bien |
+| 3 | **Freelance** con detalle | existe | La fila muestra el detalle **una sola vez** + fecha + monto. **No aparece repetido** |
+| 4 | **Otros** | 5 ingresos | Aparece la **sección "Otros"** desplegada con sus **5 filas** y su total |
+| 5 | `N ingresos` | — | **baseline + 5** exactamente |
+| 6 | `Total ingresos` | — | **Idéntico** al baseline. Si cambia un peso, es un error |
+| 7 | Mes sin `otros` | — | El acordeón colapsa a "Sin movimientos este mes"; el total no cambia; no rompe el render |
+| 8 | **Regresión global** | — | `/gastos`, `/gastos-fijos`, `/home`, `/agregar` y el selector de mes intactos |
+
+> El caso 5 se verifica por la aritmética de `page.jsx:65-71`: `N ingresos` suma `sueldo + bandas + freelance + otros + transferencias` ⇒ el delta es exactamente `ingresosOtros.length`.
 
 ## 7. Flujo de ejecución
 
@@ -397,19 +423,20 @@ Requiere `.env.local` con las 6 variables `NEXT_PUBLIC_FIREBASE_*` (`lib/firebas
 |---|---|---|---|
 | 1 | Plan funcional + decisiones de alcance | ✅ **HECHO** (30/09/2026) | ✅ |
 | 2 | Documentación (`PROPUESTA-2.3.md`, `dominio.md` §3.4) | ✅ **HECHA** | — |
-| 3 | **Gate read-only de `ingresos`** (§5) | ⏳ **PENDIENTE** — script listo | — |
-| 4 | **Aprobación de implementación** | ⏳ **NO OTORGADA** | 👈 **se pide al usuario** |
-| 5 | Implementación local (5 archivos, §3) | ❌ No empezada | — |
-| 6 | `npm run build` + `npm run lint` + fixtures | ❌ No empezada | — |
-| 7 | Test local + limpieza del sandbox | ❌ No empezada | — |
-| 8 | Revisión funcional del usuario | ❌ No empezada | — |
+| 3 | **Gate read-only de `ingresos`** (§5) | ✅ **HECHO — PASS** (30/09/2026) | — |
+| 4 | **Aprobación de implementación** | ✅ **OTORGADA** (30/09/2026) | ✅ |
+| 5 | Implementación local (5 archivos, §3) | ✅ **HECHA** (30/09/2026) | — |
+| 6 | `npm run build` + `npm run lint` | ✅ **HECHA** — build 9/9 OK; lint **0 nuevos** (2 errores + 3 warnings preexistentes, verificados contra `HEAD`) | — |
+| 7 | Test local (**solo lectura**, §6.2) | ✅ **HECHO** — sin escrituras, sin limpieza pendiente | — |
+| 8 | Revisión funcional del usuario | 🟡 **PENDIENTE** — con los 8 casos de §6.2 en navegador | 👈 **se pide al usuario** |
 | 9 | Merge a `staging` + push | ❌ No empezada | 👈 **aprobación explícita** |
 | 10 | Test en Staging | ❌ No empezada | 👈 **aprobación explícita** |
 | 11 | Merge a `main` + deploy a Producción | ❌ No empezada | 👈 **aprobación explícita** |
 | 12 | Test en Producción + cierre de 2.3 | ❌ No empezada | 👈 **aprobación explícita** |
 
-> **No encadenar:** terminar el paso 7 **no** habilita el 9. Cada uno espera su aprobación.
+> **No encadenar:** terminar el paso 8 **no** habilita el 9. Cada uno espera su aprobación.
 > **Verificar antes de cada promoción** que `main`, `staging` y Producción siguen en el mismo commit (lo que falló en 2.2 y se corrigió en `PROPUESTA-2.2.md` §10.1).
+> **Alcance de esta sesión:** hasta el paso 8. `main`, `staging` y Producción siguen en `66ba009`; los cambios de 2.3 están **solo en el working tree local** de `AppFinanciera/`, sin commitear y sin pushear.
 
 ## 8. Riesgos
 
@@ -417,8 +444,8 @@ Requiere `.env.local` con las 6 variables `NEXT_PUBLIC_FIREBASE_*` (`lib/firebas
 |---|---|
 | Importar `BANDAS` desde `app/agregar/...` hacia `app/ingresos/...` crea dependencia lectura→escritura | **0 cambio de comportamiento**: los ids son idénticos y no se usa ningún hook. Deuda anotada, reversible en 2.6 |
 | El gate encuentra `idsLegacy > 0` | STOP antes de tocar código; se define un alias de lectura con el usuario |
-| El conteo "N ingresos" cambia | Es **la corrección pedida**: antes mentía. Se valida en el caso 4 |
-| La prueba runtime escribe en la base real | Sandbox de 2.2 reutilizado + limpieza verificada con conteo antes/después (como §5.1 de 2.2) |
+| El conteo "N ingresos" cambia | Es **la corrección pedida**: antes mentía. El delta debe ser exactamente `+5` (caso 5 de §6.2) |
+| La prueba runtime escribe en la base real | **Mitigado por decisión de alcance**: no se crea ningún dato de prueba. La validación es **solo lectura** con datos reales ya existentes ⇒ **0 escrituras, 0 limpieza** (§6.2) |
 | Un `subtipo` de banda desconocido en el futuro | Fallback `?? id` + `capitalize`: se muestra crudo pero no rompe |
 | Que "arreglar" los ids de escritura parezca más simple | Los ids de escritura son intocables (§1.4) y el gate lo verifica contra datos reales |
 
@@ -428,3 +455,15 @@ Requiere `.env.local` con las 6 variables `NEXT_PUBLIC_FIREBASE_*` (`lib/firebas
 - **2.6**: `lib/ingresos.js` y `app/ingresos/components/Acordeon.jsx` (ambos muertos), `storage`, `origenCompra`.
 - **Etapa 3**: `TransferenciasIngresosSection`, y el hecho de que `totalIngresos` sume las transferencias recibidas como ingreso (contradice "reintegro ≠ ingreso").
 - **Candidato sin subetapa:** `subscribeIngresos.js` no maneja errores ⇒ loading infinito si falla una query (`REPORT-02.md` §3.8).
+
+### 9.1 Deuda funcional registrada durante 2.3 — **NO implementada**
+
+Detectada el 30/09/2026 al revisar el módulo. **Fuera del alcance de 2.3 por decisión explícita del usuario:** no se agrega `updateDoc`, `deleteDoc` ni ninguna funcionalidad nueva.
+
+> **El módulo de ingresos no tiene flujo para editar ni para eliminar un ingreso existente.** Solo existe el alta (`app/agregar/components/ingresos/helpers/submitIngreso.js`). No hay ningún `updateDoc`/`deleteDoc` sobre la colección `ingresos` en todo el código: el único `deleteDoc` de la app está en `app/gastos/hooks/useGastos.js:143` (gastos), y `/gastos` además tiene `EditarGastoModal.jsx`.
+
+**Consecuencia práctica:** un ingreso mal cargado (monto o detalle equivocado) **no se puede corregir desde la app**; requiere intervención manual sobre Firestore. En `/gastos` el mismo problema se resuelve en la UI.
+
+**Estado:** registrada como pendiente para una etapa posterior. **Sin subetapa asignada todavía** y **sin planificación aprobada**. No tocar en 2.6 ni en 2.3.
+
+**Detalle del hallazgo en:** `context/dominio.md` §12 (fila `Ingresos CRUD`), `context/MAPA-APPFINANCIERA.md` §"Estado actual / deuda técnica relevante" y `ROADMAP.md` §"Pendiente aprobado, no implementado".

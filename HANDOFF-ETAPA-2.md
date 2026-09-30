@@ -13,7 +13,8 @@
 |---|---|---|---|
 | **2.1 — Taxonomía fijos unificada + "Otros"** | ✅ **CERRADA** | `b46b570` | Local (build + 27 invariantes) · Staging (funcional) · Producción (funcional) |
 | **2.2 — Totales del mes con gastos fijos** | ✅ **CERRADA** (30/09/2026) | `119cc4a` | Local (build + fixtures 24/24) · **Producción: PASS** (cuenta real, 30/09/2026) |
-| 2.3 · 2.4 · 2.5 · 2.6 | Sin empezar | — | — |
+| 2.3 — Ingresos: labels de bandas + sección "Otros" | 🟡 **EN LOCAL — falta revisión del usuario** (30/09/2026) | — | **Gate read-only PASS** · `build` OK · `lint` 0 nuevos · validación solo lectura |
+| 2.4 · 2.5 · 2.6 | Sin empezar | — | — |
 | 2.7 — Guard de integridad `groupId` (surgió de la validación de 2.2) | ⏳ **NO IMPLEMENTADA** — pendiente de aprobación | — | — |
 | 2.8 — Header `Personal` / `Total registrado` en `/gastos-fijos` | ✅ **CERRADA** (30/09/2026) | `66ba009` | **Producción: PASS** (bloque `Personal` con los dos valores, verificado por el usuario) |
 
@@ -79,13 +80,17 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
 - **Riesgo:** bajo. **Aislable:** sí. **Producción:** `b46b570`, verificada funcionalmente.
 - **Nota de alcance:** el compartido "Otros" **no** tiene flujo "＋ Agregar" (aparece directo en la sección de compartidos, igual que los otros 5). El "＋ Agregar" solo existe para personales.
 
-### P4 — Ingresos: bug de bandas + sección "Otros"
+### P4 — Ingresos: bug de bandas + sección "Otros" — 🟡 **IMPLEMENTADA EN LOCAL (30/09/2026)**, falta promoción
 - **Bug ids bandas:** `app/ingresos/components/FilaIngreso.jsx:1-13` (TIPO_LABEL usa `la_ventolera`/`la_imbailable`/`tapelao`) vs `app/agregar/components/ingresos/hooks/useModoIngreso.js:7-20` (BANDAS con ids `laventolera`/`laimbailable`/`tapelao`; eso es lo que se guarda). `PasoTipoIngreso.jsx:3-5` importa BANDAS de useModoIngreso. **Fix:** una sola fuente de ids (conservar los guardados: `laventolera`/`laimbailable`); alinear el mapa de etiquetas de **lectura** (históricos intactos).
+  - **Corrección del diagnóstico (30/09/2026):** el bug **visible** (headers "Laventolera"/"Laimbailable") **no estaba en `FilaIngreso`**, sino en `BandasSection.jsx:10-11,60`, que agrupaba y renderizaba el id crudo con `capitalize`. `TIPO_LABEL` era **código inalcanzable** (`FilaIngreso` solo lo usan `SueldoSection` y `FreelanceSection`, ambas con `subtipo: null`), así que arreglarlo no arreglaba nada visible. **Resuelto** importando `BANDAS` para el label en `BandasSection` y **eliminando** `TIPO_LABEL`.
 - **Sección visual "Otros":** `app/ingresos/page.jsx:75-97` filtra solo sueldo/banda/freelance; el ingreso tipo "otros" (botón existe en alta) **no tiene sección** → invisible. Agregar una sección (patrón FreelanceSection + FilaIngreso).
-- **Archivos:** `FilaIngreso.jsx`, `ingresos/page.jsx`, y sección nueva (patrón existente). `lib/ingresos.js` (TIPOS_INGRESO/BANDAS, sin importadores) es la fuente redundante.
+  - **Causa raíz (hallazgo del 30/09/2026):** `subscribeIngresos.js:30-48` **no filtra por `tipo`**, así que los ingresos de "otros" ya venían en `ingresos` y **ya sumaban** en `totalIngresos`: eran *contados pero invisibles*. Por eso agregar la sección **no mueve ni un peso** del total.
+  - **Resuelto:** `OtrosSection.jsx` nuevo (con `empty`), `ingresosOtros` en `useIngresos.js` + `otros: true` en `openSections`, y `ingresosOtros.length` en `totalTransacciones` de `page.jsx`.
+- **Archivos:** `BandasSection.jsx`, `FilaIngreso.jsx`, `useIngresos.js`, `OtrosSection.jsx` (nuevo), `page.jsx`. `lib/ingresos.js` (TIPOS_INGRESO/BANDAS, sin importadores) es la fuente redundante.
 - **Riesgo:** bajo. **Aislable:** sí (bug y sección pueden ir juntos, misma área).
-- **Prueba LOCAL:** guardar ingreso banda (La Ventolera) → etiqueta correcta; guardar ingreso "otros" → visible en `/ingresos`.
-- **Evidencia de cierre:** los 3 subtipos de banda etiquetan bien; "otros" aparece sumado y listado.
+- **Prueba LOCAL:** **solo lectura, sin crear datos** (decisión del usuario) — se usan los datos reales que confirmó el gate (9 bandas + 5 `otros` + freelance con detalle). **0 escrituras en Firestore, 0 limpieza pendiente.**
+- **Evidencia de cierre:** los 3 subtipos de banda etiquetan bien; "otros" aparece listado y sumado; `totalIngresos` idéntico. **Pendiente:** revisión del usuario (8 casos) + promoción.
+- **Deuda registrada, NO implementada:** ingresos **sin edición ni borrado** (§9.1 de `PROPUESTA-2.3.md`).
 
 ### Robustez — RouteGuard / AuthContext
 - **Archivos:** `app/components/layout/RouteGuard.jsx:13,41-45` (lee `loading` de `useAuth`) · `lib/AuthContext.jsx:20` (expone solo `{ user }`, inicial `undefined`).
@@ -129,7 +134,7 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
 
 - **2.1 — Taxonomía fijos unificada + "Otros"** (D8/D9; eliminó `temp.js`). ✅ **CERRADA 25/09/2026** — commit `b46b570` en Staging, Staging y Producción. Sin dependencias. Riesgo bajo.
 - **2.2 — Totales del mes con gastos fijos** (D3). ✅ **CERRADA 30/09/2026** — commit `119cc4a`. Definición funcional **cerrada** (25/09/2026), criterio técnico `esPagado` y labels **cerrados** (29/09/2026), **gate histórico PASS** (34 entries, 0 inconsistentes), **prueba funcional en sandbox 6/6 PASS**, **deployada a Producción** y **verificada en Producción con cuenta real** (el único fijo impago dejó de sumar en `Total` y en `Total real`). Plan y detalle en `PROPUESTA-2.2.md`. Riesgo bajo.
-- **2.3 — Ingresos: ids de bandas + sección "Otros"** (P4). Independiente. Riesgo bajo. **Es la siguiente en curso.** Plan en `PROPUESTA-2.3.md`.
+- **2.3 — Ingresos: ids de bandas + sección "Otros"** (P4). Independiente. Riesgo bajo. 🟡 **EN LOCAL (30/09/2026).** **Gate read-only PASS** (`idsLegacy = 0` ⇒ fix 100 % lado lectura, **sin alias ni migración**; 5 `laventolera`, 3 `laimbailable`, 1 `tapelao`, **5 `otros`**). Implementada con 4 archivos modificados + `OtrosSection.jsx` nuevo; **`totalIngresos` intacto** y **0 escrituras en Firestore**. Plan y detalle en `PROPUESTA-2.3.md`. **Falta la revisión funcional del usuario y la promoción** (cada paso con su aprobación).
 - **2.4 — Robustez de sesión/redirección** (RouteGuard/AuthContext). Riesgo medio.
 - **2.5 — Retirar flujo legacy de gastos fijos** (D1). Requiere 2.1 consolidada (canónica fija). Riesgo medio bajo.
 - **2.6 — Limpieza de código muerto** (archivos + `storage` + `origenCompra`). Riesgo cero/bajo.
@@ -189,6 +194,12 @@ transferencia→ingreso. Solo quedan documentadas como pendientes para Etapa 3.
 
 Este HANDOFF solo aprueba la **estructura de subetapas**. Cada 2.x necesita su propia
 planificación, aprobación y verificación antes de ejecutarse. **2.1, 2.2 y 2.8 están cerradas**
-(Local → Staging → Producción → verificación). **La siguiente en curso es 2.3**
-(plan en `PROPUESTA-2.3.md`), que arranca con el gate read-only y **espera aprobación
-explícita del usuario antes de implementar**.
+(Local → Staging → Producción → verificación). **2.3 está implementada en LOCAL** desde el
+30/09/2026 (gate read-only **PASS**, `build` OK, `lint` sin problemas nuevos, **0 escrituras en
+Firestore**) y **falta la revisión funcional del usuario** antes de promover; su plan y detalle
+están en `PROPUESTA-2.3.md`.
+
+**Deuda funcional registrada el 30/09/2026, NO implementada:** el módulo de ingresos **no tiene
+flujo para editar ni para eliminar** un ingreso existente (solo el alta). Un ingreso mal cargado
+no se corrige desde la app. **Fuera del alcance de 2.3** por decisión explícita del usuario;
+queda pendiente de una etapa posterior, sin subetapa asignada. Detalle en `PROPUESTA-2.3.md` §9.1.
