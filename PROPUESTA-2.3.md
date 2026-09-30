@@ -1,10 +1,11 @@
 # PROPUESTA — Subetapa 2.3: Ingresos (labels de bandas + filas + sección "Otros")
 
-> **Naturaleza: VALIDADA EN LOCAL Y EN STAGING el 30/09/2026. NO promovida a `main` ni a Producción.**
+> **Naturaleza: VALIDADA EN LOCAL Y STAGING, y PROMOVIDA A PRODUCCIÓN el 30/09/2026. CERRADA pendiente solo la
+> verificación funcional del usuario en Producción** (§7, paso 12).
 > El gate read-only dio **PASS** (§5.4); la implementación quedó aprobada, aplicada y verificada estáticamente
 > (`build` OK, `lint` sin problemas nuevos), validada funcionalmente en **Local** y después en **Staging** por el
-> usuario. **Falta la aprobación explícita para promover a `main`**, que es lo que dispara el deploy a Producción
-> (§7, pasos 11–12). Documento redactado el 30/09/2026, después del cierre de 2.2 y 2.8 (`PROPUESTA-2.2.md` §10).
+> usuario, y promovida a `main` por **fast-forward limpio**. `main` == `staging` == `7d71fb5`.
+> Documento redactado el 30/09/2026, después del cierre de 2.2 y 2.8 (`PROPUESTA-2.2.md` §10).
 
 **Repo objetivo:** opencode-AppFinanciera (app anidada `AppFinanciera/`, repo git propio)
 **Subetapa:** 2.3 de la Etapa 2 · **Hallazgo origen:** P4 (`HANDOFF-ETAPA-2.md` §2)
@@ -25,9 +26,10 @@
 | Verificación funcional en **Local** | ✅ **PASS** (30/09/2026) — 8/8 casos con la cuenta real, en modo solo lectura |
 | Promoción a `staging` | ✅ **HECHA** (30/09/2026) — `git push origin main:staging`, **fast-forward limpio, 0 commits de merge**. `origin/main` **no** se tocó |
 | Verificación funcional en **Staging** | ✅ **PASS** (30/09/2026) — el usuario confirmó que los cambios se ven reflejados y son correctos |
-| Promoción a `main` / Producción | ⏸️ **BLOQUEADA — espera aprobación explícita**. `origin/main` sigue en `66ba009` |
+| Promoción a `main` / Producción | ✅ **HECHA** (30/09/2026) — `git push origin main`, **FF limpio**. Deploy automático desde `main` (integración Git de Vercel) |
+| Verificación funcional en **Producción** | 🟡 **PENDIENTE** — el usuario debe confirmar contra la cuenta real (el deploy es automático, pero la verificación es manual) |
 | Firestore | ⛔ **SIN CAMBIOS** — **0 escrituras** en 2.3 (no se crearon datos de prueba) |
-| Estado de ambientes | `origin/main` = `66ba009` (2.2+2.8) · `origin/staging` = `7d71fb5` (2.2+2.8+**2.3**) |
+| Estado de ambientes | ✅ **ALINEADOS**: `origin/main` == `origin/staging` == **`7d71fb5`** (2.1+2.2+2.8+**2.3**) |
 
 ## 1. Diagnóstico corregido (30/09/2026)
 
@@ -418,7 +420,7 @@ Ejecutado por el usuario desde Firebase Console → Cloud Shell con `inventario-
 
 ### 6.3 Resultado de la validación funcional (30/09/2026)
 
-**PASS 8/8 en Local y PASS en Staging.** Confirmado por el usuario en ambos ambientes, con la cuenta real y en **modo solo lectura**.
+**PASS 8/8 en Local y PASS en Staging.** Confirmado por el usuario en ambos ambientes, con la cuenta real y en **modo solo lectura**. **Pendiente**: repetir los mismos 8 casos en Producción (§7, paso 12).
 
 | # | Caso | Resultado |
 |---|---|---|
@@ -432,7 +434,7 @@ Ejecutado por el usuario desde Firebase Console → Cloud Shell con `inventario-
 | 8 | **Regresión** | ✅ `/gastos` · `/gastos-fijos` · `/home` · selector de mes — todos OK |
 
 > **0 escrituras en Firebase** en toda la subetapa: no se creó ningún dato de prueba, así que no hubo limpieza que verificar.
-> **Ambientes:** Local (commit `7d71fb5` en el working tree) → `origin/staging` = `7d71fb5` → validado. `origin/main` = `66ba009`, **sin deploy a Producción**.
+> **Ambientes:** Local → `origin/staging` = `7d71fb5` (validado) → `origin/main` = `7d71fb5` (deploy automático, pendiente la verificación del usuario).
 
 ## 7. Flujo de ejecución
 
@@ -450,13 +452,13 @@ Ejecutado por el usuario desde Firebase Console → Cloud Shell con `inventario-
 | 8 | Revisión funcional del usuario (**Local**) | ✅ **PASS** (30/09/2026) — 8/8 casos con la cuenta real, solo lectura | ✅ |
 | 9 | Commit `7d71fb5` + `git push origin main:staging` | ✅ **HECHO** (30/09/2026) — **FF limpio, 0 merges**; `origin/main` intacto en `66ba009` | ✅ |
 | 10 | Test en **Staging** | ✅ **PASS** (30/09/2026) — el usuario confirmó los cambios correctos en Staging | ✅ |
-| 11 | `git push origin main` (dispara deploy a Producción) | ⏸️ **NO EMPEZADA** — **espera aprobación explícita** | 👈 **se pide al usuario** |
-| 12 | Test en Producción + cierre de 2.3 | ❌ No empezada | 👈 **aprobación explícita** |
+| 11 | `git push origin main` (dispara deploy a Producción) | ✅ **HECHO** (30/09/2026) — **FF limpio**, pre-check con `main` en `66ba009`; deploy automático desde `main` | ✅ |
+| 12 | Test en Producción + cierre de 2.3 | 🟡 **PENDIENTE SOLO LA VERIFICACIÓN DEL USUARIO** — `main` == `staging` == `7d71fb5`; el deploy es automático, la prueba es manual | 👈 **se pide al usuario** |
 
-> **No encadenar:** terminar el paso 10 **no** habilita el 11.
-> **Verificar antes de cada promoción** que `main`, `staging` y Producción siguen en el mismo commit (lo que falló en 2.2 y se corrigió en `PROPUESTA-2.2.md` §10.1). **Cumplido en el paso 9:** `origin/main` quedó en `66ba009` y `origin/staging` en `7d71fb5`.
-> **Alcance de esta sesión:** hasta el paso 10. `origin/main` y Producción siguen en `66ba009`; 2.3 vive únicamente en `origin/staging`.
-> **Ojo al cerrar 2.3:** `staging` va a quedar un commit adelante de `main` hasta que se apruebe el paso 11. Es el estado esperado, no una desalineación.
+> **No encadenar:** terminar el paso 11 **no** habilita el 12. Falta la confirmación del usuario.
+> **Verificar antes de cada promoción** que `main`, `staging` y Producción siguen en el mismo commit (lo que falló en 2.2 y se corrigió en `PROPUESTA-2.2.md` §10.1). **Cumplido en los pasos 9 y 11.**
+> **Alcance achieved:** `origin/main` == `origin/staging` == `7d71fb5` (2.1+2.2+2.8+2.3). **Alineación correcta**, a diferencia del incidente de 2.2: acá `staging` ya tenía el commit, así que el push a `main` fue un **FF limpio sin merge** y no hizo falta la corrección posterior de `staging`.
+> **Sin regresión de 2.1/2.2/2.8:** los cuatro commits siguen en la historia lineal de `origin/main` (`b46b570` → `119cc4a` → `66ba009` → `7d71fb5`), **0 commits de merge**.
 
 ## 8. Riesgos
 
