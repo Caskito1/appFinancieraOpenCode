@@ -1,7 +1,7 @@
 # PROPUESTA — Subetapa 2.2: Totales del mes con gastos fijos
 
-> **Naturaleza: PLANIFICACIÓN. La definición funcional está cerrada, el gate histórico fue ejecutado y APROBADO, y la implementación fue autorizada por el usuario el 29/09/2026.**
-> Documento redactado al cerrar la sesión del 25/09/2026, actualizado el 29/09/2026 con el criterio definitivo `esPagado` y el resultado del gate.
+> **Naturaleza: SUBETAPA CERRADA (30/09/2026).** La definición funcional está cerrada, el gate histórico fue ejecutado y APROBADO, la implementación fue autorizada el 29/09/2026, fue commiteada, **deployada a Producción** y **verificada en Producción con cuenta real el 30/09/2026**. No queda nada pendiente de 2.2 ni de 2.8.
+> Documento redactado al cerrar la sesión del 25/09/2026, actualizado el 29/09/2026 con el criterio definitivo `esPagado` y el resultado del gate, y el 30/09/2026 con el cierre (commits, deploy y verificación en Producción).
 
 **Repo objetivo:** opencode-AppFinanciera (app anidada `AppFinanciera/`, repo git propio)
 **Subetapa:** 2.2 de la Etapa 2 · **Hallazgo origen:** D3 (`HANDOFF-ETAPA-2.md` §2)
@@ -27,10 +27,13 @@
 | Build + lint | ✅ **OK** |
 | Prueba funcional en sandbox | ✅ **EJECUTADA — 6/6 PASS** (§7.1) |
 | Limpieza del sandbox | ✅ **EJECUTADA Y VERIFICADA** — 40 → 34 entries, 0 sandbox (§5.1) |
-| Mejora UI header `/gastos-fijos` (2.8) | ✅ **EJECUTADA y validada visualmente**, pendiente de commit |
-| Commits de 2.2 | ✅ NINGUNO |
-| Push de 2.2 | ✅ NINGUNO |
-| Producción | ✅ SIN CAMBIOS |
+| Mejora UI header `/gastos-fijos` (2.8) | ✅ **EJECUTADA, deployada y verificada en Producción** |
+| Commits de 2.2 | ✅ **`119cc4a`** (2.2) · **`66ba009`** (2.8) — ambos en `main` y en `origin/main` |
+| Push de 2.2 | ✅ **HECHO** (29/09/2026 ~18:07) |
+| Deploy a Producción | ✅ **HECHO** (automático desde `main`, Vercel) |
+| `staging` alineado con Producción | ✅ **HECHO** (30/09/2026) — fast-forward `b46b570 → 66ba009`, 0 commits de merge (§10) |
+| **Verificación en Producción** | ✅ **PASS** (30/09/2026, cuenta real) — §10.2 |
+| Estado de la subetapa | ✅ **CERRADA** (30/09/2026) |
 
 ## 1. Definición funcional (cerrada)
 
@@ -377,7 +380,10 @@ El documento apareció **incorrectamente como personal** en `/gastos`, porque to
 | Escrituras durante el gate read-only | ✅ **NINGUNA** — solo `.get()` |
 | Escrituras durante la prueba runtime | ✅ **Sí**, contra datos sandbox temporales y reales |
 | Limpieza del sandbox | ✅ **EJECUTADA Y VERIFICADA** — 40 → 34 entries, 0 sandbox, 34 reales intactos (§5.1). Andamiaje (2 usuarios, `groups/TEST-2-2`, 2 `fixed_expenses`) **conservado** a propósito |
-| Commits / push | ⏳ **PENDIENTE** — ninguno |
+| Commits | ✅ **`119cc4a`** (2.2) · **`66ba009`** (2.8), ambos en `main` |
+| Push | ✅ **HECHO** (29/09/2026 ~18:07) |
+| Deploy a Producción | ✅ **HECHO** (automático desde `main`, Vercel) |
+| Verificación en Producción | ✅ **PASS** (30/09/2026, cuenta real) — §10.2 |
 
 **Archivos funcionales modificados por 2.2:**
 
@@ -416,7 +422,7 @@ Verificado sobre el repo el 25/09/2026:
 - Toda la separación depende de **6 variables de entorno** `NEXT_PUBLIC_FIREBASE_*` (`lib/firebase.js:7-12`), **inlinadas en el bundle en build time**, sin valores por defecto.
 - `getFirestore(app)` se llama **sin segundo argumento** (`lib/firebase.js:19`) ⇒ solo la base *default* del proyecto; no hay forma en código de apuntar a otra base.
 - No existen `vercel.json`, `.firebaserc` ni `firestore.rules` en el repo. No hay `.env` en el historial de git (sin secretos filtrados).
-- `main` y `staging` apuntan al **mismo commit** (`b46b570`); `origin/HEAD → main`.
+- `main` y `staging` apuntaban al **mismo commit** (`b46b570`) al momento de redactar esto (25/09/2026); ambos quedaron en `66ba009` el 30/09/2026 (§10.1). `origin/HEAD → main`.
 - **Local no es reproducible** (ver §7).
 - ⇒ Consecuencia: "validar en Staging" implica **escribir en la base real**. Una separación real de Firebase entre Staging y Producción queda como tarea de infraestructura, **no** como parte de 2.2.
 - La documentación de este mapa de ambientes (proyectos, dominios autorizados) sigue **pendiente**: `REPORT-ETAPA-0.md:181` decidió dejar la infra fuera de los documentos.
@@ -436,8 +442,51 @@ Verificado sobre el repo el 25/09/2026:
 | 9 | Revisión funcional del usuario | ✅ **HECHA** |
 | 9b | Mejora de header `/gastos-fijos` (§7.4) | ✅ **HECHA + validada visualmente** |
 | 9c | Limpieza del sandbox + verificación (§5.1) | ✅ **EJECUTADA Y VERIFICADA** (40 → 34, 0 sandbox) |
-| 10 | Commit de 2.2 + 2.8 | ⏳ **PENDIENTE** (sin commit) |
-| 11 | Merge a `main` + deploy a Producción | ⏳ **PENDIENTE** |
-| 12 | Verificación con cuenta real y cierre de 2.2 | ⏳ **PENDIENTE** |
+| 10 | Commit de 2.2 + 2.8 | ✅ **HECHO** — `119cc4a` (2.2) · `66ba009` (2.8) |
+| 11 | Merge a `main` + deploy a Producción | ✅ **HECHO** — push a `main` (29/09/2026 ~18:07) + deploy automático (Vercel). El merge previo **no hizo falta**: ya se commiteó sobre `main` |
+| 12 | Verificación con cuenta real y cierre de 2.2 | ✅ **PASS** (30/09/2026) — §10.2 |
 
-**En el paso 12:** los meses con facturas registradas y nunca pagadas **bajan** de total. Es el comportamiento pedido, y hay que revisarlo sobre los meses reales. Según §6.4, **una sola entry** real cambia de total.
+**En el paso 12:** los meses con facturas registradas y nunca pagadas **bajan** de total. Es el comportamiento pedido, y hay que revisarlo sobre los meses reales. Según §6.4, **una sola entry** real cambia de total. → **Confirmado en Producción el 30/09/2026** (§10.2).
+
+## 10. Cierre: commits, deploy, alineación de `staging` y verificación (30/09/2026)
+
+### 10.1 Qué ocurrió
+
+2.2 y 2.8 se commitearon sobre `main` el **29/09/2026 a las 18:07** y se pushearon. **No hubo merge desde `staging`.** El deploy a Producción es **automático**: la integración Git de Vercel construye `main` automáticamente. **No hay `vercel.json`, `.github/workflows`, `.gitlab-ci.yml` ni `netlify.toml` en el repo** ⇒ toda la automatización depende de la configuración del proyecto en el dashboard de Vercel, no del código.
+
+**Desalineación detectada y corregida el 30/09/2026.** Tras el deploy, `staging` había quedado en `b46b570` mientras `main` y la Producción estaban en `66ba009`: es decir, **Staging corría 2.1 solamente**. Cualquier prueba de una subetapa posterior sobre ese `staging` habría corrido una combinación que no existía en ningún ambiente.
+
+Corrección (fast-forward puro, sin `--force`):
+
+```bash
+git checkout staging
+git merge --ff-only main     # aborta si hubiera divergencia
+git push origin staging
+```
+
+| Garantía | Comprobación |
+|---|---|
+| `staging` era ancestro estricto de `main` | `git merge-base --is-ancestor staging main` → exit 0 |
+| No había commits huérfanos en `staging` | `git log main..staging` → vacío |
+| Working tree limpio antes del `checkout` | `git status --porcelain` → vacío |
+| Advance lineal, **0 commits de merge** | `git log --merges b46b570..main` → 0 |
+| Diff limitado a los 5 archivos de 2.2/2.8 | `git diff --stat` → +48 / −5 |
+| Cero escrituras a Firestore | El diff es 100 % lectura/cálculo (revisado commit por commit): solo se agrega `esPagado` (función pura), `totalPersonalCubierto` (`reduce` puro), threading de props `page.jsx` → `BalanceMesCard`, filtro de `totalFixed`/`totalFixedReal` y `estadoVisible()`. `registrarGasto`/`registrarPago`/`saldar*` intactos |
+| Reversión | `git push origin b46b570:staging` |
+
+**Resultado:** `origin/main == origin/staging == 66ba009` == lo que sirve Producción. Staging dejó de ser una combinación distinta.
+
+### 10.2 Verificación en Producción — PASS (30/09/2026, cuenta real)
+
+Contra el deploy `66ba009`, verificada por el usuario:
+
+| # | Caso | Resultado |
+|---|---|---|
+| 1 | `/gastos`, único fijo real **impago** | Dejó de sumar **tanto** en `Total` como en `Total real` · **CONFIRMADO** |
+| 2 | `/gastos-fijos`, bloque `Personal` | Muestra los **dos** valores: monto cubierto + `Total registrado` · **CONFIRMADO** (2.8) |
+
+**Cierre:** 2.2 y 2.8 quedan **cerradas**. No hay nada pendiente de modificar ni de redeployar en producción.
+
+### 10.3 Consecuencia para las subetapas siguientes
+
+`main` == `staging` == Producción. Una subetapa nueva se desarrolla **local sobre ese mismo código** y sube **primero a `staging`**, que ya corre el código de Producción ⇒ la combinación probada es exactamente `Producción + subetapa`. Si `staging` vuelve a quedar atrás respecto de `main`, hay que repetir el procedimiento de §10.1 **antes** de probar en staging.
