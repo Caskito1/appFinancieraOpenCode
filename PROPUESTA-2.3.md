@@ -1,10 +1,10 @@
 # PROPUESTA — Subetapa 2.3: Ingresos (labels de bandas + filas + sección "Otros")
 
-> **Naturaleza: IMPLEMENTADA EN LOCAL el 30/09/2026. NO promovida a `staging` ni a Producción.**
-> El gate read-only se ejecutó y dio **PASS** (§5.4); la implementación local quedó aprobada, aplicada y verificada
-> estáticamente (`build` OK, `lint` sin problemas nuevos). **Falta la revisión funcional del usuario en el navegador**
-> y el resto del flujo (§7, pasos 8–12), cada uno con su propia aprobación explícita.
-> Documento redactado el 30/09/2026, después del cierre de 2.2 y 2.8 (`PROPUESTA-2.2.md` §10).
+> **Naturaleza: VALIDADA EN LOCAL Y EN STAGING el 30/09/2026. NO promovida a `main` ni a Producción.**
+> El gate read-only dio **PASS** (§5.4); la implementación quedó aprobada, aplicada y verificada estáticamente
+> (`build` OK, `lint` sin problemas nuevos), validada funcionalmente en **Local** y después en **Staging** por el
+> usuario. **Falta la aprobación explícita para promover a `main`**, que es lo que dispara el deploy a Producción
+> (§7, pasos 11–12). Documento redactado el 30/09/2026, después del cierre de 2.2 y 2.8 (`PROPUESTA-2.2.md` §10).
 
 **Repo objetivo:** opencode-AppFinanciera (app anidada `AppFinanciera/`, repo git propio)
 **Subetapa:** 2.3 de la Etapa 2 · **Hallazgo origen:** P4 (`HANDOFF-ETAPA-2.md` §2)
@@ -20,11 +20,14 @@
 | Título de la fila | ✅ **DECIDIDO** — `detalle ?? "Ingreso"` (opción A) |
 | Gate read-only de `ingresos` | ✅ **EJECUTADO Y PASS** (30/09/2026) — ver §5.4 |
 | Aprobación de implementación | ✅ **OTORGADA** (30/09/2026) — alcance y condiciones definidos por el usuario |
-| Implementación | 🟡 **HECHO EN LOCAL** (30/09/2026) — 4 modificados + 1 nuevo, **sin commitear ni pushear** |
-| Verificación estática | ✅ **build OK** (9/9 rutas) · **lint: 0 problemas nuevos** (persisten 2 errores + 3 warnings preexistentes) |
-| Verificación funcional | 🟡 **PENDIENTE** — requiere la revisión del usuario en el navegador con la cuenta real |
-| Firestore | ⛔ **SIN CAMBIOS** — **0 escrituras** en 2.3 (se descartó crear datos de prueba) |
-| `main` / `staging` / Producción | ✅ **Alineados en `66ba009`** — 2.3 **no** los toca todavía (`PROPUESTA-2.2.md` §10.1) |
+| Implementación | ✅ **COMMITEADA** `7d71fb5` (30/09/2026) — 4 modificados + 1 nuevo, **5 archivos, +72/−28, solo bajo `app/ingresos/`** |
+| Verificación estática | ✅ **build OK** (9/9 rutas) · **lint: 0 problemas nuevos** (persisten 2 errores + 3 warnings preexistentes) · bundle sin `TIPO_LABEL` ni `la_ventolera`/`la_imbailable` |
+| Verificación funcional en **Local** | ✅ **PASS** (30/09/2026) — 8/8 casos con la cuenta real, en modo solo lectura |
+| Promoción a `staging` | ✅ **HECHA** (30/09/2026) — `git push origin main:staging`, **fast-forward limpio, 0 commits de merge**. `origin/main` **no** se tocó |
+| Verificación funcional en **Staging** | ✅ **PASS** (30/09/2026) — el usuario confirmó que los cambios se ven reflejados y son correctos |
+| Promoción a `main` / Producción | ⏸️ **BLOQUEADA — espera aprobación explícita**. `origin/main` sigue en `66ba009` |
+| Firestore | ⛔ **SIN CAMBIOS** — **0 escrituras** en 2.3 (no se crearon datos de prueba) |
+| Estado de ambientes | `origin/main` = `66ba009` (2.2+2.8) · `origin/staging` = `7d71fb5` (2.2+2.8+**2.3**) |
 
 ## 1. Diagnóstico corregido (30/09/2026)
 
@@ -413,7 +416,23 @@ Ejecutado por el usuario desde Firebase Console → Cloud Shell con `inventario-
 | 7 | Mes sin `otros` | — | El acordeón colapsa a "Sin movimientos este mes"; el total no cambia; no rompe el render |
 | 8 | **Regresión global** | — | `/gastos`, `/gastos-fijos`, `/home`, `/agregar` y el selector de mes intactos |
 
-> El caso 5 se verifica por la aritmética de `page.jsx:65-71`: `N ingresos` suma `sueldo + bandas + freelance + otros + transferencias` ⇒ el delta es exactamente `ingresosOtros.length`.
+### 6.3 Resultado de la validación funcional (30/09/2026)
+
+**PASS 8/8 en Local y PASS en Staging.** Confirmado por el usuario en ambos ambientes, con la cuenta real y en **modo solo lectura**.
+
+| # | Caso | Resultado |
+|---|---|---|
+| 1 | **La Ventolera** | ✅ label correcto |
+| 2 | **La Imbailable** / **Tapelao** | ✅ labels correctos |
+| 3 | Ingresos en sus meses correspondientes | ✅ OK |
+| 4 | **Otros** | ✅ visible, con sus registros |
+| 5 | `N ingresos` | ✅ ahora incluye los ingresos `Otros` |
+| 6 | `Total ingresos` | ✅ **coincide exactamente con el baseline** |
+| 7 | **Freelance** | ✅ nombre/detalle **una sola vez**, sin duplicación |
+| 8 | **Regresión** | ✅ `/gastos` · `/gastos-fijos` · `/home` · selector de mes — todos OK |
+
+> **0 escrituras en Firebase** en toda la subetapa: no se creó ningún dato de prueba, así que no hubo limpieza que verificar.
+> **Ambientes:** Local (commit `7d71fb5` en el working tree) → `origin/staging` = `7d71fb5` → validado. `origin/main` = `66ba009`, **sin deploy a Producción**.
 
 ## 7. Flujo de ejecución
 
@@ -428,15 +447,16 @@ Ejecutado por el usuario desde Firebase Console → Cloud Shell con `inventario-
 | 5 | Implementación local (5 archivos, §3) | ✅ **HECHA** (30/09/2026) | — |
 | 6 | `npm run build` + `npm run lint` | ✅ **HECHA** — build 9/9 OK; lint **0 nuevos** (2 errores + 3 warnings preexistentes, verificados contra `HEAD`) | — |
 | 7 | Test local (**solo lectura**, §6.2) | ✅ **HECHO** — sin escrituras, sin limpieza pendiente | — |
-| 8 | Revisión funcional del usuario | 🟡 **PENDIENTE** — con los 8 casos de §6.2 en navegador | 👈 **se pide al usuario** |
-| 9 | Merge a `staging` + push | ❌ No empezada | 👈 **aprobación explícita** |
-| 10 | Test en Staging | ❌ No empezada | 👈 **aprobación explícita** |
-| 11 | Merge a `main` + deploy a Producción | ❌ No empezada | 👈 **aprobación explícita** |
+| 8 | Revisión funcional del usuario (**Local**) | ✅ **PASS** (30/09/2026) — 8/8 casos con la cuenta real, solo lectura | ✅ |
+| 9 | Commit `7d71fb5` + `git push origin main:staging` | ✅ **HECHO** (30/09/2026) — **FF limpio, 0 merges**; `origin/main` intacto en `66ba009` | ✅ |
+| 10 | Test en **Staging** | ✅ **PASS** (30/09/2026) — el usuario confirmó los cambios correctos en Staging | ✅ |
+| 11 | `git push origin main` (dispara deploy a Producción) | ⏸️ **NO EMPEZADA** — **espera aprobación explícita** | 👈 **se pide al usuario** |
 | 12 | Test en Producción + cierre de 2.3 | ❌ No empezada | 👈 **aprobación explícita** |
 
-> **No encadenar:** terminar el paso 8 **no** habilita el 9. Cada uno espera su aprobación.
-> **Verificar antes de cada promoción** que `main`, `staging` y Producción siguen en el mismo commit (lo que falló en 2.2 y se corrigió en `PROPUESTA-2.2.md` §10.1).
-> **Alcance de esta sesión:** hasta el paso 8. `main`, `staging` y Producción siguen en `66ba009`; los cambios de 2.3 están **solo en el working tree local** de `AppFinanciera/`, sin commitear y sin pushear.
+> **No encadenar:** terminar el paso 10 **no** habilita el 11.
+> **Verificar antes de cada promoción** que `main`, `staging` y Producción siguen en el mismo commit (lo que falló en 2.2 y se corrigió en `PROPUESTA-2.2.md` §10.1). **Cumplido en el paso 9:** `origin/main` quedó en `66ba009` y `origin/staging` en `7d71fb5`.
+> **Alcance de esta sesión:** hasta el paso 10. `origin/main` y Producción siguen en `66ba009`; 2.3 vive únicamente en `origin/staging`.
+> **Ojo al cerrar 2.3:** `staging` va a quedar un commit adelante de `main` hasta que se apruebe el paso 11. Es el estado esperado, no una desalineación.
 
 ## 8. Riesgos
 

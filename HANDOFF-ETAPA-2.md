@@ -13,7 +13,7 @@
 |---|---|---|---|
 | **2.1 — Taxonomía fijos unificada + "Otros"** | ✅ **CERRADA** | `b46b570` | Local (build + 27 invariantes) · Staging (funcional) · Producción (funcional) |
 | **2.2 — Totales del mes con gastos fijos** | ✅ **CERRADA** (30/09/2026) | `119cc4a` | Local (build + fixtures 24/24) · **Producción: PASS** (cuenta real, 30/09/2026) |
-| 2.3 — Ingresos: labels de bandas + sección "Otros" | 🟡 **EN LOCAL — falta revisión del usuario** (30/09/2026) | — | **Gate read-only PASS** · `build` OK · `lint` 0 nuevos · validación solo lectura |
+| 2.3 — Ingresos: labels de bandas + sección "Otros" | 🟡 **EN STAGING, validada — falta promover a `main`** (30/09/2026) | `7d71fb5` | **Gate PASS** · `build` OK · `lint` 0 nuevos · **Local 8/8 PASS** · **Staging PASS** |
 | 2.4 · 2.5 · 2.6 | Sin empezar | — | — |
 | 2.7 — Guard de integridad `groupId` (surgió de la validación de 2.2) | ⏳ **NO IMPLEMENTADA** — pendiente de aprobación | — | — |
 | 2.8 — Header `Personal` / `Total registrado` en `/gastos-fijos` | ✅ **CERRADA** (30/09/2026) | `66ba009` | **Producción: PASS** (bloque `Personal` con los dos valores, verificado por el usuario) |
@@ -88,8 +88,8 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
   - **Resuelto:** `OtrosSection.jsx` nuevo (con `empty`), `ingresosOtros` en `useIngresos.js` + `otros: true` en `openSections`, y `ingresosOtros.length` en `totalTransacciones` de `page.jsx`.
 - **Archivos:** `BandasSection.jsx`, `FilaIngreso.jsx`, `useIngresos.js`, `OtrosSection.jsx` (nuevo), `page.jsx`. `lib/ingresos.js` (TIPOS_INGRESO/BANDAS, sin importadores) es la fuente redundante.
 - **Riesgo:** bajo. **Aislable:** sí (bug y sección pueden ir juntos, misma área).
-- **Prueba LOCAL:** **solo lectura, sin crear datos** (decisión del usuario) — se usan los datos reales que confirmó el gate (9 bandas + 5 `otros` + freelance con detalle). **0 escrituras en Firestore, 0 limpieza pendiente.**
-- **Evidencia de cierre:** los 3 subtipos de banda etiquetan bien; "otros" aparece listado y sumado; `totalIngresos` idéntico. **Pendiente:** revisión del usuario (8 casos) + promoción.
+- **Prueba LOCAL:** **solo lectura, sin crear datos** (decisión del usuario) — se usaron los datos reales que confirmó el gate (9 bandas + 5 `otros` + freelance con detalle). **0 escrituras en Firestore, 0 limpieza pendiente.**
+- **Evidencia de cierre:** ✅ **cerrada en Local (8/8)** y ✅ **cerrada en Staging**. Falta promover a `main` y verificar en Producción.
 - **Deuda registrada, NO implementada:** ingresos **sin edición ni borrado** (§9.1 de `PROPUESTA-2.3.md`).
 
 ### Robustez — RouteGuard / AuthContext
@@ -134,7 +134,7 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
 
 - **2.1 — Taxonomía fijos unificada + "Otros"** (D8/D9; eliminó `temp.js`). ✅ **CERRADA 25/09/2026** — commit `b46b570` en Staging, Staging y Producción. Sin dependencias. Riesgo bajo.
 - **2.2 — Totales del mes con gastos fijos** (D3). ✅ **CERRADA 30/09/2026** — commit `119cc4a`. Definición funcional **cerrada** (25/09/2026), criterio técnico `esPagado` y labels **cerrados** (29/09/2026), **gate histórico PASS** (34 entries, 0 inconsistentes), **prueba funcional en sandbox 6/6 PASS**, **deployada a Producción** y **verificada en Producción con cuenta real** (el único fijo impago dejó de sumar en `Total` y en `Total real`). Plan y detalle en `PROPUESTA-2.2.md`. Riesgo bajo.
-- **2.3 — Ingresos: ids de bandas + sección "Otros"** (P4). Independiente. Riesgo bajo. 🟡 **EN LOCAL (30/09/2026).** **Gate read-only PASS** (`idsLegacy = 0` ⇒ fix 100 % lado lectura, **sin alias ni migración**; 5 `laventolera`, 3 `laimbailable`, 1 `tapelao`, **5 `otros`**). Implementada con 4 archivos modificados + `OtrosSection.jsx` nuevo; **`totalIngresos` intacto** y **0 escrituras en Firestore**. Plan y detalle en `PROPUESTA-2.3.md`. **Falta la revisión funcional del usuario y la promoción** (cada paso con su aprobación).
+- **2.3 — Ingresos: ids de bandas + sección "Otros"** (P4). Independiente. Riesgo bajo. 🟡 **EN STAGING, VALIDADA (30/09/2026) — falta promover a `main`.** **Gate read-only PASS** (`idsLegacy = 0` ⇒ fix 100 % lado lectura, **sin alias ni migración**; 5 `laventolera`, 3 `laimbailable`, 1 `tapelao`, **5 `otros`**). Commit **`7d71fb5`** (5 archivos, +72/−28, solo bajo `app/ingresos/`), subido **solo a `staging`** por fast-forward limpio (0 merges) con `git push origin main:staging`, **sin tocar `origin/main`**. **Validada 8/8 en Local y PASS en Staging**, con **0 escrituras en Firestore**. `origin/main` = `66ba009` (Producción **sin** 2.3); `origin/staging` = `7d71fb5`. Plan y detalle en `PROPUESTA-2.3.md`.
 - **2.4 — Robustez de sesión/redirección** (RouteGuard/AuthContext). Riesgo medio.
 - **2.5 — Retirar flujo legacy de gastos fijos** (D1). Requiere 2.1 consolidada (canónica fija). Riesgo medio bajo.
 - **2.6 — Limpieza de código muerto** (archivos + `storage` + `origenCompra`). Riesgo cero/bajo.
@@ -194,10 +194,11 @@ transferencia→ingreso. Solo quedan documentadas como pendientes para Etapa 3.
 
 Este HANDOFF solo aprueba la **estructura de subetapas**. Cada 2.x necesita su propia
 planificación, aprobación y verificación antes de ejecutarse. **2.1, 2.2 y 2.8 están cerradas**
-(Local → Staging → Producción → verificación). **2.3 está implementada en LOCAL** desde el
-30/09/2026 (gate read-only **PASS**, `build` OK, `lint` sin problemas nuevos, **0 escrituras en
-Firestore**) y **falta la revisión funcional del usuario** antes de promover; su plan y detalle
-están en `PROPUESTA-2.3.md`.
+(Local → Staging → Producción → verificación). **2.3 está commiteada (`7d71fb5`), validada en
+Local (8/8) y en Staging**, y **falta su promoción a `main` + verificación en Producción**: su
+plan y detalle están en `PROPUESTA-2.3.md`.
+
+> **Estado de ambientes al 30/09/2026:** `origin/main` = `66ba009` (Producción, sin 2.3) · `origin/staging` = `7d71fb5` (con 2.3). Que `staging` esté un commit adelante de `main` es el estado esperado hasta que se apruebe la promoción, **no una desalineación**.
 
 **Deuda funcional registrada el 30/09/2026, NO implementada:** el módulo de ingresos **no tiene
 flujo para editar ni para eliminar** un ingreso existente (solo el alta). Un ingreso mal cargado
