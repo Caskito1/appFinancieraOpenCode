@@ -255,33 +255,30 @@ totalTransacciones={
 
 ### 5.1 Script
 
-**Archivo listo para copiar:** `gate-2.3-lectura-ingresos.js` (en la raíz de este repo).
+**Archivo:** `C:\Users\Usuario\AppData\Local\Temp\opencode\inventario-sandbox-2.3.js` (**122 líneas**).
 
-**Uso:** Firebase Console → Cloud Shell → subir/copiar el archivo → reemplazar `PROJECT_ID` → ejecutar:
+> Igual que el gate de 2.2, el script **vive fuera del repo**, en el directorio de trabajo temporal: es un artefacto de ejecución, no documentación versionada.
+
+**Uso:** Firebase Console → Cloud Shell → **pegar el contenido del archivo** → ejecutar:
 
 ```
-node gate-2.3-lectura-ingresos.js
+node inventario-sandbox-2.3.js
 ```
 
-El script **aborta sin hacer ninguna consulta** si `PROJECT_ID` quedó sin reemplazar, para no leer por error el proyecto equivocado.
+El proyecto ya viene cargado (`const PROJ = "finanzas-app-1c5f6"`): **no hay que editar nada antes de ejecutarlo**. El script imprime el `PROJ` usado en la primera línea de salida, para confirmar contra qué base se está leyendo.
 
-> `PROJECT_ID` es el id del proyecto Firebase (clave `NEXT_PUBLIC_FIREBASE_PROJECT_ID` del `.env.local`). **No se lee ni se imprime ninguna otra variable.**
+> El id de proyecto viene de la clave `NEXT_PUBLIC_FIREBASE_PROJECT_ID` del `.env.local`, igual que en el gate de 2.2 §6. **No se lee ni se imprime ninguna otra variable.**
 
 ```js
 const { Firestore } = require("@google-cloud/firestore");
 
-const PROJECT_ID = "PROJECT_ID";
+const PROJ = "finanzas-app-1c5f6";
 
 const CANONICOS = ["laventolera", "laimbailable", "tapelao"];
 const LEGACY = ["la_ventolera", "la_imbailable"];
 
 (async () => {
-  if (PROJECT_ID === "PROJECT_ID") {
-    console.log("\nABORTADO: reemplazar PROJECT_ID por el id real.\n");
-    return;
-  }
-
-  const db = new Firestore({ projectId: PROJECT_ID });
+  const db = new Firestore({ projectId: PROJ });
   const snap = await db.collection("ingresos").get();   // ÚNICA operación
   const docs = snap.docs.map((d) => d.data());
 
@@ -330,7 +327,7 @@ const LEGACY = ["la_ventolera", "la_imbailable"];
 })();
 ```
 
-> El archivo `gate-2.3-lectura-ingresos.js` además interpreta el resultado y **no imprime montos, UIDs ni `detalle`**. El bloque de arriba es la referencia de lo que hace.
+> El archivo `inventario-sandbox-2.3.js` además interpreta el resultado e imprime una **lectura del gate** (PASS / STOP / AVISO) con el checklist de los pasos siguientes. **No imprime montos, UIDs ni `detalle`**. El bloque de arriba es la referencia de lo que hace.
 
 ### 5.2 Criterio del gate
 
