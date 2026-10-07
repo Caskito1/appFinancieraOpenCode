@@ -8,7 +8,7 @@
 > Aprobado por el usuario como estructura candidata de Etapa 2 (25/09/2026). El alcance y el
 > contenido de cada subetapa se definen y aprueban por separado, en orden, antes de implementar.
 
-## 0. Estado de las subetapas (actualizado 30/09/2026)
+## 0. Estado de las subetapas (actualizado 06/10/2026)
 | Subetapa | Estado | Commit | Validación |
 |---|---|---|---|
 | **2.1 — Taxonomía fijos unificada + "Otros"** | ✅ **CERRADA** | `b46b570` | Local (build + 27 invariantes) · Staging (funcional) · Producción (funcional) |
@@ -17,6 +17,7 @@
 | 2.4 · 2.5 · 2.6 | Sin empezar | — | — |
 | 2.7 — Guard de integridad `groupId` (surgió de la validación de 2.2) | ⏳ **NO IMPLEMENTADA** — pendiente de aprobación | — | — |
 | 2.8 — Header `Personal` / `Total registrado` en `/gastos-fijos` | ✅ **CERRADA** (30/09/2026) | `66ba009` | **Producción: PASS** (bloque `Personal` con los dos valores, verificado por el usuario) |
+| 2.9 — Totales del header acotados al período visible | 🟡 **IMPLEMENTADA** (06/10/2026) — **pendiente de Staging · Producción** | `bfbdda4` | **Gate read-only PASS** (P1–P6) · `build` OK (9/9) · `lint` 0 nuevos · **runtime local 17/17 PASS** |
 
 > **2.2, 2.3 y 2.8 están commiteadas, deployadas y verificadas en Producción.** No queda nada pendiente de ellas, y **no se vuelve a tocar ni a redeployar**. `main` == `staging` == Producción == `7d71fb5` (alineación del 30/09/2026 en `PROPUESTA-2.2.md` §10.1; 2.3 agregada después sin romper la alineación). El deploy a Producción es **automático** desde `main` (integración Git de Vercel): no hay `vercel.json` ni CI en el repo.
 
@@ -146,6 +147,7 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
 - **2.6 — Limpieza de código muerto** (archivos + `storage` + `origenCompra`). Riesgo cero/bajo.
 - **2.7 — Guard de integridad `groupId` en el alta de compartidos** (surgió de la validación runtime de 2.2, §2 D3). ⏳ **NO IMPLEMENTADA — requiere aprobación propia.** Archivos: `app/gastos-fijos/hooks/useFixedExpenses.js`. Riesgo bajo.
 - **2.8 — Header `Personal` cubierto / `Total registrado` en `/gastos-fijos`** (surgió de la validación runtime de 2.2). ✅ **CERRADA 30/09/2026** — commit `66ba009`, deployada y verificada en Producción. Archivos: `app/gastos-fijos/hooks/useFixedExpenses.js`, `app/gastos-fijos/page.jsx`, `app/gastos-fijos/sections/BalanceMesCard.jsx`.
+- **2.9 — Totales del header acotados al período visible** (surgió del diagnóstico de discrepancia `$2.859` vs `/gastos` `$1.059`; gate read-only P1–P6 PASS el 06/10/2026). 🟡 **IMPLEMENTADA 06/10/2026, pendiente de commit/Staging/Producción.** Regla: `totalPersonal` y `totalPersonalCubierto` solo suman `g.entry.periodo === periodo` (`esDelPeriodo`); el efecto 4 (entries históricas con `pagoHasta > periodo`) y `esPagado` quedan intactos, y el chip `Pago hasta ...` no cambia. Archivo: `app/gastos-fijos/hooks/useFixedExpenses.js` (único de código). Riesgo bajo.
 
 Orden lógico por dependencias y riesgo: 2.1 (base) → 2.5 (necesita 2.1); 2.2, 2.3, 2.4 y 2.7 son
 independientes y pueden planificarse en cualquier orden. Cada 2.x respeta el flujo de §1.
@@ -185,6 +187,8 @@ Las transferencias continúan fuera de Etapa 2 (van a Etapa 3).
 **Verificación en Producción: PASS (30/09/2026, cuenta real).** (1) `/gastos`: el único fijo real impago dejó de sumar **tanto** en `Total` como en `Total real`. (2) `/gastos-fijos`: el bloque `Personal` muestra los **dos** valores (cubierto / `Total registrado`). Con esto se cierra el paso 12 del flujo de 12 pasos y **2.2 queda cerrada**.
 
 **2.8 — header de `/gastos-fijos` (CERRADA 30/09/2026, commit `66ba009`):** el bloque `Personal` de `BalanceMesCard` muestra dos valores. `Personal` = fijos personales **cubiertos** por la **misma** `esPagado` de 2.2 (un anual con `pagoHasta` vigente cuenta aunque `paidByUid` sea `null`); `Total registrado` = todos los personales registrados, cubiertos + pendientes. **Validado primero en local** (`Personal: $12.000` · `Total registrado: $13.000` con Drive anual `$12.000` cubierto + Otros personal `$1.000` pendiente) y **después verificado en Producción** (30/09/2026): los dos valores se muestran correctamente. **Compartidos sin cambios.** El resto de `BalanceMesCard` y `useGastos.js` **no** se tocaron.
+
+**2.9 — totales del header acotados al período (IMPLEMENTADA 06/10/2026, commit `bfbdda45bfc7e22d5f93b49d8fd0edd1d7e967eb`):** `totalPersonal` (`Total registrado`) y `totalPersonalCubierto` (`Personal`) ahora filtran con `esDelPeriodo = !!g.entry && g.entry.periodo === periodo` ⇒ solo cuentan **entries REALES del período visible**: `montoDefault` sin entry no cuenta, entries históricas no cuentan, y un pago anual realizado en un mes anterior no cuenta en el mes actual aunque `pagoHasta` siga vigente. **No se tocó** el efecto 4 (`useFixedExpenses.js:86-103`, inyección por `pagoHasta > periodo`): Spotify/Drive siguen apareciendo en las cards con chip **"Pago hasta dic 2027"**; **tampoco** `esPagado`, `getEstado`, `/gastos`, `BalanceMesCard`, `page.jsx` ni Fix B (monto visible en el chip). **Gate Firestore read-only PASS (06/10/2026, P1–P6):** Spotify+Drive = $1.800 (períodos anteriores + `pagoHasta > 2026-10`), Disney/Celular sin entry en `2026-10`, Fondo $1.059 ⇒ header **`$1.059 / $1.059`** = `/gastos` **`$1.059`**. Verificación local: `build` 9/9, `lint` 0 nuevos (2 errores + 3 warnings preexistentes de `HEAD`), **runtime 17/17 PASS** (caso gate, regresión 2.8 `12.000/13.000`, invariante `Personal == /gastos` en 4 meses, chips `pagado_hasta` intactos). **Pendiente:** push → Staging → Producción (revisión del usuario y commit ya realizados el 06/10/2026).
 
 Detalle completo (código, casos de prueba, fuera de alcance y flujo de 12 pasos): `PROPUESTA-2.2.md`.
 
