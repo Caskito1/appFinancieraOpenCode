@@ -474,7 +474,7 @@ Ejecutado por el usuario desde Firebase Console → Cloud Shell con `inventario-
 
 ## 9. Pendientes que 2.3 deja explícitos
 
-- **2.7-GUARD** (`groupId` al dar de alta un fijo compartido): sigue **NO implementada**, requiere aprobación propia.
+- **2.7-GUARD** (`groupId` al dar de alta un fijo compartido): ~~sigue **NO implementada**, requiere aprobación propia.~~ → **implementada en 2.7 (08/10/2026, commit `96934c0`)** — detalle en `HANDOFF-ETAPA-2.md` y `ROADMAP.md`.
 - **2.6**: `lib/ingresos.js` y `app/ingresos/components/Acordeon.jsx` (ambos muertos), `storage`, `origenCompra`.
 - **Etapa 3**: `TransferenciasIngresosSection`, y el hecho de que `totalIngresos` sume las transferencias recibidas como ingreso (contradice "reintegro ≠ ingreso").
 - **Candidato sin subetapa:** `subscribeIngresos.js` no maneja errores ⇒ loading infinito si falla una query (`REPORT-02.md` §3.8).

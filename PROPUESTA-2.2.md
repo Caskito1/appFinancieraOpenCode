@@ -365,7 +365,7 @@ El documento apareció **incorrectamente como personal** en `/gastos`, porque to
 
 **Mejoras futuras — NO implementadas, NO dentro de 2.2:**
 
-- **2.7-GUARD** — impedir registrar un compartido sin grupo: `if (esCompartido && !grupo?.id) return;` en `registrarGasto`. Requiere además que el `updateDoc` (`:238-246`) incluya `groupId`, porque **hoy no repara** un entry ya corrupto.
+- **2.7-GUARD** — impedir registrar un compartido sin grupo: `if (esCompartido && !grupo?.id) return;` en `registrarGasto`. Requiere además que el `updateDoc` (`:238-246`) incluya `groupId`, porque **hoy no repara** un entry ya corrupto. *(Actualizado 08/10/2026: **implementada en 2.7**, commit `96934c0` — guard con `throw` + `groupId` en el `updateDoc`; ver `HANDOFF-ETAPA-2.md`.)*
 - **UX** — `otros` y `otros_compartido` comparten el `nombre: "Otros"` (`fixedExpensesTaxonomia.js:7,19`), indistinguibles en la UI salvo por la sección.
 - **Flujo legacy inerte** — `/agregar` → Gasto fijo escribe en `fixed_expenses` con otro schema y **sin `activo`** (`fixedExpenseHelpers.js:9-71`), por lo que `useFixedExpenses.js:42-45` nunca lo lee. Ya previsto en **2.5 (D1)**.
 
