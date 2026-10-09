@@ -21,8 +21,29 @@ Aplicación de finanzas personales (Next.js 16 + React 19 + Firebase). La aplica
 - No implementar cambios sin aprobación explícita del usuario.
 - No inventar datos financieros.
 - No modificar `AppFinanciera/` fuera de una etapa aprobada; la Etapa 0 es read-only sobre la aplicación.
-- No modificar producción directamente. Toda modificación sigue: Local → Staging → Producción → Verificación.
+- Seguir el **flujo de ramas y despliegue** de la sección siguiente: nunca push directo a `main`; primero Staging y aprobación explícita antes de promover a Producción.
 - Sin acceso a Firestore salvo decisión explícita del usuario (marcar lo que requiera datos reales como `REQUIERE_VALIDACIÓN_FIRESTORE`).
+
+## Flujo de ramas y despliegue (obligatorio para todo cambio de código)
+
+Ramas (`AppFinanciera`, repo propio): **`main` = Producción** · **`staging` = pre-producción**.
+Vercel (integración Git, sin `vercel.json` ni CI en el repo): **cada push a `main` despliega Producción automáticamente** (verificado empíricamente). Si `staging` genera deployments de Preview es `REQUIERE_VERIFICACION_VERCEL` (dashboard del usuario); hasta confirmarlo, no asumir que existe.
+⚠️ **Staging y Producción comparten el mismo proyecto Firebase** (`finanzas-app-1c5f6`): probar en Staging valida código, no datos aislados.
+
+Procedimiento para cada tarea de código (incluidas correcciones pequeñas):
+1. Desarrollo y verificación en **Local** (build, lint, gates/harness según aplique).
+2. **Commit sobre `staging` o rama de trabajo** — nunca push inicial a `main`.
+3. `git push origin staging` y verificación de que el despliegue corresponde al commit.
+4. Revisión funcional del usuario en Staging.
+5. **Aprobación explícita** del usuario para promover (sin ella, no se promueve).
+6. Promoción: `git push origin staging:main` solo si es fast-forward (`git merge-base --is-ancestor origin/staging origin/main`).
+7. Verificación en Producción de que el deploy corresponde al commit promovido.
+8. Detenerse: sin deploys, merges, commits ni operaciones fuera de la autorización vigente.
+
+Reglas duras:
+- **Prohibido `git push ...main` sin la aprobación del paso 5**: ese push es un deploy a Producción.
+- Si el flujo real de ramas/Vercel no garantiza la separación (p. ej. `staging` sin Preview), **detenerse y proponer la corrección antes de publicar código**.
+- Repo padre de documentación y repo de la aplicación permanecen separados: docs en el padre, código en `AppFinanciera/`.
 
 ## Pendientes conocidos (contexto)
 
