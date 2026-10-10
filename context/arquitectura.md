@@ -21,7 +21,7 @@ Scripts: `dev`, `build`, `start`, `lint`. No hay `typecheck`; el proyecto es Jav
 ### 1. Inicialización y contexto (`lib/`)
 
 - **`lib/firebase.js`** — `initializeApp`, `getAuth`, `getFirestore`, `getStorage` (storage importado pero **nunca usado**). Exporta `auth`, `db`, `storage`.
-- **`lib/AuthContext.jsx`** — provee contexto de autenticación con un único valor expuesto: `{ user }`. **No expone `loading`** (importante: ver inconsistencia con RouteGuard) ni maneja login/registro/logout: solo observa `onAuthStateChanged`. El login está en `app/login/page.jsx` (`signInWithEmailAndPassword`) y el logout en `app/home/page.jsx` (`signOut`). No hay registro implementado en el repo.
+- **`lib/AuthContext.jsx`** — provee contexto de autenticación exponiendo `{ user, loading }`, donde `loading = user === undefined` (sesión aún no resuelta por `onAuthStateChanged`). Incluye salvaguarda de 8 s (`AUTH_RESOLVE_TIMEOUT_MS`) que, si el observer nunca emite, pasa `undefined → null` sin pisar sesiones resueltas, y un `try/catch` síncrono sobre la creación de la suscripción (corregido en **2.4**, 10/10/2026, commit `1716a19`; ver `PROPUESTA-2.4.md`). No maneja login/registro/logout: solo observa `onAuthStateChanged`. El login está en `app/login/page.jsx` (`signInWithEmailAndPassword`) y el logout en `app/home/page.jsx` (`signOut`). No hay registro implementado en el repo.
 - **`lib/GroupContext.jsx`** — provee `{ groups, loadingGroups }` leyendo la colección `groups` del usuario. Con un solo grupo real hoy, `groups[0]` es el grupo usado en casi todas las suscripciones.
 
 ### 2. Capa de datos (services — suscripciones Firestore)
@@ -62,7 +62,7 @@ Los writes viven en `app/agregar/components/*/helpers|services/submit*.js`:
 ### 5. Capa de presentación
 
 - Páginas en `app/*/page.jsx` (todas client components) que componen `sections/` + `components/`.
-- `app/components/layout/`: `Appshell` (nav bottom), `RouteGuard` (**espera `{ user, loading }` pero AuthContext no expone `loading`** → posible redirección prematura/parpadeo en rutas protegidas), `BottomNav`.
+- `app/components/layout/`: `Appshell` (nav bottom), `RouteGuard` (consume `{ user, loading }` de AuthContext y espera la resolución de sesión antes de redirigir; corregido en **2.4**, `1716a19`), `BottomNav`.
 - `/login`: formulario email/password (Appshell + card).
 - PWA: `next-pwa` genera `manifest.json` + SW en build; en desarrollo se desactiva el registro.
 

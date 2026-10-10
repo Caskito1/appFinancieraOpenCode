@@ -51,5 +51,5 @@ Reglas duras:
   - **CRUD incompleto:** no hay flujo para editar ni eliminar un ingreso existente, solo el alta (`app/agregar/components/ingresos/helpers/submitIngreso.js`). Un ingreso mal cargado no se corrige desde la app. Detalle en `PROPUESTA-2.3.md` §9.1 y `context/dominio.md` §3.4.
   - **Errores no manejados:** `subscribeIngresos.js` no maneja errores y solo emite cuando cargan ambas queries, así que una query fallida deja `/ingresos` en loading infinito. Fuera del alcance de 2.3. Detalle en `context/dominio.md` §3.4.
 - Agregar productos faltantes.
-- **Escrituras sin timeout en Firestore (preexistente, hallada el 08/10/2026):** en modo offline el botón queda en "Guardando…" indefinidamente (la Promise de `addDoc`/`updateDoc` no resuelve) y el backdrop del modal cierra dejando la escritura en cola, que se commitea al reconectar. Fuera del alcance de 2.7; candidato a 2.4 o deuda nueva.
+- **Escrituras sin timeout en Firestore (preexistente, hallada el 08/10/2026):** en modo offline el botón queda en "Guardando…" indefinidamente (la Promise de `addDoc`/`updateDoc` no resuelve) y el backdrop del modal cierra dejando la escritura en cola, que se commitea al reconectar. Fuera del alcance de 2.7 y de 2.4 (2.4 cerrada el 10/10/2026 sin este tema); queda como deuda pendiente de subetapa asignada.
 - (Futuro) sección de balance/analytics.

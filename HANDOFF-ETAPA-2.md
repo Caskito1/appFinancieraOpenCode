@@ -100,13 +100,14 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
 - **Evidencia de cierre:** ✅ **cerrada en Local (8/8)** · ✅ **cerrada en Staging** · ✅ **promovida a `main` y deployada** (FF limpio; `main` == `staging` == `7d71fb5`) · ✅ **verificada en Producción** (30/09/2026, cuenta real). **2.3 queda cerrada.**
 - **Deuda registrada, NO implementada:** ingresos **sin edición ni borrado** (§9.1 de `PROPUESTA-2.3.md`).
 
-### Robustez — RouteGuard / AuthContext
+### Robustez — RouteGuard / AuthContext — ✅ **RESUELTO EN 2.4 (CERRADA 10/10/2026, `1716a19`)** — diagnóstico original conservado como registro
 - **Archivos:** `app/components/layout/RouteGuard.jsx:13,41-45` (lee `loading` de `useAuth`) · `lib/AuthContext.jsx:20` (expone solo `{ user }`, inicial `undefined`).
 - **Comportamiento:** `loading` es `undefined` → nunca hay pantalla de carga; con `user=undefined` inicial, en mount se dispara `router.replace("/login")` en rutas protegidas (redirección prematura / posible parpadeo) antes de resolver la sesión.
 - **Cambio:** exponer estado de carga real en AuthContext (o manejar `undefined`) y mantener el comportamiento rutas protegidas/login.
 - **Riesgo:** medio (toca login/redirección — probar refresh en rutas protegidas, login y logout).
 - **Aislable:** sí.
 - **STAGING/PROD:** prueba manual de sesión en cada ambiente.
+- **Resolución (10/10/2026):** `AuthContext` expone `loading: user === undefined` + salvaguarda de 8 s; `RouteGuard` **intacto**. Validado en Local, Staging y Producción por el usuario. Detalle en `PROPUESTA-2.4.md`.
 
 ### Código muerto / deuda técnica (revisado archivo por archivo, 25/09/2026)
 | Archivo | ¿Muerto? | Referencias | Riesgo eliminarlo | ¿Etapa 2? | ¿Posterior? |

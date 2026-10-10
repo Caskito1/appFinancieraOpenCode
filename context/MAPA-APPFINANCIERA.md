@@ -17,7 +17,7 @@ Leer este documento primero. Profundizar con `context/arquitectura.md` (cómo fu
 AppFinanciera/                           → aplicación (repo git propio)
 ├── lib/
 │   ├── firebase.js                      → init Firebase (auth, db, storage sin usar)
-│   ├── AuthContext.jsx                  → contexto de sesión ({ user })
+│   ├── AuthContext.jsx                  → contexto de sesión ({ user, loading } — loading real desde 2.4)
 │   ├── GroupContext.jsx                 → contexto de grupos (lista + loading)
 │   ├── taxonomia.js                     → catálogo de productos/categorías gastos
 │   ├── fixedExpensesTaxonomia.js        → catálogo de gastos fijos (modelo activo, incluye "Otros")
@@ -98,7 +98,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 | Registro de movimientos | `app/agregar/components/{unico,compra,ingresos,transferencia,gastos-fijos}/helpers/*.js` + `hooks/*.js` |
 | Catálogos / taxonomías | `lib/taxonomia.js`, `lib/fixedExpensesTaxonomia.js` (canónico), `app/agregar/components/gastos-fijos/helpers/fixedExpensesConfig.js` (legacy) |
 | Sesión y grupos | `lib/AuthContext.jsx`, `lib/GroupContext.jsx` |
-| Protección de rutas | `app/components/layout/RouteGuard.jsx` (inconsistencia `loading` con AuthContext) |
+| Protección de rutas | `app/components/layout/RouteGuard.jsx` (usa `{ user, loading }` de AuthContext; inconsistencia corregida en 2.4) |
 | Queries de mes | `app/gastos/helpers/dateHelpers.js` (`getMonthRange`) |
 | Edición/borrado de gastos | `app/gastos/components/EditarGastoModal.jsx`, `useGastos.js:128-134` |
 
@@ -111,7 +111,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 - **Bug de visualización de ingresos freelance/bandas — DIAGNÓSTICO CORREGIDO y RESUELTO en 2.3 (30/09/2026, commit `7d71fb5`, validado en Producción con los 8 casos).** La versión anterior de esta línea decía que el bug estaba en `FilaIngreso.jsx` (keys `la_ventolera`/`la_imbailable` vs `laventolera`/`laimbailable`): **ese desajuste existe pero era código inalcanzable**, porque `FilaIngreso` solo lo usan `SueldoSection` y `FreelanceSection` y ambas reciben `subtipo: null`. El bug **visible** (headers "Laventolera"/"Laimbailable") estaba en `BandasSection.jsx:10-11,60`, que agrupaba y renderizaba el id crudo.
 - **El módulo de ingresos no tiene edición ni borrado** (deuda funcional registrada el 30/09/2026): solo existe el alta (`submitIngreso.js`). No hay ningún `updateDoc`/`deleteDoc` sobre `ingresos`; el único `deleteDoc` de la app es de gastos (`useGastos.js:143`). Un ingreso mal cargado **no se corrige desde la app**. **No implementado**; pendiente de etapa posterior (`PROPUESTA-2.3.md` §9.1).
 - **Código muerto significativo** (ingresos.js, gastosCalculations.js, fixedExpensesService.jsx, carritoHelpers.js, Transferenciassections.jsx, EmptyState.jsx, Acordeon.jsx, storage de firebase.js, helpers de taxonomia, `origenCompra`). `lib/temp.js` se eliminó en 2.1.
-- **RouteGuard espera `loading` que AuthContext no expone** (`RouteGuard.jsx:13` vs `AuthContext.jsx`).
+- ~~**RouteGuard espera `loading` que AuthContext no expone** (`RouteGuard.jsx:13` vs `AuthContext.jsx`)~~ → **RESUELTO en 2.4 (CERRADA 10/10/2026, commit `1716a19`, verificada en Producción):** AuthContext expone `loading: user === undefined` + salvaguarda de 8 s; `RouteGuard.jsx` quedó intacto. Detalle en `PROPUESTA-2.4.md`.
 - `REPORT-02.md` cita rutas `organizador-app/...` inexistentes; el código real está en `AppFinanciera/`.
 
 ## Decisiones funcionales acordadas (resumen — detalle en context/dominio.md)
