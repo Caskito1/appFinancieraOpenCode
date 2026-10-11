@@ -76,11 +76,11 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 |---|---|---|---|
 | Contextos/categorías/productos de gastos | `lib/taxonomia.js` | `useModoUnico`, `useModoCompra` | Incluye "Otros" como producto `__otros__` (`useModoUnico.js:43-53`). |
 | Gasto fijo compartido + personales (activo) | `lib/fixedExpensesTaxonomia.js` | `/gastos-fijos` (via `useFixedExpenses`) | Compartidos: alquiler, luz, gastos comunes, internet, tributos, **Otros** (`otros_compartido`). Personales: OCA, celular, Drive, fondo solidaridad, Disney+, Spotify, Candombe, **Otros** (`otros`). **Incluye "Otros" desde 2.1** (`fixedExpensesTaxonomia.js:1-23`). Disney+ = **personal** (6.3). |
-| Gasto fijo (legacy alta) | `app/agregar/components/gastos-fijos/helpers/fixedExpensesConfig.js` | `useFixedExpense` (ModoGastosFijos, deshabilitado en UI) | Disney+ figura como **compartido** (`fixedExpensesConfig.js:72-76`), mientras la taxonomía activa lo tiene **personal** (`fixedExpensesTaxonomia.js:16`). |
+| Gasto fijo (legacy alta) | ~~`app/agregar/components/gastos-fijos/helpers/fixedExpensesConfig.js`~~ **(código eliminado en 2.5, 11/10/2026)** | ~~`useFixedExpense` (ModoGastosFijos)~~ | Registro histórico: Disney+ figuraba como **compartido** en el helper legacy, mientras la taxonomía activa lo tiene **personal**. El código legacy fue eliminado en 2.5; **no hay escritor del esquema legacy desde la app**. |
 
 **Hallazgos:**
 - `#problema` ~~El gasto fijo **"Otros" se perdió** en el catálogo activo~~ → **RESUELTO en 2.1** (Etapa 2, 25/09/2026): "Otros" existe en el catálogo activo de personales (`otros`) y de compartidos (`otros_compartido`). Decisión funcional 6 cumplida también en gastos fijos.
-- `#problema` Doble taxonomía de fijos con discrepancias (Disney compartido vs personal) — **parcialmente resuelto en 2.1**: la copia duplicada `lib/temp.js` fue eliminada (0 importadores verificados) y `fixedExpensesTaxonomia.js` queda como única taxonomía canónica. La discrepancia de Disney+ en el helper **legacy** sigue vigente → 2.5.
+- `#problema` ~~Doble taxonomía de fijos con discrepancias (Disney compartido vs personal)~~ → **RESUELTO en 2.1 + 2.5 (Etapa 2 cerrada 11/10/2026)**: en 2.1 se eliminó `lib/temp.js` y `fixedExpensesTaxonomia.js` quedó como única taxonomía canónica; en **2.5** se eliminó el helper legacy completo (`fixedExpensesConfig.js` y todo `agregar/components/gastos-fijos/`), de modo que la discrepancia de Disney+ **ya no tiene código que la sostenga**. Quedan solo posibles documentos legacy en datos históricos de `fixed_expenses` (sin escritor en la app).
 - `#deseado` La tarjeta (OCA) hoy es un fijo personal; cuando exista el módulo tarjeta (Etapa 4) el modelo debe reubicarse.
 
 ## 5. Recuperaciones / dinero a recuperar (Decisión funcional 4 y 5)
@@ -126,7 +126,7 @@ Lo que el visualizador debe respetar:
 - Los filtros de mes son **clientes** (rango local): `getMonthRange` (`dateHelpers.js:3-20`); las queries de ingresos restringen por rango de fechas (`subscribeIngresos.js:30-48`), las de gastos por rango client-side (`useGastos.js:50-59`).
 - Historial: no se borra al saldar balances fijos.
 - Grupos: la app asume `groups[0]` como grupo activo (`useGastos.js:38`, `useFixedExpenses.js:37`); `GroupContext` lee de Firestore.
-- Config de fijos personales: `fixed_expenses` guarda **config activo** `{ expenseId, usuario, montoDefault, activo }` (`useFixedExpenses.js:180-189`). La misma colección también recibe **docs legacy** `{nombre, compartido, monto, fecha, balanceado, saldoPendiente}` escritos por `fixedExpenseHelpers` (ModoGastosFijos, UI deshabilitada).
+- Config de fijos personales: `fixed_expenses` guarda **config activo** `{ expenseId, usuario, montoDefault, activo }` (`useFixedExpenses.js:180-189`). La misma colección **puede conservar docs legacy** `{nombre, compartido, monto, fecha, balanceado, saldoPendiente}` — **el código que los escribía (`fixedExpenseHelpers`/ModoGastosFijos) fue eliminado en 2.5 (11/10/2026)**; no existe escritor del esquema legacy desde la app.
 
 ## 12. Diferencias comportamiento actual vs deseado (resumen clasificado)
 
@@ -142,7 +142,7 @@ Lo que el visualizador debe respetar:
 | Bandas | `#problema` → resuelto 2.3 | ~~Labels de bandas rotulados con el id crudo (`"Laventolera"`, `"Laimbailable"`)~~ → `BandasSection.jsx` mapea el id canónico al label de `BANDAS` (`useModoIngreso`). El diagnóstico correcto: el bug visible estaba en `BandasSection.jsx`, **no** en `FilaIngreso.jsx` | — (2.3, commit `7d71fb5`, validado en Producción con los 8 casos, 30/09/2026) |
 | Filas ingreso | `#problema` → resuelto 2.3 | ~~`FilaIngreso` imprime el `detalle` dos veces (título + subtítulo)~~ → título único `detalle ?? "Ingreso"` + fecha + monto | — (2.3, commit `7d71fb5`, validado en Producción con los 8 casos, 30/09/2026) |
 | Ingresos CRUD | `#problema` | El módulo de ingresos **no tiene flujo para editar ni eliminar** un ingreso: solo el alta (`submitIngreso.js`). El único `deleteDoc` de la app es de gastos (`useGastos.js:143`) y `/gastos` tiene `EditarGastoModal.jsx` | **Posterior** — sin subetapa. **NO implementado** |
-| Fijos | `#problema` | Doble taxonomía **resuelta en 2.1** (se eliminó `lib/temp.js`); sigue el doble esquema en `fixed_expenses` (config activo vs legacy ModoGastosFijos) | 2.5 |
+| Fijos | `#problema` → resuelto 2.1 + 2.5 | Doble taxonomía **resuelta en 2.1** (`lib/temp.js` eliminado); doble esquema de escritura **resuelto en 2.5** (código legacy ModoGastosFijos eliminado; sin escritor desde la app) | — (Etapa 2 cerrada 11/10/2026) |
 | Transferencias | `#problema` | Legacy leído pero alta deshabilitada | 2 |
 
 Detalle completo con evidencia `archivo:línea`: `REPORT-ETAPA-0.md` (sección hallazgos).

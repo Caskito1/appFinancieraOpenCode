@@ -20,7 +20,7 @@ Scripts: `dev`, `build`, `start`, `lint`. No hay `typecheck`; el proyecto es Jav
 
 ### 1. Inicialización y contexto (`lib/`)
 
-- **`lib/firebase.js`** — `initializeApp`, `getAuth`, `getFirestore`, `getStorage` (storage importado pero **nunca usado**). Exporta `auth`, `db`, `storage`.
+- **`lib/firebase.js`** — `initializeApp`, `getAuth`, `getFirestore`. Exporta `auth`, `googleProvider`, `db`. *(El import de `getStorage` y `export storage` fueron eliminados en **2.6**, 11/10/2026, `10ab576`; `storageBucket` permanece en el config.)*
 - **`lib/AuthContext.jsx`** — provee contexto de autenticación exponiendo `{ user, loading }`, donde `loading = user === undefined` (sesión aún no resuelta por `onAuthStateChanged`). Incluye salvaguarda de 8 s (`AUTH_RESOLVE_TIMEOUT_MS`) que, si el observer nunca emite, pasa `undefined → null` sin pisar sesiones resueltas, y un `try/catch` síncrono sobre la creación de la suscripción (corregido en **2.4**, 10/10/2026, commit `1716a19`; ver `PROPUESTA-2.4.md`). No maneja login/registro/logout: solo observa `onAuthStateChanged`. El login está en `app/login/page.jsx` (`signInWithEmailAndPassword`) y el logout en `app/home/page.jsx` (`signOut`). No hay registro implementado en el repo.
 - **`lib/GroupContext.jsx`** — provee `{ groups, loadingGroups }` leyendo la colección `groups` del usuario. Con un solo grupo real hoy, `groups[0]` es el grupo usado en casi todas las suscripciones.
 
@@ -33,7 +33,7 @@ Patrón: **`onSnapshot` + `query` en colecciones**, agrupando por usuario/grupo.
 | `subscribeGastos` (`app/gastos/services/subscribeGastos.js`) | `gastos` (personal: `usuario`+`tipo="personal"`; grupo: `groupId`+`tipo="compartido"`) + `transferencias` (por `groupId`) | `orderBy("createdAt","desc")` en c/u; `onLoaded` tras completar todas las queries | `useGastos` |
 | `subscribeFixedExpenses` (`app/gastos/services/subscribeFixedExpenses.js`) | `fixed_expense_entries` por `usuario`/`periodo` (personales) y por `groupId`/`periodo` (compartidos) | Deduplica por id entre ambas | `useGastos` |
 | `subscribeIngresos` (`app/ingresos/services/subscribeIngresos.js`) | `ingresos` (por `usuario` + rango de mes) y `transferencias` (por `paraUid` + rango de mes) | `orderBy("createdAt","desc")`; emite solo cuando ambas cargaron | `useIngresos` |
-| `fixedExpensesService.jsx` (LEGACY) | `fixed_expenses` con `compartido`+`fecha` — **sin importadores** | — | — |
+| ~~`fixedExpensesService.jsx` (LEGACY)~~ | ~~`fixed_expenses` con `compartido`+`fecha`~~ | **Eliminado en 2.6** (11/10/2026, `10ab576`; 0 importadores) | — |
 
 **Nota importante (requiere índice compuesto):** `subscribeIngresos` usa `where(usuario) + where(createdAt >=/<) + orderBy(createdAt)` → requiere **índice compuesto en Firestore** (`ingresos`: `usuario` + `createdAt`). Ídem `subscribeGastos` (`gastos`: `usuario` + `tipo` + `createdAt`; `gastos`: `groupId` + `tipo` + `createdAt`) y `transferencias` (`groupId` + `createdAt`, `paraUid` + `createdAt`). Si esos índices no existen, la suscripción falla (probablemente con `loading` infinito en la UI). → `REQUIERE_VALIDACIÓN_FIRESTORE`.
 
@@ -55,7 +55,7 @@ Los writes viven en `app/agregar/components/*/helpers|services/submit*.js`:
 | `submitCompra.js` | `gastos` | (multi-producto) `..., origenCompra: true` — **campo escrito pero jamás leído** |
 | `submitIngreso.js` | `ingresos` | `usuario, tipo, monto, subtipo?, detalle?` |
 | `submitTransferencia.jsx` | `transferencias` | `deUid, paraUid, paraNombre, monto, concepto, detalle?` |
-| `fixedExpenseHelpers.js` (`submitFixedExpense`) | `fixed_expenses` (schema LEGACY) | `nombre, compartido, monto, fecha, balanceado, saldoPendiente` → usado solo por `ModoGastosFijos` (UI deshabilitada) |
+| ~~`fixedExpenseHelpers.js` (`submitFixedExpense`)~~ | ~~`fixed_expenses` (schema LEGACY)~~ | **Eliminado en 2.5** (11/10/2026, `3216095`; junto con todo `ModoGastosFijos` y la carpeta `agregar/components/gastos-fijos/`) |
 | `useFixedExpenses.agregarGastoPersonal` | `fixed_expenses` (config ACTIVA) | `expenseId, usuario, montoDefault, activo` |
 | `useFixedExpenses.registrarGasto/Pago/Saldar` | `fixed_expense_entries` | entries mensuales + estado/participantes |
 
@@ -77,7 +77,7 @@ Los writes viven en `app/agregar/components/*/helpers|services/submit*.js`:
 ### Gastos fijos (activo, `/gastos-fijos`)
 El usuario activa gastos fijos escribiendo **config en `fixed_expenses`** (`{expenseId, usuario, montoDefault, activo}`) vía `useFixedExpenses.agregarGastoPersonal` (`useFixedExpenses.js:180-189`). Por mes se crean **entries** en `fixed_expense_entries` (`registrarGasto`). `/gastos-fijos` lee `fixed_expense_entries`, calcula balance por `groupId`, permite registrar pago (setea `paidByUid`), dispensar y saldar (balance vuelve a 0 sin borrar historial).
 
-> **Legacy:** `app/agregar/components/gastos-fijos/helpers/fixedExpenseHelpers.js` (`submitFixedExpense`) escribe el esquema **legacy** completo en `fixed_expenses` (`{nombre, compartido, monto, fecha, balanceado, saldoPendiente...}`) — es el usado por `useFixedExpense`/`ModoGastosFijos`, **deshabilitado en la UI** (`app/agregar/page.jsx:82-107`).
+> ~~**Legacy:** `app/agregar/components/gastos-fijos/helpers/fixedExpenseHelpers.js` (`submitFixedExpense`) escribe el esquema **legacy** completo en `fixed_expenses`~~ → **código eliminado en 2.5** (11/10/2026, `3216095`). No existe escritor del esquema legacy desde la app; documentos legacy preexistentes en datos permanecen como histórico.
 
 ### Transferencias (legacy, deshabilitada en UI pero viva en datos)
 `ModoTransferencia`/`useModoTransferencia` se alimenta de `groups.members` + `users` (lectura por doc). En `/agregar` el botón está comentado, pero el flujo completo existe en código y las colecciones `transferencias` **se siguen leyendo** en `/gastos` y `/ingresos`.
@@ -88,7 +88,7 @@ El usuario activa gastos fijos escribiendo **config en `fixed_expenses`** (`{exp
 2. **Sin schemas ni types**: no hay validación de estructura en escritura; los esquemas viven implícitos en los forms/helpers ("implicit schema"). Riesgo de doc malformados (ej. `concepto` vs `detalle` en transferencias).
 3. **Sin Firestore Rules en el repo** (no consultables).
 4. **Sin capa de pruebas**: no hay tests en `package.json` (solo `lint`).
-5. **`fixed_expenses` tiene DOS esquemas** en la misma colección: (a) **config activo** `{expenseId, usuario, montoDefault, activo}` escrito por `useFixedExpenses` y (b) **legacy** `{nombre, compartido, monto, fecha, balanceado, saldoPendiente}` escrito por `fixedExpenseHelpers` (ModoGastosFijos deshabilitado). → Riesgo de documentos híbridos. Etapa 2.
+5. **`fixed_expenses` tenía DOS esquemas** en la misma colección: (a) **config activo** `{expenseId, usuario, montoDefault, activo}` escrito por `useFixedExpenses` (vigente) y (b) **legacy** `{nombre, compartido, monto, fecha, balanceado, saldoPendiente}` — **el escritor legacy (`fixedExpenseHelpers`/ModoGastosFijos) fue eliminado en 2.5** (11/10/2026). Queda el riesgo solo en datos históricos preexistentes.
 6. **`subscribeIngresos` y `subscribeGastos` no exponen `onError`** (salvo console.error en fixed): si una suscripción falla (permisos/índice), la UI puede quedar en `loading` indefinido. Etapa 2.
 7. Los componentes usan `lucide-react` en `app/ingresos/components/Acordeon.jsx`, pero **`lucide-react` NO está en `package.json`** — ese archivo no se importa actualmente; si se usara rompería el build. Etapa 2.
 

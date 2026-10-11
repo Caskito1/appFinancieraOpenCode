@@ -16,13 +16,11 @@ Leer este documento primero. Profundizar con `context/arquitectura.md` (cómo fu
 ```
 AppFinanciera/                           → aplicación (repo git propio)
 ├── lib/
-│   ├── firebase.js                      → init Firebase (auth, db, storage sin usar)
+│   ├── firebase.js                      → init Firebase (auth, db; storage eliminado en 2.6)
 │   ├── AuthContext.jsx                  → contexto de sesión ({ user, loading } — loading real desde 2.4)
 │   ├── GroupContext.jsx                 → contexto de grupos (lista + loading)
 │   ├── taxonomia.js                     → catálogo de productos/categorías gastos
-│   ├── fixedExpensesTaxonomia.js        → catálogo de gastos fijos (modelo activo, incluye "Otros")
-│   ├── fixedExpensesConfig.js           → configuración legacy de gastos fijos (usado por ModoGastosFijos)
-│   └── ingresos.js                      → TIPOS_INGRESO / BANDAS (sin importadores)
+│   └── fixedExpensesTaxonomia.js        → catálogo de gastos fijos (modelo activo, incluye "Otros")
 ├── app/
 │   ├── layout.jsx, page.jsx             → layout raíz y redirección
 │   ├── globals.css / manifest.json      → estilos + manifiesto PWA
@@ -57,7 +55,7 @@ AppFinanciera/                           → aplicación (repo git propio)
 | `gastos` | Gastos diarios (personales y compartidos) | `submitUnico`, `submitCompra`, `editarGasto`, `eliminarGasto`, `useModoUnico`, `useModoCompra` | `subscribeGastos`, `useGastos` |
 | `ingresos` | Ingresos registrados (sueldo/banda/freelance) | `submitIngreso`, `useModoIngreso` | `subscribeIngresos`, `useIngresos` |
 | `transferencias` | Transferencias entre miembros (legacy/deshabilitado en UI) — **colección ausente en Firestore** (validado 25/09/2026): **código legacy sin datos** | `submitTransferencia`, `useModoTransferencia` | `subscribeGastos`, `subscribeIngresos` |
-| `fixed_expenses` | Gastos fijos — **datos actuales 100 % esquema activo** (`{expenseId, usuario, montoDefault, activo}`, validado 25/09/2026); esquema legacy **solo en código** (`fixedExpenseHelpers`/`submitFixedExpense`, ModoGastosFijos deshabilitado en UI) | `useFixedExpenses` (config), `fixedExpenseHelpers` (legacy) | `useFixedExpenses` (config activo) |
+| `fixed_expenses` | Gastos fijos — **datos actuales 100 % esquema activo** (`{expenseId, usuario, montoDefault, activo}`, validado 25/09/2026); el esquema legacy **ya no tiene escritor en código** (helper eliminado en 2.5, `3216095`) | `useFixedExpenses` (config) | `useFixedExpenses` (config activo) |
 | `fixed_expense_entries` | Entradas mensuales de gastos fijos (modelo ACTIVO de /gastos-fijos) | `useFixedExpenses` (registrar/saldar/dispensa) | `subscribeFixedExpenses`, `useFixedExpenses` |
 | `groups` | Grupos (1 solo grupo hoy) | — (solo lectura) | `GroupContext`, `useModoTransferencia` |
 | `users` | Usuarios del grupo | — (solo lectura) | `useModoTransferencia` — **inconsistencia documentada: campo `uid`/`iud` según doc (hallazgo posterior)** |
@@ -80,7 +78,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 **`ingresos`**: `{ usuario, tipo: "sueldo"|"banda"|"freelance", monto, subtipo?, detalle?, createdAt: serverTimestamp() }`
 **`transferencias`**: `{ deUid, paraUid, paraNombre, monto, concepto: "alquiler"|"tarjeta"|"otros", detalle?, createdAt, groupId }`
 **`fixed_expenses`** (config ACTIVA): `{ expenseId, usuario, montoDefault?, activo, createdAt }`
-**`fixed_expenses`** (LEGACY, solo ModoGastosFijos deshabilitado): `{ nombre, compartido, monto, fecha?, balanceado, saldoPendiente, ... }`
+**`fixed_expenses`** (LEGACY — **sin escritor desde 2.5**; posible residuo en datos históricos): `{ nombre, compartido, monto, fecha?, balanceado, saldoPendiente, ... }`
 **`fixed_expense_entries`** (activo): `{ fixedExpenseId, nombre, periodo, montoTotal, vencimiento?, pagoHasta?, paidByUid?, paidByNombre?, usuario, groupId?, participantes[], estado: "sin_registrar"|"pendiente_pago"|"pendiente_saldar"|"saldado"|"pagado_hasta", createdAt: serverTimestamp() }`
 **`groups`**: `{ id, name, members: [uid], ... }`
 **`users`**: `{ uid, displayName?, email?, ... }` — variación real: campo `iud` en lugar de `uid` en parte de los docs (hallazgo, 25/09/2026)
@@ -110,7 +108,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 - **Módulo de transferencias deshabilitado en UI** (`app/agregar/page.jsx:82-107`) pero lógica y lecturas activas.
 - **Bug de visualización de ingresos freelance/bandas — DIAGNÓSTICO CORREGIDO y RESUELTO en 2.3 (30/09/2026, commit `7d71fb5`, validado en Producción con los 8 casos).** La versión anterior de esta línea decía que el bug estaba en `FilaIngreso.jsx` (keys `la_ventolera`/`la_imbailable` vs `laventolera`/`laimbailable`): **ese desajuste existe pero era código inalcanzable**, porque `FilaIngreso` solo lo usan `SueldoSection` y `FreelanceSection` y ambas reciben `subtipo: null`. El bug **visible** (headers "Laventolera"/"Laimbailable") estaba en `BandasSection.jsx:10-11,60`, que agrupaba y renderizaba el id crudo.
 - **El módulo de ingresos no tiene edición ni borrado** (deuda funcional registrada el 30/09/2026): solo existe el alta (`submitIngreso.js`). No hay ningún `updateDoc`/`deleteDoc` sobre `ingresos`; el único `deleteDoc` de la app es de gastos (`useGastos.js:143`). Un ingreso mal cargado **no se corrige desde la app**. **No implementado**; pendiente de etapa posterior (`PROPUESTA-2.3.md` §9.1).
-- **Código muerto significativo** (ingresos.js, gastosCalculations.js, fixedExpensesService.jsx, carritoHelpers.js, Transferenciassections.jsx, EmptyState.jsx, Acordeon.jsx, storage de firebase.js, helpers de taxonomia, `origenCompra`). `lib/temp.js` se eliminó en 2.1.
+- **Código muerto — limpieza ejecutada en la Etapa 2 (cerrada 11/10/2026):** eliminados en 2.1 `lib/temp.js`; en **2.5** el flujo legacy de gastos fijos (`ModoGastosFijos` + carpeta `agregar/components/gastos-fijos/`); en **2.6** `lib/ingresos.js`, `carritoHelpers.js`, `fixedExpensesService.jsx`, ambos `EmptyState.jsx`, `ingresos/components/Acordeon.jsx` y el `storage` de `lib/firebase.js` (−330/0). **Conservados por decisión:** `gastosCalculations.js` (balances de Transferencias → Etapa 3), la escritura `origenCompra` (posible uso externo) y `Transferenciassections.jsx` (0 importadores, pero área Transferencias → Etapa 3/4).
 - ~~**RouteGuard espera `loading` que AuthContext no expone** (`RouteGuard.jsx:13` vs `AuthContext.jsx`)~~ → **RESUELTO en 2.4 (CERRADA 10/10/2026, commit `1716a19`, verificada en Producción):** AuthContext expone `loading: user === undefined` + salvaguarda de 8 s; `RouteGuard.jsx` quedó intacto. Detalle en `PROPUESTA-2.4.md`.
 - `REPORT-02.md` cita rutas `organizador-app/...` inexistentes; el código real está en `AppFinanciera/`.
 
