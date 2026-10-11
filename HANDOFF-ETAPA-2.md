@@ -15,12 +15,13 @@
 | **2.2 — Totales del mes con gastos fijos** | ✅ **CERRADA** (30/09/2026) | `119cc4a` | Local (build + fixtures 24/24) · **Producción: PASS** (cuenta real, 30/09/2026) |
 | **2.3 — Ingresos: labels de bandas + sección "Otros"** | ✅ **CERRADA** (30/09/2026) | `7d71fb5` | **Gate PASS** · `build` OK · `lint` 0 nuevos · **Local 8/8 PASS** · **Staging PASS** · **Producción: PASS** (cuenta real, 30/09/2026) |
 | **2.4 — Robustez de sesión/redirección (AuthContext)** | ✅ **CERRADA** (10/10/2026) | `1716a19` | `build` OK 9/9 · `lint` 0 nuevos · **Local PASS** (usuario) · **Staging PASS** (usuario) · **Producción: PASS** (usuario) |
-| 2.5 · 2.6 | Sin empezar | — | — |
+| **2.5 — Retiro del flujo legacy de gastos fijos (D1)** | ✅ **CERRADA** (11/10/2026) | `3216095` | Grep 0 refs · `build` OK 9/9 · `lint` 0 nuevos · **Local PASS** (usuario) · **Preview PASS** · **Staging PASS** · **Producción: PASS** (usuario) |
+| **2.6 — Limpieza de código muerto (sin Transferencias)** | Sin empezar | — | — |
 | 2.7 — Guard de integridad `groupId` (surgió de la validación de 2.2) | ✅ **CERRADA** (08/10/2026) | `96934c0` | **Gate Firestore PASS** (41 entries, 0 corruptos) · `build` OK · `lint` 0 nuevos · harness 20/20 · **prueba visual local PASS** · **Producción: PASS** (verificado por el usuario) |
 | 2.8 — Header `Personal` / `Total registrado` en `/gastos-fijos` | ✅ **CERRADA** (30/09/2026) | `66ba009` | **Producción: PASS** (bloque `Personal` con los dos valores, verificado por el usuario) |
 | 2.9 — Totales del header acotados al período visible | ✅ **CERRADA** (06/10/2026) | `bfbdda4` | **Gate read-only PASS** (P1–P6) · `build` OK (9/9) · `lint` 0 nuevos · **runtime local 17/17 PASS** · **Producción: PASS** (verificado por el usuario) |
 
-> **2.4 cerrada el 10/10/2026 con el flujo de ramas completo** (Local → `staging` con Preview de Vercel → aprobación del usuario → `staging:main` por fast-forward → deploy automático → **verificación en Producción por el usuario**). Plan y detalle en `PROPUESTA-2.4.md`. **Estado de ambientes al 10/10/2026:** `main` == `staging` == Producción == **`1716a19`** (2.7 el 08/10 en `96934c0`, 2.4 el 10/10). El deploy a Producción es **automático** desde `main` (integración Git de Vercel): no hay `vercel.json` ni CI en el repo.
+> **2.5 cerrada el 11/10/2026 con el flujo completo** (Local → Preview de la rama → `staging` FF → PASS usuario → aprobación → `main` FF → deploy automático → **verificación en Producción por el usuario**). Plan y detalle en `PROPUESTA-2.5.md`. **Estado de ambientes al 11/10/2026:** `main` == `staging` == Producción == **`3216095`** (2.4 el 10/10 en `1716a19`, 2.5 el 11/10). El deploy a Producción es **automático** desde `main` (integración Git de Vercel): no hay `vercel.json` ni CI en el repo. **Queda únicamente 2.6** para cerrar la Etapa 2.
 
 **2.1 — qué se hizo (resumen):** en `lib/fixedExpensesTaxonomia.js` (canónico) se agregó
 "Otros" al catálogo **personal** (`id: otros`) y al mapa **compartidos** (`id: otros_compartido`),
@@ -57,7 +58,7 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
 
 ## 2. Análisis por candidato (evidencia archivo:línea, revisado 25/09/2026)
 
-### D1 — Legado de gastos fijos (esquema B)
+### D1 — Legado de gastos fijos (esquema B) — ✅ **RESUELTO EN 2.5 (CERRADA 11/10/2026, `3216095`)**
 - **Archivos:** `app/agregar/components/ModoGastosFijos.jsx` (+ import `agregar/page.jsx:11`, branch `:149-151`, botón comentado `:82-93`), `gastos-fijos/hooks/useFixedExpense.js`, `gastos-fijos/helpers/fixedExpenseHelpers.js` (escribe esquema B: nombre/compartido/monto/balanceado/saldoPendiente…), `gastos-fijos/helpers/fixedExpensesConfig.js` (disney compartido), `gastos-fijos/sections/{PasoTipo,PasoDetalle,PasoResumen}.jsx`.
 - **Comportamiento:** solo alcanzable si se descomentara el botón; escribiría esquema B en `fixed_expenses`. Hoy **inerte** (bundleado pero inalcanzable).
 - **Dependencias:** ninguna funcional activa (`useFixedExpenses` activo lee desde `@/lib/fixedExpensesTaxonomia`).
@@ -205,12 +206,13 @@ consultas de `transferencias`, import/JSX de `TransferenciasIngresosSection` ni 
 transferencia→ingreso. Solo quedan documentadas como pendientes para Etapa 3.
 
 Este HANDOFF solo aprueba la **estructura de subetapas**. Cada 2.x necesita su propia
-planificación, aprobación y verificación antes de ejecutarse. **2.1, 2.2, 2.3, 2.4, 2.7, 2.8 y 2.9 están cerradas**
-(Local → Staging → Producción → verificación). **2.4 quedó cerrada el 10/10/2026** con el commit
-`1716a19`, validada funcionalmente en los tres ambientes; su plan y detalle están en
-`PROPUESTA-2.4.md`. Quedan **sin empezar 2.5 y 2.6**.
+planificación, aprobación y verificación antes de ejecutarse. **2.1, 2.2, 2.3, 2.4, 2.5, 2.7, 2.8 y 2.9 están cerradas**
+(Local → Staging → Producción → verificación). **2.5 quedó cerrada el 11/10/2026** con el commit
+`3216095` (−705/0, 8 archivos, 0 Firestore); su plan y detalle están en `PROPUESTA-2.5.md`. Queda
+**únicamente sin empezar 2.6** (limpieza de código muerto, con lista blanca que **excluye** todo el
+área de Transferencias, reservada a las Etapas 3–4).
 
-> **Estado de ambientes al 10/10/2026:** `origin/main` == `origin/staging` == `1716a19` (2.1+2.2+2.8+2.3+2.7+2.9+2.4). **Alineados.** El deploy a Producción es **automático** desde `main` (integración Git de Vercel): no hay `vercel.json` ni CI en el repo.
+> **Estado de ambientes al 11/10/2026:** `origin/main` == `origin/staging` == `3216095` (2.1+2.2+2.8+2.3+2.7+2.9+2.4+2.5). **Alineados.** El deploy a Producción es **automático** desde `main` (integración Git de Vercel): no hay `vercel.json` ni CI en el repo.
 
 **Deuda funcional registrada el 30/09/2026, NO implementada** (ninguna tiene subetapa asignada):
 el módulo de ingresos **no tiene flujo para editar ni para eliminar** un ingreso existente (solo el
