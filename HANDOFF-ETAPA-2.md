@@ -8,7 +8,7 @@
 > Aprobado por el usuario como estructura candidata de Etapa 2 (25/09/2026). El alcance y el
 > contenido de cada subetapa se definen y aprueban por separado, en orden, antes de implementar.
 
-## 0. Estado de las subetapas (actualizado 10/10/2026)
+## 0. Estado de las subetapas (actualizado 11/10/2026 — ETAPA 2 COMPLETAMENTE CERRADA)
 | Subetapa | Estado | Commit | Validación |
 |---|---|---|---|
 | **2.1 — Taxonomía fijos unificada + "Otros"** | ✅ **CERRADA** | `b46b570` | Local (build + 27 invariantes) · Staging (funcional) · Producción (funcional) |
@@ -16,12 +16,12 @@
 | **2.3 — Ingresos: labels de bandas + sección "Otros"** | ✅ **CERRADA** (30/09/2026) | `7d71fb5` | **Gate PASS** · `build` OK · `lint` 0 nuevos · **Local 8/8 PASS** · **Staging PASS** · **Producción: PASS** (cuenta real, 30/09/2026) |
 | **2.4 — Robustez de sesión/redirección (AuthContext)** | ✅ **CERRADA** (10/10/2026) | `1716a19` | `build` OK 9/9 · `lint` 0 nuevos · **Local PASS** (usuario) · **Staging PASS** (usuario) · **Producción: PASS** (usuario) |
 | **2.5 — Retiro del flujo legacy de gastos fijos (D1)** | ✅ **CERRADA** (11/10/2026) | `3216095` | Grep 0 refs · `build` OK 9/9 · `lint` 0 nuevos · **Local PASS** (usuario) · **Preview PASS** · **Staging PASS** · **Producción: PASS** (usuario) |
-| **2.6 — Limpieza de código muerto (sin Transferencias)** | Sin empezar | — | — |
+| **2.6 — Limpieza de código muerto (sin Transferencias)** | ✅ **CERRADA** (11/10/2026) | `10ab576` | Greps 0 restos · `build` OK 9/9 · `lint` 0 nuevos · **Local/Preview PASS** · **Staging PASS** · **Producción: PASS** (usuario) |
 | 2.7 — Guard de integridad `groupId` (surgió de la validación de 2.2) | ✅ **CERRADA** (08/10/2026) | `96934c0` | **Gate Firestore PASS** (41 entries, 0 corruptos) · `build` OK · `lint` 0 nuevos · harness 20/20 · **prueba visual local PASS** · **Producción: PASS** (verificado por el usuario) |
 | 2.8 — Header `Personal` / `Total registrado` en `/gastos-fijos` | ✅ **CERRADA** (30/09/2026) | `66ba009` | **Producción: PASS** (bloque `Personal` con los dos valores, verificado por el usuario) |
 | 2.9 — Totales del header acotados al período visible | ✅ **CERRADA** (06/10/2026) | `bfbdda4` | **Gate read-only PASS** (P1–P6) · `build` OK (9/9) · `lint` 0 nuevos · **runtime local 17/17 PASS** · **Producción: PASS** (verificado por el usuario) |
 
-> **2.5 cerrada el 11/10/2026 con el flujo completo** (Local → Preview de la rama → `staging` FF → PASS usuario → aprobación → `main` FF → deploy automático → **verificación en Producción por el usuario**). Plan y detalle en `PROPUESTA-2.5.md`. **Estado de ambientes al 11/10/2026:** `main` == `staging` == Producción == **`3216095`** (2.4 el 10/10 en `1716a19`, 2.5 el 11/10). El deploy a Producción es **automático** desde `main` (integración Git de Vercel): no hay `vercel.json` ni CI en el repo. **Queda únicamente 2.6** para cerrar la Etapa 2.
+> **2.5 y 2.6 cerradas el 11/10/2026 con el flujo completo** (Local → Preview de la rama → `staging` FF → PASS usuario → aprobación → `main` FF → deploy automático → **verificación en Producción por el usuario**), por `3216095` (2.5, −705/0) e `10ab576` (2.6, −330/0). Plan y detalle en `PROPUESTA-2.5.md` y `PROPUESTA-2.6.md`. **Etapa 2 COMPLETAMENTE CERRADA (9/9 subetapas) el 11/10/2026.** **Estado de ambientes al 11/10/2026:** `main` == `staging` == Producción == **`10ab576`**. El deploy a Producción es **automático** desde `main` (integración Git de Vercel): no hay `vercel.json` ni CI en el repo.
 
 **2.1 — qué se hizo (resumen):** en `lib/fixedExpensesTaxonomia.js` (canónico) se agregó
 "Otros" al catálogo **personal** (`id: otros`) y al mapa **compartidos** (`id: otros_compartido`),
@@ -110,19 +110,19 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
 - **STAGING/PROD:** prueba manual de sesión en cada ambiente.
 - **Resolución (10/10/2026):** `AuthContext` expone `loading: user === undefined` + salvaguarda de 8 s; `RouteGuard` **intacto**. Validado en Local, Staging y Producción por el usuario. Detalle en `PROPUESTA-2.4.md`.
 
-### Código muerto / deuda técnica (revisado archivo por archivo, 25/09/2026)
+### Código muerto / deuda técnica (revisado archivo por archivo, 25/09/2026 · resultados de ejecución anotados el 11/10/2026)
 | Archivo | ¿Muerto? | Referencias | Riesgo eliminarlo | ¿Etapa 2? | ¿Posterior? |
 |---|---|---|---|---|---|
 | `lib/temp.js` | Sí | 0 | Cero | **Hecho en 2.1** (eliminado) | — |
-| `lib/ingresos.js` | Sí | 0 | Cero | Sí | — |
-| `app/gastos/helpers/gastosCalculations.js` | Sí | 0 | Cero | Sí | — |
-| `app/agregar/.../compra/helpers/carritoHelpers.js` | Sí | 0 | Cero | Sí | — |
-| `app/gastos-fijos/services/fixedExpensesService.jsx` | Sí | 0 | Cero | Sí | — |
-| `app/gastos/sections/Transferenciassections.jsx` | Sí | 0 | Cero | Sí | — |
-| `app/gastos/sections/EmptyState.jsx` + `app/components/ui/EmptyState.jsx` | Sí (duplicados) | 0 | Cero | Sí | — |
-| `app/ingresos/components/Acordeon.jsx` | Sí (duplicado) | 0 | Cero | Sí | — |
-| `export storage` en `lib/firebase.js` | Sí | 0 | Bajo | Sí | — |
-| `origenCompra` (`submitCompra.js:74`) | Solo escritura, 0 lecturas | — | Bajo | Sí (dejar de escribir) | — |
+| `lib/ingresos.js` | Sí | 0 | Cero | **Hecho en 2.6** (eliminado) | — |
+| `app/gastos/helpers/gastosCalculations.js` | Sí | 0 | Cero | **CONSERVADO** (decisión 11/10/2026: contenido transferencias-adjacente) | Etapa 3 |
+| `app/agregar/.../compra/helpers/carritoHelpers.js` | Sí | 0 | Cero | **Hecho en 2.6** (eliminado; la implementación viva está en `useModoCompra.js`) | — |
+| `app/gastos-fijos/services/fixedExpensesService.jsx` | Sí | 0 | Cero | **Hecho en 2.6** (eliminado; servicio vivo = `useFixedExpenses.js`) | — |
+| `app/gastos/sections/Transferenciassections.jsx` | Sí (0 importadores verificados) | 0 | Cero | **Conservado** por exclusión de área Transferencias | Etapa 3/4 |
+| `app/gastos/sections/EmptyState.jsx` + `app/components/ui/EmptyState.jsx` | Sí (duplicados) | 0 | Cero | **Hechos en 2.6** (eliminados) | — |
+| `app/ingresos/components/Acordeon.jsx` | Sí (duplicado; importa `lucide-react`, no en `package.json`) | 0 | Cero | **Hecho en 2.6** (eliminado) | — |
+| `export storage` en `lib/firebase.js` | Sí | 0 | Bajo | **Hecho en 2.6** (import y export quitados) | — |
+| `origenCompra` (`submitCompra.js:74`) | Solo escritura, 0 lecturas | — | Bajo | **CONSERVADO** (decisión 11/10/2026: posible uso externo) | Confirmación del usuario |
 | `TransferenciasIngresosSection` (import `ingresos/page.jsx:14` + JSX comentado `:99-111`) | Import muerto | — | Medio | **NO** | Etapa 3 |
 | Consultas `transferencias` (`subscribeGastos.js:81-95`, `useIngresos.js:95-106`) | Semántica heredada | Colección ausente | Medio | **NO** | Etapa 3 |
 | `ModoTransferencia` (agregar) + `submitTransferencia.jsx` | Inerte (botón comentado) | — | — | **NO** | Etapa 3 |
@@ -146,8 +146,8 @@ members` 2 uids válidos, identificación mixta · índices de patrones reales O
 - **2.2 — Totales del mes con gastos fijos** (D3). ✅ **CERRADA 30/09/2026** — commit `119cc4a`. Definición funcional **cerrada** (25/09/2026), criterio técnico `esPagado` y labels **cerrados** (29/09/2026), **gate histórico PASS** (34 entries, 0 inconsistentes), **prueba funcional en sandbox 6/6 PASS**, **deployada a Producción** y **verificada en Producción con cuenta real** (el único fijo impago dejó de sumar en `Total` y en `Total real`). Plan y detalle en `PROPUESTA-2.2.md`. Riesgo bajo.
 - **2.3 — Ingresos: ids de bandas + sección "Otros"** (P4). Independiente. Riesgo bajo. ✅ **CERRADA 30/09/2026** — commit **`7d71fb5`** (5 archivos, +72/−28, solo bajo `app/ingresos/`). **Gate read-only PASS** (`idsLegacy = 0` ⇒ fix 100 % lado lectura, **sin alias ni migración**; 5 `laventolera`, 3 `laimbailable`, 1 `tapelao`, **5 `otros`**). **Validada 8/8 en Local, PASS en Staging y PASS en Producción** (cuenta real, 30/09/2026), promovida a `main` por fast-forward limpio (0 merges). **0 escrituras en Firestore**. **`origin/main` == `origin/staging` == `7d71fb5`** (sin desalineación, a diferencia del incidente de 2.2). Plan y detalle en `PROPUESTA-2.3.md`.
 - **2.4 — Robustez de sesión/redirección (RouteGuard/AuthContext).** ✅ **CERRADA 10/10/2026, commit `1716a19`:** `AuthContext` ahora expone `loading: user === undefined` (antes inexistente; `RouteGuard` lo desestructuraba y siempre era `undefined`, lo que disparaba `router.replace("/login")` antes de que `onAuthStateChanged` resolviera la sesión — redirección prematura/parpadeo). Incluye salvaguarda `AUTH_RESOLVE_TIMEOUT_MS = 8000` (solo `undefined → null`, guard funcional; suscripción permanece viva para recuperación tardía), cleanup con `cancelled` + `unsubscribe` + `clearTimeout` (Strict Mode OK) y `try/catch` solo síncrono diferido por `queueMicrotask` (0 errores lint nuevos). **Archivo único: `lib/AuthContext.jsx`** (+28/−5); `RouteGuard.jsx` **intacto** (ya estaba escrito contra el contrato `loading`). Aclaración clave: en `firebase@12.12.1` el callback de error de `onAuthStateChanged` está **deprecado y nunca se dispara** (doc oficial + firebase-js-sdk#6254) — no se agregó. Flujo completo: Local (build 9/9, lint 0 nuevos, 5 pruebas manuales PASS del usuario) → push a `staging` (fast-forward, Preview de Vercel) → **PASS en Staging** (usuario) → aprobación explícita → `staging:main` fast-forward → deploy automático → **PASS en Producción** (usuario). Plan y detalle en `PROPUESTA-2.4.md`. Riesgo medio. **Verificada en Producción el 10/10/2026. 2.4 queda cerrada.**
-- **2.5 — Retirar flujo legacy de gastos fijos** (D1). Requiere 2.1 consolidada (canónica fija). Riesgo medio bajo.
-- **2.6 — Limpieza de código muerto** (archivos + `storage` + `origenCompra`). Riesgo cero/bajo.
+- **2.5 — Retirar flujo legacy de gastos fijos** (D1). ✅ **CERRADA 11/10/2026, commit `3216095`** (8 archivos, −705/0): eliminados `ModoGastosFijos.jsx` y la carpeta `agregar/components/gastos-fijos/` (esquema B inalcanzable); `agregar/page.jsx` editado solo en los 3 bloques aprobados; bloque Transferencias intacto. Grep 0 refs, `build` 9/9, `lint` 0 nuevos, **0 Firestore**. Flujo: Local (PASS usuario) → Preview (PASS) → `staging` FF (PASS) → `main` FF → **PASS en Producción (usuario)**. Detalle en `PROPUESTA-2.5.md`.
+- **2.6 — Limpieza de código muerto** (archivos + `storage`; con `origenCompra` y `gastosCalculations` conservados por decisión). ✅ **CERRADA 11/10/2026, commit `10ab576`** (7 archivos, −330/0): eliminados `lib/ingresos.js`, `carritoHelpers.js`, `fixedExpensesService.jsx`, ambos `EmptyState` y el duplicado `ingresos/components/Acordeon.jsx`; `lib/firebase.js` solo perdió `getStorage` y `export storage`. **Transferencias excluida** (`Transferenciassections.jsx` conservado pese a 0 importadores). Greps 0 restos, `build` 9/9, `lint` baseline exacto, **0 Firestore**. Flujo completo con PASS en Local/Preview, Staging y **Producción (usuario)**. Detalle en `PROPUESTA-2.6.md`.
 - **2.7 — Guard de integridad `groupId` en el alta de compartidos** (surgió de la validación runtime de 2.2, §2 D3). ✅ **CERRADA 08/10/2026, commit `96934c0`:** guard en `registrarGasto` (lanza si `esCompartido && !grupo?.id`), `groupId` agregado al `updateDoc` de re-registro, y `PagarModal` con `try/catch/finally` que muestra el error sin cerrar el modal. **Gate Firestore PASS** (41 entries, 0 corruptos), harness 20/20, **prueba visual local PASS**. Promovida a Producción con **push directo previo al nuevo flujo de ramas** (ese incidente originó el procedimiento permanente de `AGENTS.md`); `main` == `staging` == `96934c0`. Archivos: `useFixedExpenses.js`, `PagarModal.jsx`. Riesgo bajo. **Verificada en Producción el 08/10/2026 por el usuario. 2.7 queda cerrada.**
 - **2.8 — Header `Personal` cubierto / `Total registrado` en `/gastos-fijos`** (surgió de la validación runtime de 2.2). ✅ **CERRADA 30/09/2026** — commit `66ba009`, deployada y verificada en Producción. Archivos: `app/gastos-fijos/hooks/useFixedExpenses.js`, `app/gastos-fijos/page.jsx`, `app/gastos-fijos/sections/BalanceMesCard.jsx`.
 - **2.9 — Totales del header acotados al período visible** (surgió del diagnóstico de discrepancia `$2.859` vs `/gastos` `$1.059`; gate read-only P1–P6 PASS el 06/10/2026). ✅ **CERRADA 06/10/2026** — commit `bfbdda4`, pusheado a `main` (deploy automático) y **verificado en Producción por el usuario**. Regla: `totalPersonal` y `totalPersonalCubierto` solo suman `g.entry.periodo === periodo` (`esDelPeriodo`); el efecto 4 (entries históricas con `pagoHasta > periodo`) y `esPagado` quedan intactos, y el chip `Pago hasta ...` no cambia. Archivo: `app/gastos-fijos/hooks/useFixedExpenses.js` (único de código). Riesgo bajo.
@@ -205,14 +205,14 @@ Firestore · no migrar datos · no agrupar cambios independientes · no crear
 consultas de `transferencias`, import/JSX de `TransferenciasIngresosSection` ni la semántica
 transferencia→ingreso. Solo quedan documentadas como pendientes para Etapa 3.
 
-Este HANDOFF solo aprueba la **estructura de subetapas**. Cada 2.x necesita su propia
-planificación, aprobación y verificación antes de ejecutarse. **2.1, 2.2, 2.3, 2.4, 2.5, 2.7, 2.8 y 2.9 están cerradas**
-(Local → Staging → Producción → verificación). **2.5 quedó cerrada el 11/10/2026** con el commit
-`3216095` (−705/0, 8 archivos, 0 Firestore); su plan y detalle están en `PROPUESTA-2.5.md`. Queda
-**únicamente sin empezar 2.6** (limpieza de código muerto, con lista blanca que **excluye** todo el
-área de Transferencias, reservada a las Etapas 3–4).
+Este HANDOFF solo aprueba la **estructura de subetapas**. Cada 2.x necesitó su propia
+planificación, aprobación y verificación. **Las 9 subetapas (2.1–2.9) están CERRADAS**
+(Local → Staging → Producción → verificación). **2.5 cerró el 11/10/2026** con `3216095`
+(−705/0) y **2.6 el mismo día** con `10ab576` (−330/0); planes y detalle en
+`PROPUESTA-2.5.md` y `PROPUESTA-2.6.md`. **La Etapa 2 queda COMPLETAMENTE CERRADA el
+11/10/2026.** El área de Transferencias quedó intacta (reservada a las Etapas 3–4).
 
-> **Estado de ambientes al 11/10/2026:** `origin/main` == `origin/staging` == `3216095` (2.1+2.2+2.8+2.3+2.7+2.9+2.4+2.5). **Alineados.** El deploy a Producción es **automático** desde `main` (integración Git de Vercel): no hay `vercel.json` ni CI en el repo.
+> **Estado de ambientes al 11/10/2026:** `origin/main` == `origin/staging` == `10ab576` (2.1+2.2+2.8+2.3+2.7+2.9+2.4+2.5+2.6). **Alineados.** El deploy a Producción es **automático** desde `main` (integración Git de Vercel): no hay `vercel.json` ni CI en el repo.
 
 **Deuda funcional registrada el 30/09/2026, NO implementada** (ninguna tiene subetapa asignada):
 el módulo de ingresos **no tiene flujo para editar ni para eliminar** un ingreso existente (solo el

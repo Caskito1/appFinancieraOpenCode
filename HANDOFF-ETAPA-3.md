@@ -5,10 +5,10 @@
 > Resultado esperado: `PROPUESTA-ETAPA-3.md` en el repo de AppFinanciera.
 > La entrega de este HANDOFF al repo de AppFinanciera es una acción posterior, no automática.
 
-## 0. Estado de coordinación (verificado 10/10/2026)
+## 0. Estado de coordinación (actualizado 11/10/2026)
 
-- Etapa 2 **en curso**: cerradas 2.1, 2.2, 2.3, 2.7, 2.8, 2.9 y **2.4** (2.4 el 10/10/2026, commit `1716a19`, verificada en Producción; `main` == `staging` == Producción == `1716a19`, verificado por Personal System vía git).
-- **2.5 y 2.6 sin empezar**; no bloquean este diseño (decisión del 30/09/2026).
+- **Etapa 2 CERRADA el 11/10/2026** — las 9 subetapas cerradas (2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9). Últimos cierres: **2.5** (`3216095`, retiro del flujo legacy de gastos fijos) y **2.6** (`10ab576`, limpieza de código muerto), ambos verificados en Producción por el usuario. `main` == `staging` == Producción == **`10ab576`**.
+- **2.5 y 2.6 cerradas**; no bloqueaban este diseño (decisión del 30/09/2026), y ahora la Etapa 2 no tiene subetapas abiertas.
 - Etapas 3–4 no iniciadas. Este HANDOFF abre únicamente el **diseño**.
 - **La Etapa 4 (implementación) requiere aprobación explícita y separada del usuario; no está autorizada por este documento.**
 
@@ -84,17 +84,15 @@ La propuesta deberá:
 5. Recomendar qué hacer con código, registros y referencias, **diferenciando claramente cada caso**.
 6. **No** dar por autorizada la eliminación de datos, la migración destructiva ni la modificación de registros históricos: todo caso de ese tipo requiere decisión y autorización explícitas adicionales.
 
-## 6. Coordinación con 2.5 y 2.6
+## 6. Coordinación con 2.5 y 2.6 — ✅ RESUELTA (ambas cerradas el 11/10/2026)
 
-La 2.5 (retirar el flujo legacy de gastos fijos) y la 2.6 (limpieza de código muerto) siguen pendientes y **no bloquean** la elaboración del diseño. Existe riesgo de solape: 2.6 incluye limpieza de código muerto y el flujo de transferencias tiene UI en desuso.
+**Resultado real (registrado el 11/10/2026):** la 2.5 y la 2.6 se ejecutaron **antes** del diseño, como esta sección preveía. La sugerencia de §6 (excluir `transferencias` del alcance de 2.6) **se siguió**: 2.6 limpió código muerto sin tocar el área de Transferencias. Además, por decisión explícita del usuario quedaron **conservados** y disponibles para este diseño:
 
-El diseño debe evaluar explícitamente, con evidencia del repo:
-- qué limpieza puede hacerse independientemente del nuevo modelo;
-- qué código debe preservarse hasta implementar Reintegros;
-- si conviene ejecutar 2.5 y 2.6 antes, después o en partes coordinadas con la Etapa 4;
-- cómo evitar trabajo duplicado, regresiones y refactors innecesarios.
+- **`app/gastos/helpers/gastosCalculations.js`** — sin importadores, pero contiene balances de Transferencias (`calcularTotalIngresos`, `calcularNeto`); evaluación en la Etapa 3.
+- **`origenCompra`** en `submitCompra.js:74` — escritura sin lectores en la app; posible uso externo no verificable sin Firestore.
+- **`Transferenciassections.jsx`** — 0 importadores verificados, conservado por exclusión de área (Etapas 3/4).
 
-**Sugerencia de coordinación a considerar (no decidida):** excluir `transferencias` del alcance de 2.6 y que la sustitución completa viaje con la Etapa 4, de modo que un solo cambio sea dueño del área. El orden definitivo lo fundamenta el repo con evidencia. Este HANDOFF no autoriza iniciar 2.5, 2.6 ni la Etapa 4.
+El área Transferencias permanece **íntegra** (UI, consultas, balances). La verificación read-only de uso histórico sigue siendo paso previo obligatorio del diseño (§5).
 
 ## 7. Entregable esperado: `PROPUESTA-ETAPA-3.md` (repo AppFinanciera)
 
