@@ -22,6 +22,14 @@
 > decisiones de la **Ronda 2 de planificación de la Etapa 4** (`HANDOFF-ETAPA-4.md` §3). **No**
 > confundir con los **D-1…D-8 funcionales** de `PROPUESTA-ETAPA-3.md` §1.4 (heredados del
 > HANDOFF de la Etapa 3). Al citar ambos documentos, cada nombre lleva su fuente.
+>
+> **Revisión 16/10/2026 — corrección documental autorizada por el usuario:** hallazgos 1–6
+> del borrador de reglas (precedencia, sintaxis de (e), constancias falsificables, rama (g),
+> C1 externo, lecturas de devoluciones) + congelaciones D-9 server-side + resoluciones del
+> usuario (D-9 opción B; stock de pendientes; runner `node:test`; evento `confirmacion`
+> postergado a 4.6; suite 3.1–3.22). Registro detallado en **§10**. **Sin cambios** en las
+> decisiones D-1…D-11 del handoff ni en la secuencia. **Sigue sin autorizar: implementación,
+> instalación de herramientas ni deploys.**
 
 ---
 
@@ -42,9 +50,9 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 | | |
 |---|---|
 | **Alcance** | Ejecutar el gate de `PROPUESTA-ETAPA-3.md` §8.5 con los criterios aprobados por **D-2** (3.7 y 3.11–3.15 incluidos). Versionar `firestore.rules` + `firebase.json`; reglas de `eventos` **create-only** (**D-3**); matriz **E1/C1/(ii)** de **D-8** expresada en reglas; herramientas conforme **D-1** (§6 de este documento). **Sin PASS no se habilita ninguna escritura del módulo.** |
-| **Archivos a crear** (en `AppFinanciera/`, solo cuando 4.0 esté aprobada e implementada) | `firestore.rules` — Bloque A = **copia exacta** de las reglas vigentes en consola (`REQUIERE_VALIDACIÓN_FIRESTORE`: no consultables desde el repo) + Bloque B = reglas propuestas de las colecciones nuevas (texto completo en §2 de este documento) · `firebase.json` (config emuladores + referencia a reglas/índices) · `firestore.indexes.json` (índice de R1': `reintegros` `participantes` array_contains + `createdAt` desc — riesgo R-2) · `tests/rules/reintegros.rules.test.mjs` (suite `@firebase/rules-unit-testing` de los criterios 3.1–3.15) · edición de `package.json`: devDeps `firebase-tools` + `@firebase/rules-unit-testing` y scripts `test:rules` (§6) |
-| **Dependencias** | Aprobación de la Etapa 4 + **aprobación específica de 4.0** (paso 5) + **instalación de Java (JRE 11+) por el usuario** — **NO instalado en la máquina actual** (verificado 15/10/2026; §7 hallazgo N-1) |
-| **Done verificable** | (1) `firestore.rules` en repo con Bloque A íntegro y Bloque B completo; (2) evidencia de **equivalencia repo↔consola** (SHA-256 de ambos textos registrados; §2.3); (3) `npm run test:rules` → **15/15 PASS** (criterios 3.1–3.15, §2.4); (4) evidencia archivada + **aprobación expresa del usuario**; (5) despliegue de reglas a Producción **solo** tras aprobación y con el flujo `AGENTS.md` (afecta a Staging y Producción a la vez: mismo proyecto `finanzas-app-1c5f6`) |
+| **Archivos a crear** (en `AppFinanciera/`, solo cuando 4.0 esté aprobada e implementada) | `firestore.rules` — Bloque A = **copia exacta** de las reglas vigentes en consola (`REQUIERE_VALIDACIÓN_FIRESTORE`: no consultables desde el repo; el archivo **no existe hoy** en el repo — N-4) + Bloque B = reglas propuestas de las colecciones nuevas (texto completo en §2 de este documento) · `firebase.json` (config emuladores + referencia a reglas/índices; **no existe hoy** — N-4) · `firestore.indexes.json` (índice de R1': `reintegros` `participantes` array_contains + `createdAt` desc — riesgo R-2) · `tests/rules/reintegros.rules.test.mjs` (suite `@firebase/rules-unit-testing` de 3.1–3.22, §2.4) · edición de `package.json`: devDeps `firebase-tools` + `@firebase/rules-unit-testing` y scripts `test:rules` (§6) |
+| **Dependencias** | Aprobación de la Etapa 4 + **aprobación específica de 4.0** (paso 5) + **instalación de Java (JRE 11+) por el usuario** — NO instalado al verificar el 15/10/2026 (N-1): **re-verificar el entorno al autorizar 4.0** y **presentar al usuario el diff exacto de `package.json`/scripts antes de instalar** nada |
+| **Done verificable** | (1) `firestore.rules` en repo con Bloque A íntegro y Bloque B completo; (2) evidencia de **equivalencia repo↔consola** (SHA-256 de ambos textos + backup del texto vigente para restauración; §2.3); (3) `npm run test:rules` → **22/22 PASS** (3.1–3.22, §2.4; **run real archivado — no se declara PASS sin evidencia**); (4) evidencia archivada + **aprobación expresa del usuario**; (5) despliegue de reglas a Producción **solo** tras aprobación, con ventana de mantenimiento y el flujo `AGENTS.md` (afecta a Staging y Producción a la vez: mismo proyecto `finanzas-app-1c5f6`) |
 | **Evidencia esperada** | Archivo de resultados PASS/FAIL por caso; hashes registrados; commit de 4.0; nota de aprobación |
 
 ### 1.1 Subetapa 4.1 — Modelo y servicios
@@ -83,10 +91,11 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 
 | | |
 |---|---|
-| **Alcance** | Helpers transaccionales `eliminarEntrega` / `eliminarObligacion` / `condonar` (rollback total; rechazo de registros ya eliminados I-11); constancias (D-4, §3.4); matriz **D-8** completa en UI (E1: eliminar obligación solo registrador; C1: condonar solo el acreedor según su vista, externo solo registrador; (ii): edición solo registrador); congelaciones (condonada → solo lectura + «Eliminar», entregas congeladas; eliminada → inmutable); labels **D-10** (acción «Condonar», sello «Condonada»); flujo resolutivo del **caso abierto D-9** (§4 de este documento, si el usuario aprueba la recomendación B); acción visible **exclusivamente «Eliminar»** (DC-6, nunca «Anular», sin borrado físico). |
+| **Alcance** | Helpers transaccionales `eliminarEntrega` / `eliminarObligacion` / `condonar` (rollback total; rechazo de registros ya eliminados I-11); constancias (D-4, §3.4); matriz **D-8** completa en UI (E1: eliminar obligación solo registrador; C1: condonar solo el acreedor según su vista, externo solo registrador; (ii): edición solo registrador); congelaciones (condonada → solo lectura + «Eliminar», entregas congeladas; eliminada → inmutable); labels **D-10** (acción «Condonar», sello «Condonada»); flujo resolutivo de **D-9** (§4 de este documento: opción B **elegida por el usuario
+16/10/2026**, pendiente de la aprobación de esta subetapa); acción visible **exclusivamente «Eliminar»** (DC-6, nunca «Anular», sin borrado físico). |
 | **Archivos a crear** | `app/agregar/components/reintegros/helpers/eliminarEntrega.js` · `eliminarObligacion.js` · `condonar.js` |
 | **Archivos a editar** | `FilaReintegro.jsx` (acciones Eliminar/Condonar + confirmaciones + sellos) · `DevolucionModal.jsx` (estado congelado) · `useReintegros.js` (estado derivado `condonado` con prioridad, §3.3 de la PROPUESTA Etapa 3) |
-| **Dependencias** | 4.3 + **aprobación del usuario a la resolución D-9** (§4) |
+| **Dependencias** | 4.3 + **aprobación de 4.3-bis** — la resolución D-9 ya está **elegida: opción B (16/10/2026, §4.2)**; su implementación no avanza sin la aprobación propia de la subetapa (§4) |
 | **Done verificable** | Casos 11–14 de §14.1: eliminar entrega atómica y reabre liquidación; doble eliminación rechazada; eliminar obligación conserva entregas + ambas constancias; condonación sin entrega/`devuelto`/caja; registro eliminado inmutable; permisos E1/C1/(ii) verificados (emulador + UI); build/lint OK |
 | **Evidencia esperada** | Harness + prueba funcional con ambas cuentas reales en Staging |
 
@@ -105,7 +114,7 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 
 | | |
 |---|---|
-| **Alcance** | Esquema **exacto del evento** definido en §3.5 de este documento (D-3 lo delega al plan); verificación de que **toda** acción (alta, edición, devolución, editar entrega, eliminar entrega, eliminar obligación, condonar, confirmación de 4.6) escribe su evento; verificación de rollback (evento huérfano = fallo); reglas create-only ya desplegadas en 4.0 (criterio 3.14). **Sin vista de bitácora en v1.** |
+| **Alcance** | Esquema **exacto del evento** — fuente: `PROPUESTA-ETAPA-3.md` §3.5 (D-3 lo delega al plan; la referencia previa a «§3.5 de este documento» no existía y se corrige); verificación de que **toda** acción (alta, edición, devolución, editar entrega, eliminar entrega, eliminar obligación, condonar) escribe su evento — y la de **confirmación** de 4.6, **una vez aprobada la extensión de tipos `['confirmacion']` con esa subetapa** (§2.5: en 4.0 la lista es la cerrada de D-3); verificación de rollback (evento huérfano = fallo; el acople acción↔evento es de harness, no de reglas — §3.5); reglas create-only ya desplegadas en 4.0 (criterio 3.14). **Sin vista de bitácora en v1.** |
 | **Archivos a editar** | `eventos.js` (si el schema exige ajuste fino) · helpers que escriben eventos (completar cobertura) |
 | **Dependencias** | 4.1 (servicio) + 4.3-bis (acciones de eliminación/condonación) |
 | **Done verificable** | Caso 15 de §14.1: create-only (update/delete rechazados en emulador); cada acción emite exactamente un evento; rollback deja eventos consistentes; harness PASS |
@@ -118,7 +127,7 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 | **Alcance** | §7.1 #1–#16 de la PROPUESTA Etapa 3, **previo cumplimiento de las 6 condiciones de §7.4**: (1) diff revisado archivo por archivo; (2) greps `transferenc\|Transferenc` sobre `*.{js,jsx}` al momento del retiro; (3) totales de `/gastos` e `/ingresos` sin cambios indebidos (con colección vacía deberían ser idénticos); (4) `build` OK, `lint` 0 nuevos, greps 0 restos, prueba funcional de `/gastos`+`/ingresos`+`/agregar`; (5) I-1 verificado (Reintegros no suma como ingreso ni gasto); (6) **aprobación explícita del usuario antes de las eliminaciones**. **#17 (`origenCompra`, `submitCompra.js:74`) NO se toca** (decisión 2.6 #2 cerrada). |
 | **Archivos a editar** | `app/agregar/page.jsx` (#1–#3: import, botón comentado :8, :79-91, render :133-135) · `app/gastos/services/subscribeGastos.js` (#7: `transferenciasMap` :26-28, `totalQueries` :32, query :80-95) · `app/gastos/hooks/useGastos.js` (#8: estado :18, filas sintéticas :65-76, merge :76-80) · `app/ingresos/services/subscribeIngresos.js` (#9: query :50-72, dualidad `emitIfReady` :78-92) · `app/ingresos/hooks/useIngresos.js` (#10: estado :22-25, suma :103-114, return :135) · `app/ingresos/page.jsx` (#11: import :15, conteo :67-73, JSX comentado :110-122) · `app/gastos/components/FilaGasto.jsx` (#15: ramas :21-24, :37, :63, :82) |
 | **Archivos a eliminar** | `app/agregar/components/ModoTransferencia.jsx` · `app/agregar/components/transferencia/` (completa: hook + helper) · `app/gastos/sections/Transferenciassections.jsx` · `app/gastos/components/FilaTransferencia.jsx` · `app/ingresos/sections/TransferenciasIngresosSection.jsx` · `app/gastos/helpers/gastosCalculations.js` |
-| **Dependencias** | 4.4 (recomendado; el módulo completo antes del retiro) |
+| **Dependencias** | **4.4-bis** (la secuencia aprobada corre 4.5 tras 4.4-bis: «módulo completo» = incl. bitácora; §4 R1-1/R1-2 — la dependencia previa decía «4.4» y se corrige aquí para reflejar la secuencia) |
 | **Done verificable** | Las 6 condiciones cumplidas y checklist firmado; greps 0 restos; build/lint OK; totales correctos; I-1 verificado; PASS en Staging y verificación en Producción |
 | **Evidencia esperada** | Checklist + greps + diff revisado + verificación en Producción |
 
@@ -134,9 +143,9 @@ BottomNav y `gastoVinculadoId` **siguen fuera** de la Etapa 4.
 | | |
 |---|---|
 | **Archivos a crear** | `app/agregar/components/reintegros/helpers/confirmarObligacion.js` |
-| **Archivos a editar** | `submitReintegro.js` (alta con `confirmadaPor: null` si `contraparteUid != null`; externo auto-confirmado) · `FilaReintegro.jsx` (badge «Pendiente de confirmación» + acción «Confirmar» para la contraparte) · `useReintegros.js` (separación pendientes-de-confirmación vs activos confirmados) · `DevolucionModal.jsx` (bloqueo pre-confirmación) · `firestore.rules` (reglas de transición de confirmación, §2.5) · suite de reglas (nuevos casos) |
+| **Archivos a editar** | `submitReintegro.js` (alta con `confirmadaPor: null` si `contraparteUid != null`; externo auto-confirmado) · `FilaReintegro.jsx` (badge «Pendiente de confirmación» + acción «Confirmar» para la contraparte) · `useReintegros.js` (separación pendientes-de-confirmación vs activos confirmados; exclusión del stock — §5.3) · `DevolucionModal.jsx` (bloqueo pre-confirmación) · `firestore.rules` (edición de 4.6: guarda de (e) `confirmadaPor != null` + extensión de tipos `['confirmacion']` en `eventos` — §2.5; la rama (g) ya existe en el texto de 4.0) · suite de reglas (casos «+4.6») |
 | **Dependencias** | 4.5 + **aprobación del diseño de §5** en su momento |
-| **Done verificable** | Obligación pendiente visible para ambas partes; entregas bloqueadas (UI y reglas) hasta confirmar; registrador edita/elimina pre-confirmación; contraparte confirma (una sola vez, unidireccional); post-confirmación rige D-8; externos sin paso extra; harness + casos de reglas PASS; build/lint OK |
+| **Done verificable** | Obligación pendiente visible para ambas partes; entregas bloqueadas (UI y reglas) hasta confirmar; registrador edita/elimina pre-confirmación; contraparte confirma (una sola vez, unidireccional); post-confirmación rige D-8; externos sin paso extra; **stock: los pendientes NO suman en «Pendiente de cobro/devolución» ni en Generado/Deuda generada del resumen — solo badge en lista (decisión aprobada 16/10/2026, §5.3); la confirmación no crea ingreso ni devolución**; evento `confirmacion` emitido una vez aprobada la extensión de tipos (§2.5); harness + «+4.6» PASS; build/lint OK |
 | **Evidencia esperada** | Harness bilateral con dos cuentas + evidencia de reglas en emulador |
 
 ### 1.9 Harness unificado (referencia para todas las subetapas)
@@ -206,11 +215,17 @@ service cloud.firestore {
     }
 
     // C1 (D-8): solo el ACREEDOR según su vista condona.
+    // EXTERNO (contraparteUid == null): solo el registrador — D-8 lo dice
+    // explícitamente y la lógica de espejo no aplica (no hay segunda parte
+    // en la app). Miembro: espejo según sentido (el que adelantó / la otra
+    // parte cuando el registrador es el deudor).
     function esAcreedor(rid) {
-      return obl(rid).registradoPor == uid()
-        ? obl(rid).sentido == 'por_cobrar'          // el registrador adelantó
-        : (uid() in obl(rid).participantes
-           && obl(rid).sentido == 'por_devolver');  // la contraparte es acreedora
+      return obl(rid).contraparteUid == null
+        ? obl(rid).registradoPor == uid()                  // externo: solo registrador
+        : (obl(rid).registradoPor == uid()
+             ? obl(rid).sentido == 'por_cobrar'            // miembro: el que adelantó
+             : (uid() in obl(rid).participantes
+                && obl(rid).sentido == 'por_devolver'));   // contraparte acreedora
     }
 
     // E1 (D-8): solo el REGISTRADOR elimina la obligación.
@@ -224,16 +239,23 @@ service cloud.firestore {
       // Lectura: las dos partes (R1' del cliente; aquí la garantía server-side).
       allow get, list: if esParticipante(rid);
 
-      // Alta (4.2): firmada por el propio registrador; sin entregas aún.
+      // Alta (4.2): firmada por el propio registrador; sin entregas ni
+      // constancias aún. Coherencia participantes ↔ contraparte exigida
+      // (externo: 1 uid — §1.2; miembro: 2 uids distintos).
       allow create: if auth()
         && request.resource.data.registradoPor == uid()
         && request.resource.data.registradoPorNombre is string
         && uid() in request.resource.data.participantes
-        && request.resource.data.participantes.size() >= 1
-        && request.resource.data.participantes.size() <= 2
+        // GRUPO EXPLÍCITO (hallazgo 1): la precedencia &&/|| no debe partir
+        // la condición — un contraparteUid string no puede esquivar nada.
+        && (request.resource.data.contraparteUid == null
+            ? request.resource.data.participantes.size() == 1
+            : (request.resource.data.contraparteUid is string
+               && request.resource.data.participantes.size() == 2
+               && request.resource.data.contraparteUid
+                  in request.resource.data.participantes
+               && request.resource.data.contraparteUid != uid()))
         && request.resource.data.contraparteNombre is string
-        && request.resource.data.contraparteUid == null
-           || request.resource.data.contraparteUid is string
         && request.resource.data.sentido in ['por_cobrar', 'por_devolver']
         && request.resource.data.monto is number
         && request.resource.data.monto > 0
@@ -242,6 +264,9 @@ service cloud.firestore {
         && request.resource.data.concepto is string
         && request.resource.data.concepto.size() > 0
         && request.resource.data.gastoVinculadoId == null   // reservado en v1
+        // Sin constancias al nacer (nadie 'ya condonó/ya eliminó' un doc nuevo):
+        && !('condonacion' in request.resource.data)
+        && !('eliminacion' in request.resource.data)
         // 4.6 (§2.5): null = pendiente de confirmación si hay contraparte con uid
         && ('confirmadaPor' in request.resource.data
             ? (request.resource.data.contraparteUid != null
@@ -256,67 +281,100 @@ service cloud.firestore {
         && request.resource.data.contraparteUid == resource.data.contraparteUid
         && request.resource.data.participantes == resource.data.participantes
         && request.resource.data.createdAt == resource.data.createdAt
-        // I-11 / 3.13 — un registro eliminado es inmutable:
+        // I-11 / 3.13 — un registro eliminado es inmutable (guard GLOBAL):
         && !('eliminacion' in resource.data)
-        // No se re-elimina ni se toca una constancia existente (3.12, 3.15):
-        && (!('eliminacion' in request.resource.data)
-            || !('eliminacion' in resource.data))
-        && (!('condonacion' in request.resource.data)
-            || !('condonacion' in resource.data))
         && (
           // (a) Devolución (transacción de submitDevolucion): sube devuelto
-          // dentro de [0, monto]. El acople EXACTO lo impone la regla de
-          // creación de la entrega (criterio 3.8, más abajo): sin el update
-          // acompañante, esa creación falla.
-          ( request.resource.data.devuelto > resource.data.devuelto
+          // dentro de [0, monto] y NO toca ningún otro campo (diff/hasOnly).
+          // El acople EXACTO lo impone la regla de creación de la entrega
+          // (criterio 3.8): sin el update acompañante, esa creación falla.
+          // Solo sobre ACTIVA: condonada ⇒ congelada (D-9: solo lectura).
+          ( request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['devuelto'])
+            && request.resource.data.devuelto > resource.data.devuelto
             && request.resource.data.devuelto <= request.resource.data.monto
-            && request.resource.data.monto == resource.data.monto
-            && request.resource.data.condonacion == resource.data.get('condonacion', null)
-            && request.resource.data.eliminacion == resource.data.get('eliminacion', null)
+            && resource.data.get('condonacion', null) == null
           )
-          // (b) Eliminar entrega (transacción): baja devuelto exactamente por
-          // el monto de la entrega; el acople exacto lo impone la regla de
-          // update de la entrega (criterio 3.8': getAfter(rid).devuelto ==
-          // get(rid).devuelto − get(entrega).monto).
-          || ( request.resource.data.devuelto < resource.data.devuelto
+          // (b) Eliminar entrega (lado de la obligación): baja devuelto
+          // exactamente el monto de la entrega; el acople exacto lo impone
+          // la regla de update de la entrega (criterio 3.8': getAfter(obl)
+          // == get(obl) − get(entrega).monto). Solo sobre ACTIVA
+          // (D-9: entregas congeladas en una condonada).
+          || ( request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['devuelto'])
+               && request.resource.data.devuelto < resource.data.devuelto
                && request.resource.data.devuelto >= 0
-               && request.resource.data.monto == resource.data.monto
+               && resource.data.get('condonacion', null) == null
              )
           // (c) Editar monto de la obligación (solo registrador, D-8(ii):
-          // monto bloqueado con devuelto > 0; transaccional en la app):
+          // monto bloqueado con devuelto > 0; transaccional en la app).
+          // Solo toca `monto`; solo sobre ACTIVA.
           || ( esRegistrador(rid)
+               && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['monto'])
+               && request.resource.data.monto != resource.data.monto
                && request.resource.data.monto > 0
                && request.resource.data.monto >= request.resource.data.devuelto
                && resource.data.devuelto == 0
                && request.resource.data.devuelto == 0
+               && resource.data.get('condonacion', null) == null
              )
           // (d) Edición de campos NO financieros (D-8(ii): siempre; solo
-          // registrador). Montos y acumulador intactos.
+          // registrador). Única rama 'libre': montos, acumulador,
+          // constancias, confirmación y gastoVinculadoId quedan intactos;
+          // solo sobre ACTIVA (condonada ⇒ solo lectura; eliminada ya cae
+          // en la guard global).
           || ( esRegistrador(rid)
                && request.resource.data.monto == resource.data.monto
                && request.resource.data.devuelto == resource.data.devuelto
+               && request.resource.data.get('condonacion', null)
+                  == resource.data.get('condonacion', null)
+               && request.resource.data.get('eliminacion', null)
+                  == resource.data.get('eliminacion', null)
+               && request.resource.data.get('confirmadaPor', null)
+                  == resource.data.get('confirmadaPor', null)
+               && request.resource.data.get('confirmadaAt', null)
+                  == resource.data.get('confirmadaAt', null)
+               && request.resource.data.gastoVinculadoId == null
+               && resource.data.get('condonacion', null) == null
              )
-          // (e) Condonación (C1, D-8): una sola vez; acreedor; NO mueve
-          // devuelto (I-12); condonada → congelada (P-6: solo lectura y
-          // «Eliminar»Posteriores: los casos (a)–(d) quedan bloqueados porque
-          // exigimos devuelto/monto sin cambios... se añade guarda global:
+          // (e) Condonación (C1, D-8): UNA SOLA VEZ (sin condonación previa)
+          // y solo el acreedor (esAcreedor — incluye el caso externo). Única
+          // transición autorizada que AGREGA `condonacion`: hasOnly impide
+          // mover devuelto (I-12), monto o cualquier otro campo. Corrige el
+          // hueco donde una edición ordinaria podía forjar la constancia.
+          || ( resource.data.get('condonacion', null) == null
+               && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['condonacion'])
                && request.resource.data.get('condonacion', null) != null
                && esAcreedor(rid)
                && request.resource.data.condonacion.condonadaPor == uid()
-               && request.resource.data.devuelto == resource.data.devuelto
              )
-          // (f) Eliminar obligación (E1): una sola vez; solo registrador;
-          // conserva constancias previas (I-4/I-10):
+          // (f) Eliminar obligación (E1): UNA SOLA VEZ; solo registrador.
+          // Única transición autorizada que AGREGA `eliminacion`. Es la ÚNICA
+          // rama permitida sobre una obligación CONDONADA — así D-9 opción B
+          // (elegida 16/10/2026) sigue posible: conserva ambas constancias
+          // (I-4/I-10), monto, devuelto y confirmación intactos; sin
+          // reactivación silenciosa (no existe rama que quite constancias).
           || ( esRegistrador(rid)
+               && resource.data.get('eliminacion', null) == null
+               && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['eliminacion'])
+               && request.resource.data.get('eliminacion', null) != null
                && request.resource.data.eliminacion.eliminadaPor == uid()
-               && request.resource.data.devuelto == resource.data.devuelto
-               && request.resource.data.monto == resource.data.monto
              )
-          // (g) 4.6 — Confirmación (§2.5): solo la contraparte; una sola vez.
-          || ( 'confirmadaPor' in request.resource.data
+          // (g) 4.6 — Confirmación (§2.5): UNA SOLA VEZ (null → uid), solo
+          // la contraparte (≠ registrador), con contraparte miembro, y SOLO
+          // cambian los dos campos de confirmación (demás congelados).
+          // `confirmadaAt` debe escribirse con serverTimestamp(): se exige
+          // igual a request.time (no se admite hora forjada por el cliente).
+          || ( resource.data.contraparteUid != null
+               && uid() != resource.data.registradoPor
                && resource.data.get('confirmadaPor', null) == null
+               && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['confirmadaPor', 'confirmadaAt'])
                && request.resource.data.confirmadaPor == uid()
-               && request.resource.data.get('eliminacion', null) == null
+               && request.resource.data.confirmadaAt == request.time
              )
         );
 
@@ -324,9 +382,15 @@ service cloud.firestore {
       match /eventos/{eid} {
         allow get, list: if esParticipante(rid);
         allow create: if auth()
+          // Solo participantes de ESTA obligación pueden escribir su bitácora:
+          && esParticipante(rid)
           && request.resource.data.registradoPor == uid()
           && request.resource.data.tipo in
-               ['creacion', 'edicion', 'eliminacion', 'condonacion', 'confirmacion']
+               ['creacion', 'edicion', 'eliminacion', 'condonacion']
+               // 'confirmacion' NO va aquí: D-3 aprobó estos 4 tipos. La
+               // extensión se propone y se aprueba con 4.6 (§2.5) y entra
+               // con la edición de reglas de esa subetapa — sin ampliar en
+               // silencio el esquema en 4.0.
           && request.resource.data.entidad in ['obligacion', 'entrega'];
         allow update, delete: if false;   // 3.14: create-only
       }
@@ -335,16 +399,17 @@ service cloud.firestore {
     // ─── reintegro_devoluciones ────────────────────────────────────────
     match /reintegro_devoluciones/{did} {
 
-      allow get, list: if auth()
-        && request.resource.data.reintegroId is string;   // filtrado server por doc get:
-      // Nota: `list` sobre la colección expondría docs ajenos si no hay filtro;
-      // la app solo hace get por id tras la query D1 del cliente. Para el
-      // listado D1 (in[]) la app recorre ids visibles; regla de list estricta:
-      // se propone NO habilitar list y suscribir con get por id (volumen v1
-      // bajo, ≤30 por R-3). Si se prefiriera list, exigiría where(reintegroId)
-      // — Firestore no lo evalúa en reglas; por eso: solo get.
-
+      // Lectura SOLO por get individual (hallazgo 6 corregido): la app
+      // resuelve ids visibles vía la query D1 sobre `reintegros` y hace
+      // get por cada id (volumen v1 bajo, ≤30 por R-3). `list` queda
+      // deshabilitado: Firestore NO puede evaluar un filtro where(reintegroId)
+      // dentro de reglas, así que un list habilitado expondría entregas
+      // ajenas a cualquier autenticado. (La versión anterior usaba
+      // request.resource.data —inexistente en lecturas— y habilitaba
+      // `list` contradictoriamente con su propia nota; ambas cosas
+      // eliminadas.)
       allow get: if auth() && esParticipante(resource.data.reintegroId);
+      allow list: if false;
 
       // Alta de entrega (4.3, criterio 3.8 — ACOPLE D-6):
       allow create: if auth()
@@ -354,10 +419,21 @@ service cloud.firestore {
         && request.resource.data.monto > 0
         && request.resource.data.registradoPor == uid()
         && request.resource.data.fechaPago != null
-        && request.resource.data.get('eliminacion', null) == null
-        // 4.6: sin entregas antes de confirmar (§2.5)
-        && oblAfter(request.resource.data.reintegroId).get('confirmadaPor', null) != null
-           || obl(request.resource.data.reintegroId).contraparteUid == null
+        && !('eliminacion' in request.resource.data)
+        // OBLIGACIÓN ACTIVA (D-9, decisión 16/10/2026): ninguna entrega
+        // ordinaria sobre condonada (entregas congeladas) ni sobre
+        // eliminada (inmutable). Primera barrera explícita; el acople de
+        // abajo es la segunda (el padre congelado ni siquiera aceptaría el
+        // delta).
+        && obl(request.resource.data.reintegroId)
+             .get('condonacion', null) == null
+        && obl(request.resource.data.reintegroId)
+             .get('eliminacion', null) == null
+        // 4.6 (§2.5): sin entregas antes de confirmar — GRUPO EXPLÍCITO
+        // (hallazgo 1): la precedencia no debe partir la condición.
+        && (oblAfter(request.resource.data.reintegroId)
+              .get('confirmadaPor', null) != null
+            || obl(request.resource.data.reintegroId).contraparteUid == null)
         // ACOPLE (3.8): el acumulador debe subir exactamente el monto escrito,
         // sin exceder el monto de la obligación — un cliente malicioso no
         // puede crear una entrega desincronizada:
@@ -376,18 +452,28 @@ service cloud.firestore {
         && !('eliminacion' in resource.data)          // I-11: eliminada es inmutable
         && resource.data.reintegroId == request.resource.data.reintegroId
         && resource.data.registradoPor == request.resource.data.registradoPor
+        // OBLIGACIÓN ACTIVA (D-9): sobre condonada/eliminada ninguna
+        // entrega se toca (además el acople del padre lo rechazaría).
+        && obl(resource.data.reintegroId).get('condonacion', null) == null
+        && obl(resource.data.reintegroId).get('eliminacion', null) == null
         && (
-          // (i) Eliminación lógica de la entrega + recálculo acoplado:
-          ( request.resource.data.get('eliminacion', null) != null
+          // (i) Eliminación lógica de la entrega + recálculo acoplado.
+          // hasOnly: SOLO se agrega `eliminacion` (un cliente no puede
+          // colar otros campos; monto intacto por definición del diff):
+          ( request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['eliminacion'])
+            && request.resource.data.get('eliminacion', null) != null
             && request.resource.data.eliminacion.eliminadaPor == uid()
-            && request.resource.data.monto == resource.data.monto
             && oblAfter(resource.data.reintegroId).devuelto
                  == obl(resource.data.reintegroId).devuelto - resource.data.monto
             && oblAfter(resource.data.reintegroId).devuelto >= 0
           )
-          // (ii) Edición de monto (PO-7: saldo resultante, sin sobrepago):
-          || ( request.resource.data.monto > 0
-               && request.resource.data.get('eliminacion', null) == null
+          // (ii) Edición de monto (PO-7: saldo resultante, sin sobrepago).
+          // hasOnly: SOLO cambia `monto`:
+          || ( request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['monto'])
+               && request.resource.data.monto > 0
+               && request.resource.data.monto != resource.data.monto
                && oblAfter(resource.data.reintegroId).devuelto
                     == obl(resource.data.reintegroId).devuelto
                        - resource.data.monto
@@ -402,32 +488,78 @@ service cloud.firestore {
 ```
 
 > **Notas de redacción (parte del plan):** (1) el operador `get(key, default)` de reglas se
-> usa como defensa para campos ausentes (D-5: campo ausente = activo); (2) la rama (e) de
-> `update` de `reintegros` debe complementarse en 4.0 con la guarda de **congelación**
-> (condonada ⇒ bloquea nuevas entregas — ya garantizado porque la creación de entrega exige
-> acople que un estado congelado no permite si `devuelto` está quieto y el form está
-> deshabilitado — y bloquea edición de monto: exigir `condonacion == null` en (c)/(d));
-> (3) la precedencia de operadores se写下 con paréntesis explícitos al implementar
-> (la redacción de arriba es intencionalmente exhaustiva pero se validará sintácticamente
-> contra el emulador en 4.0); (4) criterios 3.9/3.10 (positivas) y 3.11/3.12/3.13/3.15
-> quedan cubiertos por las ramas anteriores y se prueban en la suite.
+> usa como defensa para campos ausentes (D-5: campo ausente = activo); (2) la precedencia de
+> operadores está **ya explícita con paréntesis** en los dos puntos donde `&&`/`||` se
+> mezclaban (create de `reintegros` y de entregas — hallazgo 1); (3) las listas de
+> `affectedKeys().hasOnly([...])` son el **acoplamiento exacto** app↔reglas: los helpers solo
+> pueden escribir esos campos — un campo extra provoca un **rechazo visible** (no un hueco);
+> (4) la redacción es exhaustiva pero **se validará sintácticamente contra el emulador en 4.0**
+> antes de cualquier despliegue (paréntesis, `diff`, ternarios); (5) criterios 3.9/3.10
+> (positivas) y 3.11/3.12/3.13/3.15 quedan cubiertos por las ramas anteriores y se prueban en
+> la suite, junto con los refuerzos 3.16–3.22 (§2.4).
+
+### 2.2.1 Transiciones permitidas (análisis por rama — hallazgo 3)
+
+Cada transición fue analizada por separado (no se aplicó una guarda mecánica idéntica).
+Constantes de lectura: **constancias** = `condonacion`/`eliminacion`; **confirmación** =
+`confirmadaPor`/`confirmadaAt`.
+
+| Rama | Transición permitida | Constancias | Confirmación | Estado del doc | Quién |
+|---|---|---|---|---|---|
+| **(a)** | `devuelto` ↑ dentro de `[0, monto]` | intactas (`hasOnly`) | intacta (`hasOnly`) | **activa** (no condonada) | participante |
+| **(b)** | `devuelto` ↓ exacto (borrar entrega) | intactas (`hasOnly`) | intacta (`hasOnly`) | **activa** | participante |
+| **(c)** | `monto` nuevo (≥ devuelto; `devuelto == 0`) | intactas (`hasOnly`) | intacta (`hasOnly`) | **activa** | registrador |
+| **(d)** | campos no financieros | intactas (explícito) | intacta (explícito) | **activa** | registrador |
+| **(e)** | **+ condonacion**, una sola vez | solo agrega `condonacion`; jamás `eliminacion` | intacta (`hasOnly`) | sin condonar | acreedor (C1, incl. externo) |
+| **(f)** | **+ eliminacion**, una sola vez | solo agrega `eliminacion`; conserva `condonacion` | intacta (`hasOnly`) | activa **o condonada** (D-9 opción B) | registrador (E1) |
+| **(g)** | `confirmadaPor` `null → uid` + `confirmadaAt` | intactas (`hasOnly`) | **únicos campos cambiados** | sin confirmar, contraparte miembro | contraparte ≠ registrador |
+| — | doc **eliminado** ⇒ inmutable (guard global, rama alguna) | — | — | eliminada | nadie |
+
+**Congelaciones server-side (D-9) — ahora explícitas, no derivadas del form:**
+
+1. **Condonada ⇒ solo lectura + «Eliminar»:** las ramas (a)–(d) y (g) exigen
+   `condonacion == null` en el origen; solo (f) opera sobre una condonada. La
+   eliminación lógica de la condonada (opción B, elegida 16/10/2026) **sigue posible**.
+2. **Entregas congeladas:** `create` y `update` de entregas exigen la obligación activa
+   (1ª barrera); el acople con el padre congelado es la 2ª barrera.
+3. **Sin reactivación silenciosa:** (e)/(f) son *one-shot*; (d) no toca constancias; no
+   existe rama que quite `condonacion`/`eliminacion`; el doc eliminado cae en la guard
+   global.
+4. **Sin forjar constancias:** (d)/(a)/(b)/(c) congelan las constancias; solo (e)/(f) las
+   agregan, con sus permisos (C1/E1) y una sola vez (hallazgo 3 cerrado).
 
 ### 2.3 Verificación de equivalencia repo↔consola (plan)
 
-1. En 4.0, el usuario copia desde Consola → Firestore → Rules el texto vigente.
+1. **Backup previo:** en 4.0, el usuario copia desde Consola → Firestore → Rules el texto
+   vigente y se registra con su **SHA-256** — ese texto es el **plan de restauración**
+   (rollback) si algo sale mal.
 2. Se pega íntegro en el Bloque A de `firestore.rules` del repo.
 3. Se calcula **SHA-256** de (a) el texto pegado y (b) el texto mostrado en consola
    (o diff literal si la consola lo permite); ambos hashes se registran en la evidencia.
-4. Cualquier divergencia ⇒ se detiene y se resuelve antes de cualquier despliegue.
-5. El despliegue (`firebase deploy --only firestore:rules`) se ejecuta **solo** tras PASS
-   del emulador + aprobación explícita, por el flujo `AGENTS.md`.
+4. **Repaso del conjunto COMPLETO** (Bloque A + Bloque B) por el usuario — no solo las
+   reglas del módulo nuevo: cualquier efecto no previsto sobre colecciones existentes
+   se resuelve antes de continuar.
+5. Cualquier divergencia ⇒ se detiene y se resuelve antes de cualquier despliegue.
+6. El despliegue (`firebase deploy --only firestore:rules`) se ejecuta **solo** tras PASS
+   del emulador + aprobación explícita, por el flujo `AGENTS.md`. Se recomienda una
+   **ventana de mantenimiento** (Staging y Producción comparten proyecto: el cambio es
+   único e inmediato para ambos).
+7. **Restauración:** ante cualquier problema, se re-despliega el texto del backup del
+   paso 1 (mismo proceso y misma aprobación). Sin backup registrado no hay despliegue.
 
-### 2.4 Suite de reglas (criterios 3.1–3.15)
+### 2.4 Suite de reglas (3.1–3.22)
 
 `tests/rules/reintegros.rules.test.mjs` con `@firebase/rules-unit-testing`, emulador de
-Firestore, `projectId demo-*`:
+Firestore, `projectId demo-*`.
 
-| # | Caso (criterio §8.5 de la PROPUESTA Etapa 3) |
+**Sobre los números:** 3.1–3.15 son los criterios del gate §8.5 (D-2: 3.7 y 3.11–3.15
+aprobados; el resto ya figuraban en el gate). **3.16–3.22 son tests de refuerzo añadidos
+por este plan** para las reglas corregidas (§2.2): verifican comportamientos, no crean
+criterios nuevos ni modifican D-2. **Ningún caso se da por aprobado sin un run real en
+el emulador con evidencia archivada.** Los casos propios del flujo de 4.6 permanecen en
+la fila **«+4.6»** (ámbito de esa subetapa).
+
+| # | Caso |
 |---|---|
 | 3.1 | No autenticado: sin lectura ni escritura en ambas colecciones |
 | 3.2 | Usuario ajeno: sin lectura de `reintegros` ni de sus entregas; sin escritura |
@@ -442,9 +574,19 @@ Firestore, `projectId demo-*`:
 | 3.11 | No-participante: sin escritura (alta entrega, edición, eliminación, condonación) |
 | 3.12 | Doble eliminación: el segundo update sobre doc ya eliminado ⇒ rechazado |
 | 3.13 | Edición de registro eliminado: rechazada |
-| 3.14 | Bitácora: `update`/`delete` sobre `eventos` rechazados; create solo con `registradoPor == auth.uid` |
-| 3.15 | Condonación (C1): acreedor según vista puede; deudor y externo-tercero no; sin crear entrega ni mover `devuelto` |
-| +4.6 | (tras 4.6) Confirmación: solo contraparte; una sola vez; entregas pre-confirmación rechazadas |
+| 3.14 | Bitácora: `update`/`delete` sobre `eventos` rechazados; create solo con `registradoPor == auth.uid` **y** de participante |
+| 3.15 | Condonación (C1, miembro): acreedor según vista puede; deudor y externo-tercero no; sin crear entrega ni mover `devuelto` |
+| **3.16** | **Coherencia participantes↔contraparte en create** (hallazgo previo §1): (a) `contraparteUid` string no ∈ `participantes` ⇒ rechazado; (b) externo con `size ≠ 1` ⇒ rechazado; (c) miembro con `size ≠ 2` o `contraparteUid == uid` ⇒ rechazado; positivas: alta externa y miembro válidas ⇒ aceptadas |
+| **3.17** | **Regresión de precedencia** (hallazgo 1): create con campo previo inválido (p. ej. `monto < 0`) y `contraparteUid` string ⇒ **rechazado** (el grupo no se parte); create válido con `contraparteUid` string ⇒ aceptado |
+| **3.18** | **Entregas sobre doc congelado** (D-9): creación de entrega sobre obligación **condonada** ⇒ rechazada; sobre **eliminada** ⇒ rechazada; edición/eliminación de entrega de esas obligaciones ⇒ rechazada (positiva: sobre activa ⇒ aceptada, ya en 3.9) |
+| **3.19** | **Integridad de constancias en escritura ordinaria** (hallazgo 3): (a) rama (d) agregando `condonacion` sin ser acreedor ⇒ rechazado; (b) ramas (a)/(b)/(c) agregando `eliminacion` ⇒ rechazadas; (c) quitar o alterar constancia existente por cualquier rama que no sea (e)/(f) ⇒ rechazado; (d) create de obligación con constancia ya incluida ⇒ rechazado |
+| **3.20** | **Transición de confirmación a nivel de reglas** (esbozo §2.5, presente desde el texto de 4.0): (a) update que además altera `monto`/`devuelto`/constancias ⇒ rechazado; (b) confirmación por el propio registrador ⇒ rechazada; (c) des-confirmación (`uid → null`) ⇒ rechazada; (d) positiva: contraparte, `null → uid` con `confirmadaAt == request.time` ⇒ aceptada |
+| **3.21** | **Condonación de obligación EXTERNA (C1 externo)**: externa `por_devolver` condonada por el registrador ⇒ **aceptada** (hallazgo 5; antes quedaba imposible); externa `por_cobrar` por el registrador ⇒ aceptada; por un tercero ⇒ rechazada |
+| **3.22** | **Lecturas de entregas**: `get` de entrega por no-participante ⇒ rechazado; `list` sobre `reintegro_devoluciones` ⇒ **rechazado** (solo get por id) |
+| **+4.6** | **(tras 4.6 — flujo completo, fuera de este conteo):** alta con contraparte nace pendiente; ambas partes la **ven** con badge; entregas bloqueadas en UI **y** reglas hasta confirmar; solo la contraparte confirma (una vez); registrador edita/elimina pre-confirmación; post-confirmación rige D-8; registro con tipo `'confirmacion'` (una vez aprobada la extensión de tipos, §2.5); externos auto-confirmados sin paso extra; guarda nueva de (e): condonación pre-confirmación rechazada |
+
+**Total esperado en 4.0: 22/22 PASS (3.1–3.22).** El «+4.6» se suma al llegar 4.6. Un
+FAIL no se maquilla ni se pospone: se diagnostica antes de cualquier despliegue.
 
 ### 2.5 Reglas de 4.6 (transición de confirmación)
 
@@ -453,14 +595,27 @@ Ya esbozadas en §2.2 (rama create con `confirmadaPor` y rama update (g)):
 - **Alta con contraparte uid:** `confirmadaPor == null` (pendiente).
 - **Alta externa:** sin campo o auto-confirmada (`confirmadaPor == registradoPor`) — decisión
   de implementación de 4.6: se propone **ausencia del campo para externos** (coherente con
-  D-5 «campo ausente = …», aquí: «ausente = externo/auto-confirmada») y `null` solo como
+  D-5 «ausente = …», aquí: «ausente = externo/auto-confirmada») y `null` solo como
   estado explícito «pendiente».
-- **Confirmación:** update únicamente `confirmadaPor: null → uid()` y **solo** cuando
-  `request.resource.data.confirmadaPor == uid() && uid() != registradoPor` (la regla (g)
-  exige `confirmadaPor == uid()` y el create exige el campo null al nacer; se añade en 4.0/4.6
-  la explícita `uid() != resource.data.registradoPor`).
-- **Sin des-confirmación:** no hay rama que vacíe `confirmadaPor`.
+- **Confirmación:** update únicamente `confirmadaPor: null → uid()` + `confirmadaAt`
+  (**serverTimestamp()**: la rama (g) exige `confirmadaAt == request.time`) y **solo**
+  cuando `uid() != registradoPor && contraparteUid != null` — la regla (g) tal como quedó
+  redactada en §2.2 **ya incluye** esas condiciones (hallazgo 4 cerrado: además congela
+  monto, devuelto, constancias y el resto vía `hasOnly`).
+- **Sin des-confirmación:** no hay rama que vacíe `confirmadaPor` (3.20(c)).
 - **Entregas:** create exige `confirmadaPor != null` (o externo).
+- **Aprobación del evento `confirmacion`:** la lista de tipos del create de `eventos`
+  quedó en los 4 tipos de **D-3** (§2.2). La extensión por `['confirmacion']` **se
+  propone, se prueba y se aprueba dentro del alcance de 4.6**, junto con la edición de
+  `firestore.rules` de esa subetapa (§1.8) — hasta entonces, emitir un evento de ese
+  tipo sería rechazado por reglas (3.14), y es el comportamiento deseado.
+- **Guarda de 4.6 sobre (e):** la condonación pre-confirmación queda bloqueada añadiendo
+  `confirmadaPor != null` a la rama (e) en la edición de reglas de 4.6 (§5.2); el caso
+  se prueba en «+4.6», no en 3.1–3.22.
+- **Eficacia desde 4.0:** la rama (g) puede desplegarse en 4.0 sin efecto funcional (la
+  app aún no escribe esos campos; un participante ≠ registrador podría auto-setear
+  `confirmadaPor`, pero la app de v1 no lo lee ni lo usa y ningún otro campo se altera).
+  Su **estructura** ya se cubre en 3.20; el **flujo** completo es de 4.6.
 
 ---
 
@@ -473,7 +628,10 @@ la obligación, y `saldo = monto − devuelto ≥ 0` en todo camino válido de l
 web de Firestore **no admite queries dentro de `Transaction.get`** (solo `DocumentReference`):
 la transacción **no puede recomputar la Σ** y compararla. Cualquier demostración que dependa
 de esa recomputación es inválida. Tampoco las **rules** pueden agregar (Σ de una colección):
-la igualdad **no es verificable como agregado** ni en transacción ni en reglas.
+la igualdad **no es verificable como agregado** ni en transacción ni en reglas. Tampoco se
+afirma que «compilar las reglas» o «correr una suite parcial» constituyan evidencia: **D-6
+se da por demostrado solo con la evidencia completa de §3.4** — si falta, el punto queda
+**bloqueado** (§3.5) y se presentan alternativas, sin resolverlo por suposición.
 
 ### 3.1 Argumento de la demostración (por construcción)
 
@@ -525,6 +683,61 @@ locking en los docs leídos; la perdedora **relee y falla la validación** (`imp
 tras el commit ajeno) ⇒ aborta sin escribir. Message: *«El saldo cambió; revisá el importe e
 intentá de nuevo.»* (caso 5 del harness).
 
+### 3.4 Evidencia mínima exigida para afirmar «D-6 demostrado»
+
+Nada de lo anterior cuenta como evidencia por sí solo. La afirmación exige **todas** estas
+piezas, archivadas, en 4.1 y 4.3:
+
+1. **Suite de reglas 22/22 PASS** (§2.4), incluyendo los adversariales de cliente roto:
+   3.8 (entrega sin update / delta incorrecto), 3.11 (escritura ajena) y 3.19 (constancias
+   forjadas por rama ordinaria) — esto cubre: (i) crear entrega sin update, (ii) update sin
+   entrega, (iii) deltas distintos, (iv) eliminaciones dobles, (v) escritura directa de
+   `devuelto` fuera de los shapes permitidos y (vi) colado de campos extra en cualquier rama.
+2. **Harness del módulo con reconciliación** (§3.2) tras **cada** secuencia: alta, devolución
+   parcial, devolución completa, edición de entrega, eliminación de entrega, eliminación de
+   obligación, condonación — con `assertDevueltoConsistente` en cero diferencias.
+3. **Registro de escritores:** grep de evidencia `file:línea` mostrando que `devuelto` solo
+   lo escriben `submitDevolucion` / `eliminarEntrega` / `editarEntrega` (escritor único,
+   §3.1) y que **ningún** `updateDoc` genérico sobre `reintegros` existe fuera de los
+   helpers.
+4. **Cobertura de caminos:** verificación de que toda mutación del conjunto de entregas cae
+   en una rama acoplada (§2.2.1) — cualquier rama nueva descubierta sin acople = bloqueo.
+
+Si cualquiera falla o falta: **D-6 no está demostrado**; se documenta el hueco y se
+presentan alternativas antes de seguir (§3.5).
+
+### 3.5 Limitaciones, casos no cubiertos y disparadores de reconsideración
+
+**Limitaciones conocidas (aceptadas y documentadas, no resueltas):**
+
+- **Verificación post-hoc:** la reconciliación detecta la divergencia; no la impide. La
+  impedancia la dan transacciones + reglas. Es así por diseño (D-7) y se declara.
+- **Residuo de dos operaciones válidas en momentos distintos:** dos escrituras legítimas
+  consecutivas pasan reglas por separado; en un instante intermedio `devuelto` refleja el
+  estado anterior — que **coincide** con la Σ hasta ese momento (cada operación lleva su
+  delta). La ventana solo se vuelve problemática si existiera una ruta que altere la Σ sin
+  su delta; esa ruta **no existe en el diseño** (§2.2.1) y el punto 3. de §3.4 vigila que
+  siga sin existir.
+- **Bitácora no acoplada a reglas:** las reglas garantizan create-only y autoría de
+  participante, pero **no** exigen que un evento acompañe a una acción concreta — un
+  participante puede escribir un evento huérfano válido. La detección es por harness y
+  revisión (§1.6), no por reglas. Corregirlo exigiría `getAfter` por acción, complejidad
+  que este plan no asume.
+- **Campos fuera de `hasOnly`:** si un helper de la app escribe un campo no listado, la
+  escritura **falla visiblemente** (disponible, no silencioso). Es una limitación de
+  mantenimiento: cambiar un shape exige actualizar reglas y suite en el mismo cambio.
+- **Σ no agregable en servidor:** ninguna garantía de igualdad en el momento de leer,
+  solo al escribir (ya cubierto) + reconciliación al cargar.
+
+**Si aparece (cualquiera de estas):** un escritor alternativo de `devuelto` fuera de los
+tres helpers (grep negativo en §3.4.3), una rama de escritura que altere entregas sin
+acople, o la necesidad de **garantía agregada en tiempo real** (p. ej. invariantes de
+cartera multi-usuario consultados por terceros) ⇒ **se bloquea el punto D-6, se retoma el
+diseño y se presentan alternativas** (servidor confiable Cloud Functions/Cloud Run con
+transacción de servidor, u otro mecanismo) **antes** de implementar. Si el emulador muestra
+que alguna rama de §2.2 no cierra como se afirma aquí, mismo procedimiento: bloqueo +
+alternativas, sin suponer.
+
 ---
 
 ## 4. Caso abierto D-9: pago recibido después de la condonación
@@ -541,13 +754,15 @@ La app **no** registra dinero recibido que no sea una entrega (reintegro ≠ ing
 | Opción | Descripción | Compatible con E1 | Compatible con C1 | Trazabilidad | Veredicto |
 |---|---|---|---|---|---|
 | **A — No registrar en la app** | El dinero se maneja fuera; la obligación permanece `condonada`; el hecho queda en la bitácora solo si el usuario escribe un evento manual (no existe esa acción; simplemente no se registra nada) | ✓ (no usa E1) | ✓ (no toca la constancia) | La constancia de condonación permanece **exacta** (se perdonó y el perdón fue real); el pago posterior **no queda trazado en la app** | Válida y **trivial**; costo: la app no refleja el dinero recuperado; el «excedente de caja» manual del usuario sí lo reflejaría si cuenta la plata |
-| **B — «Eliminar» lógico + re-registrar** | (1) `eliminarObligacion` sobre la condonada (E1: **solo registrador**; conserva constancia de condonación + constancia de eliminación + eventos — I-4/I-10); (2) `submitReintegro` de una obligación nueva que representa la realidad actual (ej. mismo concepto/contraparte, `movimientoInicial` según corresponda); (3) `submitDevolucion` completa inmediata ⇒ `liquidado`. Referencia textual en `detalle` («pago posterior a condonación de {rid}») + eventos de bitácora en ambos docs encadenan la historia | ✓ — **usa** E1: el eliminador es el registrador. **Tensión documentada:** si el condonador fue la contraparte (C1: acreedor en espejo), el registrador (lado deudor) ejecuta la eliminación del registro perdonado por el acreedor. Eso **no** viola C1 (la constancia de quién condonó se preserva; C1 solo gobierna **quién condona**, no quién elimina — E1 gobierna eso) | ✓ (la condonación historical queda intacta) | ✓ fuerte: ambas constancias + eventos + referencia textual; **sin borrado físico ni en cascada** | **Recomendada**, sujeta a aprobación. Riesgo residual: coordinación (solo el registrador puede eliminar); duplicado visual breve |
+| **B — «Eliminar» lógico + re-registrar** | (1) `eliminarObligacion` sobre la condonada (E1: **solo registrador**; conserva constancia de condonación + constancia de eliminación + eventos — I-4/I-10); (2) `submitReintegro` de una obligación nueva que representa la realidad actual (ej. mismo concepto/contraparte, `movimientoInicial` según corresponda); (3) `submitDevolucion` completa inmediata ⇒ `liquidado`. Referencia textual en `detalle` («pago posterior a condonación de {rid}») + eventos de bitácora en ambos docs encadenan la historia | ✓ — **usa** E1: el eliminador es el registrador. **Tensión documentada:** si el condonador fue la contraparte (C1: acreedor en espejo), el registrador (lado deudor) ejecuta la eliminación del registro perdonado por el acreedor. Eso **no** viola C1 (la constancia de quién condonó se preserva; C1 solo gobierna **quién condona**, no quién elimina — E1 gobierna eso) | ✓ (la condonación historical queda intacta) | ✓ fuerte: ambas constancias + eventos + referencia textual; **sin borrado físico ni en cascada** | **ELEGIDA por el usuario (16/10/2026)** — ver §4.2/§4.3. Riesgo residual: coordinación (solo el registrador puede eliminar); duplicado visual breve |
 | **C — Des-condonar (quitar la constancia)** | Revertir `condonacion` y continuar | ✗ — pisaría la constancia de C1 | ✗ — el condonador perdió su hecho registrado | ✗ — destruye un hecho | **Descartada**: viola congelaciones aprobadas (D-9) e I-4 |
 | **D — Registrar entrega sobre la condonada** | `submitDevolucion` normal | ✓ | — | ✓ | **Descartada**: viola «entregas congeladas» (D-9) |
 
-### 4.2 Recomendación del plan
+### 4.2 Resolución elegida por el usuario: opción B
 
-**Opción B**, con estos términos exactos (sujeta a aprobación del usuario antes de 4.3-bis):
+**Opción B — ELEGIDA POR EL USUARIO (16/10/2026) como resolución de D-9.** No es solo
+una recomendación del plan; pero **tampoco autoriza implementación**: 4.3-bis la aplica
+solo con su propia aprobación y el flujo de AGENTS.md. Términos exactos:
 
 1. **Acción visible única en la UI de la fila condonada:** ya existe «Eliminar» (D-9). No se
    agrega una acción nueva «Recibir pago». El flujo documentado (copy en la confirmación de
@@ -564,7 +779,34 @@ La app **no** registra dinero recibido que no sea una entrega (reintegro ≠ ing
 4. **Límite:** si el condonador es la contraparte y el registrador no coopera, no hay flujo
    (A queda como fallback). Documentado, no «resuelto» en silencio.
 
-**Estado:** recomendación **lista para aprobación**; 4.3-bis no la implementa sin ese sí.
+**Estado:** **resolución elegida (16/10/2026)**; documentada en §4.3. 4.3-bis no la
+implementa sin su aprobación explícita (paso 5 del flujo).
+
+### 4.3 Consecuencias funcionales de la opción B (documentadas)
+
+1. **Doc viejo (condonada + eliminada):** sale de listas y cálculos por D-5 (campo
+   ausente = activo no aplica aquí: la constancia de eliminación lo saca de vistas),
+   **permanece en la base** con ambas constancias (`condonacion` + `eliminacion`),
+   sus eventos y su histórico de entregas intactas — I-4/I-10 sin borrado físico. Queda
+   **inmutable** (guard global: rama alguna lo actualiza).
+2. **Doc nuevo:** es la obligación vigente. El usuario lo crea con el alta estándar (4.2)
+   y registra las devoluciones reales con 4.3. **La app NO automatiza la reconstrucción**
+   (cambio mínimo; no acopla alta + devolución en un mecanismo nuevo).
+3. **Anti-duplicación/confusión:** la única acción visible sobre la condonada es
+   «Eliminar», con el copy de §4.2.1 que explica el motivo («…para registrar el pago
+   recibido como un nuevo reintegro; la condonación se conserva en el historial»). Riesgo
+   residual aceptado: **duplicado visual breve** si el usuario lee mal o hace dos veces
+   el flujo — DC-4: sin avisos automáticos de duplicados; se mitiga con el copy.
+4. **Entregas del doc viejo:** se congelan como histórico; **no migran ni suman** al doc
+   nuevo. El dinero realmente cobrado se registra como nuevas entregas del doc nuevo.
+5. **Trazabilidad encadenada:** eventos `eliminacion` (viejo, `motivo` opcional
+   «Pago posterior a condonación») + `creacion` (nuevo, referencia textual en `detalle`)
+   + eventos de la entrega; ambas constancias juntas en el doc viejo.
+6. **Reglas:** una entrega ordinaria sobre condonada o eliminada queda **rechazada**
+   (3.18) — el caso no puede colarse por la app ni por un cliente directo.
+7. **Fallback A:** si el condonador fue la contraparte y el registrador no coopera, no
+   hay flujo posible (solo el registrador puede ejecutar (f)); queda documentado: el
+   dinero se maneja fuera de la app. No se resuelve en silencio.
 
 ---
 
@@ -602,7 +844,8 @@ La app **no** registra dinero recibido que no sea una entrega (reintegro ≠ ing
 4. **Confirmación:** acción **«Confirmar»** visible **solo para la contraparte**
    (`uid != registradoPor`). Transacción simple (o `updateDoc` + evento): set
    `confirmadaPor: uid`, `confirmadaAt: serverTimestamp()` + evento `confirmacion`
-   (D-3). **Unidireccional e irrepetible** (regla (g)).
+   (**tipo por aprobarse con 4.6** — la lista cerrada de D-3 no lo incluye, §2.5).
+   **Unidireccional e irrepetible** (regla (g)).
    - **¿Rechazar?** **No está en D-11b** (solo habla de confirmar). El plan **no inventa**
      una acción «Rechazar»: si la contraparte no está de acuerdo, el registrador **elimina**
      su registro (pre-confirmación, D-11b.3) y conversan fuera de la app. Dejar registrado:
@@ -620,14 +863,17 @@ La app **no** registra dinero recibido que no sea una entrega (reintegro ≠ ing
    monto bloqueado con `devuelto > 0`; eliminar: E1; condonar: C1; entregas: ambas partes
    por PO-5).
 
-### 5.3 Indicadores y stock (decisión propuesta, sujeta a aprobación)
+### 5.3 Indicadores y stock (decisión APROBADA por el usuario, 16/10/2026)
 
 **Las obligaciones pendientes de confirmación NO entran en «Pendiente de cobro/devolución»**
 (stock financiero) ni en Generado/Deuda generada del resumen (4.4): una deuda no acordada
-distorsería el stock. Se muestran **solo en la lista** con su badge. Rationale: D-11b.1 exige
-**ver** la obligación; no exige **contarla**. Si el usuario aprueba otra opción (contarlas),
-el cambio es solo de `useReintegros.js` (decisión registrada acá para no inventar en
-silencio).
+distorsionaría el stock. Se muestran **solo en la lista** con su badge «Pendiente de
+confirmación» — **no desaparecen ni se presentan como confirmadas.** La confirmación
+bilateral es lo que incorpora la obligación al resumen financiero. Rationale: D-11b.1
+exige **ver** la obligación; no exige **contarla**; y confirmar no crea ingreso ni
+devolución (regla rectora: un reintegro no es un ingreso). Es **criterio de aceptación
+de 4.6** (§1.8) y se prueba en su harness. La exclusión es solo de stock/resumen: la
+fila con su badge permanece visible en la lista.
 
 ### 5.4 Ventana R-4 (entre 4.3 y 4.6)
 
@@ -663,8 +909,8 @@ justificación; aislamiento total de `finanzas-app-1c5f6`. Esta sección fija la
 |---|---|---|---|
 | `firebase-tools` (devDep) | Emuladores + deploy de reglas | `^14` (la vigente al implementar) | Único soporte oficial de `emulators:exec`; se invoca vía npm script (sin instalación global obligatoria) |
 | `@firebase/rules-unit-testing` (devDep) | Suite de reglas | `^3` | Estándar del ecosistema; API `initializeTestEnvironment` con `projectId demo-*` |
-| **`node:test`** (runner, built-in) | Ejecutar tests de reglas y harness del módulo | Node **20.11.1** (ya instalado; verificado) | **Cero dependencias nuevas**: el repo no tiene framework de pruebas (`package.json:18-23`); añadir vitest/jest contradice el criterio de cambio mínimo. `node --test` cubre aserciones, runs y reporte. **Alternativa documentada:** `vitest` — elegiria si se quisiera watch-mode o matchers; coste: +2 devDeps. El runner es sustituible sin tocar el código de las pruebas (D-1: «configuración fina ajustable») |
-| **Java JRE 11+** | Requisito del emulador de Firestore | Instalación **por el usuario** | **NO está instalado** (verificado 15/10/2026, §7 N-1). El emulador de Firestore lo exige. Sin él, 4.0 no puede correr localmente. **Prerrequisito humano, bloqueante de la implementación de 4.0** |
+| **`node:test`** (runner, built-in) | Ejecutar tests de reglas y harness del módulo | Node **20.11.1** (ya instalado; verificado) | **Cero dependencias nuevas**: el repo no tiene framework de pruebas (`package.json:18-23`); añadir vitest/jest contradice el criterio de cambio mínimo. `node --test` cubre aserciones, runs y reporte. **Alternativa documentada:** `vitest` — se elegiría si se quisiera watch-mode o matchers; coste: +2 devDeps. El runner es sustituible sin tocar el código de las pruebas (D-1: «configuración fina ajustable»). **Dirección aceptada por el usuario (16/10/2026); instalación efectiva solo al aprobar 4.0** |
+| **Java JRE 11+** | Requisito del emulador de Firestore | Instalación **por el usuario** | **NO estaba instalado** (verificado 15/10/2026, §7 N-1): **re-verificar el entorno al autorizar 4.0** (puede haber cambiado). El emulador de Firestore lo exige. Sin él, 4.0 no puede correr localmente. **Prerrequisito humano, bloqueante de la implementación de 4.0** |
 
 ### 6.2 Configuración (`firebase.json` propuesto)
 
@@ -738,6 +984,7 @@ pruebas usan la API de `rules-unit-testing`, no la del runner.
 | **N-1** | **Java no instalado** en la máquina de desarrollo | `java -version` → comando no encontrado; sin JRE en `Program Files\Java`, `(x86)\Java` ni `LOCALAPPDATA` | **Bloquea la implementación de 4.0** (no la planificación). Instalación por el usuario (§6.1) |
 | **N-2** | **`firebase-tools` no instalado** (ni global ni local) | `Get-Command firebase` vacío; ausente de `package.json` | Se agrega como devDep **al implementar** 4.0 (D-1: sin instalar aún) |
 | **N-3** | Índice compuesto de R1' no existe (la colección misma no existe) | Colecciones `reintegros*` ausentes | Crear/pre-aprobar en 4.0 (`firestore.indexes.json` + riesgo R-2) |
+| **N-4** | **`firestore.rules` y `firebase.json` no existen** en `AppFinanciera/` (verificado 16/10/2026: glob sin resultados; requisito de `HANDOFF-ETAPA-4.md` §5.6) | Ausencia en la raíz de `AppFinanciera/` | Las reglas vigentes **solo están en la consola**: 4.0 las recupera al Bloque A (§2.2) con backup + SHA-256 (§2.3). `firebase.json` se crea en 4.0 |
 
 ### 7.3 Deriva menor en documentos de `context/` (deuda documental, **sin acción** en la Etapa 4)
 
@@ -775,13 +1022,60 @@ corrigen en esta etapa** (context docs ≠ alcance aprobado de la Etapa 4).
   de este documento (paso 4; el commit de este archivo se autoriza en esa revisión).
 - Cada subetapa posterior requiere su propia aprobación y respeta
   Local → Staging → Producción con verificación (`AGENTS.md`).
-- Decisiones de este plan que **requieren confirmación del usuario al aprobar**:
-  (1) resolución D-9 opción B (§4.2); (2) exclusión de pendientes de confirmación del stock
-  financiero en 4.6 (§5.3); (3) runner `node:test` (§6.1); (4) schema de eventos (§3.5
-  de la PROPUESTA Etapa 3 / detalle en la implementación de 4.4-bis conforme D-3).
+
+**Decisiones de este plan ya resueltas por el usuario (16/10/2026):**
+
+1. ✅ **D-9 → opción B** (eliminar lógico + re-registrar; §4.2/§4.3). Elegida; la
+   implementación sigue dependiendo de la aprobación de 4.3-bis.
+2. ✅ **Exclusión de pendientes de confirmación del stock financiero** en 4.6 (§5.3) —
+   criterio de aceptación y prueba de esa subetapa.
+3. ✅ **Runner `node:test`** como dirección técnica (§6.1) — instalación efectiva solo al
+   aprobar 4.0, con presentación previa del diff de dependencias.
+4. ✅ **Corrección de los hallazgos 1–6** del borrador de reglas (§2.2/§2.2.1/§10).
+
+**Siguen pendientes de aprobación/explicitación del usuario:**
+
+- (a) **Aprobación expresa del plan corregido** y después de la subetapa **4.0** (paso 5).
+- (b) **Schema exacto del evento** (detalle de implementación en 4.4-bis, fuente:
+  `PROPUESTA-ETAPA-3.md` §3.5, conforme D-3).
+- (c) **Extensión de tipos `['confirmacion']`** en `eventos` — se aprueba con 4.6 (§2.5).
+- (d) **Diseño completo de 4.6** (§5) en su momento, incluida la guarda de (e).
+- (e) Instalación de herramientas (D-1) y Java: presentación → aprobación → instalar.
+
+---
+
+## 10. Registro de correcciones (16/10/2026)
+
+Corrección documental autorizada por el usuario — **solo este archivo** (sin tocar
+`AppFinanciera/`, sin instalar dependencias, sin acceder a Firestore, sin commits ni push).
+Qué cambió y dónde:
+
+| # | Hallazgo / pedido | Corrección aplicada | Dónde |
+|---|---|---|---|
+| **1** | Precedencia `&&`/`||` rota en dos `create` | Grupos con paréntesis explícitos; caso de regresión **3.17** | §2.2 (create de `reintegros` y de entregas), §2.2.1 (2), §2.4 |
+| **2** | Rama (e) con sintaxis rota y comentario corrupto | (e) reescrita con apertura correcta y comentario íntegro | §2.2 |
+| **3** | Constancias falsificables vía ramas ordinarias (d)/(b)/(c) y en `create` | Transiciones analizadas **por rama** (tabla §2.2.1); `hasOnly` por rama; solo (e)/(f) agregan constancias; `create` sin constancias; caso **3.19** | §2.2, §2.2.1, §2.4 |
+| **4** | Rama (g) sin congelar el resto del doc; sin `uid != registradoPor` | `hasOnly(['confirmadaPor','confirmadaAt'])`; `confirmadaAt == request.time`; contraparte ≠ registrador; caso **3.20** | §2.2, §2.4, §2.5 |
+| **5** | `esAcreedor` no cubría «externo: solo registrador» (D-8) | Función con rama externa explícita; caso **3.21** | §2.2, §2.4 |
+| **6** | Lecturas de `reintegro_devoluciones` con `request.resource.data` + `list` contradictorio | Solo `get` por participante; `list: if false`; caso **3.22** | §2.2 |
+| **7** | Congelaciones D-9 dependían del form (nota (2) incorrecta) | Guards **server-side**: (a)–(d)/(g) exigen obligación activa; create y update de entregas exigen activa; (f) es la única rama permitida sobre condonada; caso **3.18** | §2.2, §2.2.1, §2.4 |
+| **8** | Evento `confirmacion` embebido en 4.0 + create de `eventos` sin check de participante | Lista = 4 tipos cerrados de D-3; extensión a 4.6; **`esParticipante(rid)` añadido** (corrección adicional: antes cualquier autenticado podía escribir en la bitácora ajena) | §2.2, §2.5, §1.6 |
+| **9** | D-9 sin estado ni consecuencias | Opción B **elegida (16/10/2026)** + nueva §4.3 de consecuencias funcionales | §4.2, §4.3 |
+| **10** | Stock de pendientes: decisión pendiente | **Aprobada (16/10/2026)** + criterio de aceptación/prueba en 4.6 | §5.3, §1.8 |
+| **11** | Dependencia de 4.5 decía «4.4» | → **4.4-bis** (secuencia aprobada, módulo completo) | §1.7 |
+| **12** | Verificación pedida por handoff §5.6 | **N-4**: `firestore.rules`/`firebase.json` inexistentes (16/10/2026) | §7.2, §1.0 |
+| **13** | Rollback y repaso de reglas | Backup + SHA-256 previo, repaso del **conjunto completo**, ventana de mantenimiento, procedimiento de restauración | §2.3, §1.0 |
+| **14** | D-6 no podía declararse sin evidencia | **§3.4** evidencia mínima exigida + **§3.5** límites, casos no cubiertos y disparadores de bloqueo/alternativas | §3 |
+| **15** | Suite: casos y conteos | **3.16–3.22** añadidos, «+4.6» diferenciado, total **22/22**, sin declarar PASS sin run real | §1.0, §2.4 |
+| **16** | Typos y texto corrupto | «elegiria»→«elegiría»; «distorsería»→«distorsionaría»; `se写下`→redacción nueva; referencia rota «§3.5 de este documento» → `PROPUESTA-ETAPA-3.md` §3.5 | §6.1, §5.3, §2.2, §1.6 |
+| **17** | Java re-verificable | Re-verificación al autorizar 4.0 + presentación del diff de `package.json`/scripts antes de instalar | §1.0, §6.1 |
+
+**No se reabrió ninguna decisión D-1…D-11** del handoff; la secuencia
+`4.0 → 4.1 → 4.2 → 4.3 → 4.3-bis → 4.4 → 4.4-bis → 4.5 → 4.6` no cambió.
 
 ---
 
 *Fin del documento. Etapa 4 — plan técnico de implementación de Reintegros. Producido
-15/10/2026 conforme a `HANDOFF-ETAPA-4.md` §5. Base de código: `10ab576`. Este documento no
-implementa, no modifica código ni datos, y no autoriza deploys.*
+15/10/2026 conforme a `HANDOFF-ETAPA-4.md` §5; **corregido el 16/10/2026** (§10, autorización
+del usuario). Base de código: `10ab576`. Este documento no implementa, no modifica código ni
+datos, y no autoriza deploys.*
