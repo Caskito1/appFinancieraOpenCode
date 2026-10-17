@@ -5,7 +5,8 @@
 > (restricciones). El handoff lo denominaba `PLAN-ETAPA-4.md`; **el usuario ordenó nombrarlo
 > `PROPUESTA-ETAPA-4.md`** (15/10/2026), en la raíz del repo padre, siguiendo el precedente de
 > `PROPUESTA-ETAPA-3.md` (decisión de ubicación también del usuario, igual que en la Etapa 3).
-> **La implementación (subetapas 4.0…4.6) requiere aprobación explícita y separada del usuario;
+> **La implementación (subetapas 4.0…4.5; 4.6 ELIMINADA 17/10/2026 — §11) requiere aprobación
+> explícita y separada del usuario;
 > la subetapa 4.0 exige aprobación propia (paso 5, HANDOFF §1).** `AppFinanciera/` no fue
 > modificado; sin acceso a Firestore; sin instalación de dependencias; sin commits ni push.
 >
@@ -33,15 +34,18 @@
 
 ---
 
-## 1. Desglose por subetapa (4.0…4.6, incl. bis)
+## 1. Desglose por subetapa (4.0…4.5, incl. bis; 4.6 ELIMINADA 17/10/2026)
 
-**Secuencia aprobada (15/10/2026, R1-1/R1-2 — no se modifica):**
+**Secuencia aprobada (15/10/2026, R1-1/R1-2) con la enmienda del 17/10/2026:**
 
-`4.0 → 4.1 → 4.2 → 4.3 → 4.3-bis → 4.4 → 4.4-bis → 4.5 → 4.6`
+`4.0 → 4.1 → 4.2 → 4.3 → 4.3-bis → 4.4 → 4.4-bis → 4.5`
 
-Justificación de mantenerla sin reordenar: 4.0 es prerrequisito de seguridad de toda escritura
-(§8.5 de la PROPUESTA); las bis tras su base permiten que 4.5 corra con el módulo completo
-(criterio §14 de la PROPUESTA); 4.6 al final por D-11a. **No se propone reordenamiento.**
+**4.6 ELIMINADA (decisión del usuario, 17/10/2026)** — su núcleo, la confirmación
+bilateral, quedó sin objeto (§11 filas 7–9). **No se renumera**: era la última de
+la secuencia. Justificación del orden restante: 4.0 es prerrequisito de seguridad
+de toda escritura (§8.5 de la PROPUESTA); las bis tras su base permiten que 4.5
+corra con el módulo completo (criterio §14 de la PROPUESTA). **No se propone
+reordenamiento.**
 Cada subetapa sigue el flujo `AGENTS.md`: Local → `staging` → aprobación → `main` (solo
 fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 
@@ -69,11 +73,11 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 
 | | |
 |---|---|
-| **Alcance** | `ReintegroModal` (alta de obligación, ambos sentidos, contraparte miembro o externa, `movimientoInicial` precargado con texto anti-doble-captura) + hook del modal + `submitReintegro`; botón «Reintegro» en `/agregar`; redirect a `/reintegros`. Sin cambios en `/home` (el botón de navegación llega con 4.3, cuando la página es usable). |
-| **Archivos a crear** | `app/agregar/components/reintegros/ReintegroModal.jsx` · `app/agregar/components/reintegros/hooks/useReintegroModal.js` (resolución de miembros patrón `useModoTransferencia.jsx:32-85`, con fallback `uid`/`iud` — R-5) |
-| **Archivos a editar** | `app/agregar/page.jsx` — agregar sección/botón «Reintegro» + render del modal (patrón `ModoIngreso`; **sin tocar** los bloques de Transferencias: eso es 4.5) |
+| **Alcance** | `ReintegroModal` (alta de obligación en **un paso**, ambos sentidos; **un SOLO selector «¿Con quién?»** con la unión de miembros de todos los grupos + «Persona externa»; **groupId deducido**: 1 grupo compartido → ese; varios → picker «¿En qué grupo?»; externa → null) + hook del modal + `submitReintegro` (rid único por apertura; montos enteros; timeout de UI con bloqueo de campos y redirect montado-guarded); **`movimientoInicial` DERIVADO — decisión del usuario 17/10/2026, reemplaza «precargado con texto anti-doble-captura»**: `por_cobrar` → `salida`; `por_devolver` → `ninguno` por defecto con casilla «Me entró dinero (efectivo o transferencia)» → `entrada`; nota «los reintegros van por fuera de Gastos e Ingresos»; monto con tope de 12 dígitos; nombre de contraparte miembro **solo de doc `users/` existente** (null si no, `canSubmit` lo exige). Botón «Reintegro» en `/agregar` con **render condicional**; redirect a `/reintegros`. **`/reintegros` — decisión del usuario 17/10/2026, reemplaza la página stub:** balance de stock **Préstamos/Deudas** (cantidad, total y pendiente sobre abiertas; PO-1, sin filtro de mes), **pestañas Activos/Saldados**, **acordeones** Préstamos/Deudas (patrón `/gastos`) y sección colapsable **«Dinero del mes»** (entradas/salidas **solo lectura** con selector de mes, rotulada «No incluido en Gastos/Ingresos»); **sin acciones**: pagar/editar = 4.3, condonar/eliminar = 4.3-bis. **Sin etiqueta «Sin confirmar» — decisión del usuario 17/10/2026: el otro miembro NO confirma las deudas (4.6 eliminada); las obligaciones de miembro cuentan en el balance de ambas partes y se presentan como cualquier otra.** Entorno: **emulador local exclusivo** (flag `NEXT_PUBLIC_USE_EMULATOR` con guarda doble en `lib/firebase.js`) + siembra `scripts/seed-emulator.mjs` (guarda de host: `FIRESTORE_EMULATOR_HOST` obligatorio **y** solo `127.0.0.1`/`localhost`) + Emulator UI en :4000. Reintento de suscripción acotado (solo `unavailable`, máx. 5) + botón **«Reintentar»** manual. Sin cambios en `/home` (el botón de navegación llega con 4.3, cuando la página es usable). |
+| **Archivos a crear** | `app/agregar/components/reintegros/ReintegroModal.jsx` · `app/agregar/components/reintegros/hooks/useReintegroModal.js` (resolución de nombres R-5 patrón `useModoTransferencia`, pero **nombre usable solo de doc existente**, sin fallback de uid) · `app/reintegros/page.jsx` (ya no el stub de 4.1: página con balance, pestañas, acordeones y «Dinero del mes») · `scripts/seed-emulator.mjs` (+ script npm `seed:emulator`) · `.env.development.local` (gitignored, flag del emulador) |
+| **Archivos a editar** | `app/agregar/page.jsx` — sección/botón «Reintegro» + render del modal con **render condicional** (`ModoIngreso`; **sin tocar** los bloques de Transferencias: eso es 4.5) · `app/reintegros/hooks/useReintegros.js` (reintento acotado + `reintentar()`) · `lib/firebase.js` (conexión a emuladores + aviso en consola) · `firebase.json` (Emulator UI :4000) · `package.json` (+script `seed:emulator`) |
 | **Dependencias** | 4.1 |
-| **Done verificable** | Alta por modal verificada en Local/Staging: ambos sentidos; contraparte miembro (`participantes` = 2 uids) y externa (1 uid + nombre libre); `movimientoInicial` precarga correcta; `submitReintegro` atómico (obligación + evento `creacion`); redirect a `/reintegros`; build/lint OK |
+| **Done verificable** | Alta por modal verificada en Local/Staging: **un paso** con selector único «¿Con quién?»; ambos sentidos; contraparte miembro (`participantes` = 2 uids) y externa (1 uid + nombre libre); `movimientoInicial` **derivado** correcto (incl. casilla «Me entró dinero»); `submitReintegro` atómico (obligación + evento `creacion`); redirect a `/reintegros`; `/reintegros` legible con balance de stock, pestañas, acordeones y «Dinero del mes», **sin etiqueta «Sin confirmar»** (las obligaciones de miembro suman en ambos balances); botón «Reintentar» visible tras agotar los reintentos automáticos; siembra + emuladores locales con UI en :4000; build/lint OK |
 | **Evidencia esperada** | Prueba funcional del usuario en Local + PASS en Staging |
 
 ### 1.3 Subetapa 4.3 — Devoluciones y consulta de pendientes
@@ -114,7 +118,7 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 
 | | |
 |---|---|
-| **Alcance** | Esquema **exacto del evento** — fuente: `PROPUESTA-ETAPA-3.md` §3.5 (D-3 lo delega al plan; la referencia previa a «§3.5 de este documento» no existía y se corrige); verificación de que **toda** acción (alta, edición, devolución, editar entrega, eliminar entrega, eliminar obligación, condonar) escribe su evento — y la de **confirmación** de 4.6, **una vez aprobada la extensión de tipos `['confirmacion']` con esa subetapa** (§2.5: en 4.0 la lista es la cerrada de D-3); verificación de rollback (evento huérfano = fallo; el acople acción↔evento es de harness, no de reglas — §3.5); reglas create-only ya desplegadas en 4.0 (criterio 3.14). **Sin vista de bitácora en v1.** |
+| **Alcance** | Esquema **exacto del evento** — fuente: `PROPUESTA-ETAPA-3.md` §3.5 (D-3 lo delega al plan; la referencia previa a «§3.5 de este documento» no existía y se corrige); verificación de que **toda** acción (alta, edición, devolución, editar entrega, eliminar entrega, eliminar obligación, condonar) escribe su evento — y la de **confirmación** de 4.6, **una vez aprobada la extensión de tipos `['confirmacion']` con esa subetapa** (§2.5: en 4.0 la lista es la cerrada de D-3); verificación de rollback (evento huérfano = fallo; el acople acción↔evento es de harness, no de reglas — §3.5); reglas create-only ya desplegadas en 4.0 (criterio 3.14). **Sin vista de bitácora en v1.** *(Decisión 17/10/2026: sin confirmación bilateral → la extensión de tipos `['confirmacion']` queda **sin objeto**; la lista se mantiene cerrada en los 4 tipos de D-3 — §11 filas 7/10.)* |
 | **Archivos a editar** | `eventos.js` (si el schema exige ajuste fino) · helpers que escriben eventos (completar cobertura) |
 | **Dependencias** | 4.1 (servicio) + 4.3-bis (acciones de eliminación/condonación) |
 | **Done verificable** | Caso 15 de §14.1: create-only (update/delete rechazados en emulador); cada acción emite exactamente un evento; rollback deja eventos consistentes; harness PASS |
@@ -131,7 +135,14 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 | **Done verificable** | Las 6 condiciones cumplidas y checklist firmado; greps 0 restos; build/lint OK; totales correctos; I-1 verificado; PASS en Staging y verificación en Producción |
 | **Evidencia esperada** | Checklist + greps + diff revisado + verificación en Producción |
 
-### 1.8 Subetapa 4.6 — Confirmación bilateral (PO-4, D-11a/D-11b)
+### 1.8 Subetapa 4.6 — Confirmación bilateral (PO-4, D-11a/D-11b) — **[ELIMINADA 17/10/2026]**
+
+> > **❌ ELIMINADA — decisión del usuario 17/10/2026:** no hay confirmación bilateral (el
+> > otro miembro NO confirma las deudas). El alcance, archivos, dependencias y «done» de
+> > esta subetapa quedan **sin objeto**; la secuencia termina en 4.5 (§1). El cuerpo de la
+> > tabla se conserva **solo como registro histórico**. Lo que sobrevive: los permisos que
+> > resolvía (pagos, editar monto, condonar, eliminar) → **§11 fila 11 (confirmados)**;
+> > los cambios de reglas asociados → **§11 fila 10 (registrados, NO ejecutados)**.
 
 Diseño detallado completo en **§5** de este documento (estados, queries, reglas, UI, alternativa
 tácita). Alcance mínimo: alta crea obligación «pendiente de confirmación» cuando la contraparte
@@ -588,7 +599,15 @@ la fila **«+4.6»** (ámbito de esa subetapa).
 **Total esperado en 4.0: 22/22 PASS (3.1–3.22).** El «+4.6» se suma al llegar 4.6. Un
 FAIL no se maquilla ni se pospone: se diagnostica antes de cualquier despliegue.
 
-### 2.5 Reglas de 4.6 (transición de confirmación)
+### 2.5 Reglas de 4.6 (transición de confirmación) — **[SUPERADO 17/10/2026]**
+
+> > **⚠ SUPERADO — 17/10/2026 (4.6 eliminada, sin confirmación).** Registro histórico. Los
+> > textos afectados se modifican en el **primer paso de la próxima sesión — el lote de
+> > reglas previo a 4.3**, **siempre con diff y tests para aprobación del usuario** (las
+> > reglas que se desplieguen a Producción serán **las posteriores a ese lote**): guarda de
+> > entregas `confirmadaPor != null || contraparteUid == null` · rama (g) · condición H-c de
+> > la rama (c) (pasa a moot) · condición de `confirmadaPor` en el `create` · suite (3.9
+> > parcial, 3.20, 3.25). **No ejecutar sin aprobación** (§11 filas 10–11).
 
 Ya esbozadas en §2.2 (rama create con `confirmadaPor` y rama update (g)):
 
@@ -810,7 +829,13 @@ implementa sin su aprobación explícita (paso 5 del flujo).
 
 ---
 
-## 5. Diseño detallado de 4.6 — Confirmación bilateral (PO-4; D-11a/D-11b)
+## 5. Diseño detallado de 4.6 — Confirmación bilateral (PO-4; D-11a/D-11b) — **[SUPERADO 17/10/2026]**
+
+> > **⚠ SUPERADO — 17/10/2026 (4.6 eliminada).** Registro histórico. En particular:
+> > §5.3 (exclusión de pendientes de confirmación del stock, decisión 16/10/2026) queda
+> > **sin objeto** — no hay estado «pendiente de confirmación» y **todo cuenta en el
+> > balance de ambas partes**; §5.4 (ventana R-4 entre 4.3 y 4.6) queda obsoleta — **R-4
+> > vuelve a mitigarse solo con convención de uso** (§11 filas 7–9).
 
 > Nota verificada (`HANDOFF-ETAPA-4.md` §4): el «patrón de fijos» citado como referencia de
 > UX **no existe como mecanismo** en el código (`useFixedExpenses.js:270-317` solo tiene
@@ -1071,11 +1096,37 @@ Qué cambió y dónde:
 | **17** | Java re-verificable | Re-verificación al autorizar 4.0 + presentación del diff de `package.json`/scripts antes de instalar | §1.0, §6.1 |
 
 **No se reabrió ninguna decisión D-1…D-11** del handoff; la secuencia
-`4.0 → 4.1 → 4.2 → 4.3 → 4.3-bis → 4.4 → 4.4-bis → 4.5 → 4.6` no cambió.
+`4.0 → 4.1 → 4.2 → 4.3 → 4.3-bis → 4.4 → 4.4-bis → 4.5 → 4.6` no cambió
+*(en la sesión del 16/10; la eliminación de 4.6 llega con §11, el 17/10/2026)*.
+
+---
+
+## 11. Decisiones del usuario (17/10/2026, cierre de 4.2)
+
+Enmiendas al desglose (§1), a 4.2 (§1.2), a 4.4-bis (§1.6), a 4.6 (§1.8/§2.5/§5) y a la
+secuencia, resueltas por el usuario el **17/10/2026** al aprobar la subetapa 4.2 con ajustes.
+
+| # | Decisión | Dónde reemplaza / afecta |
+|---|---|---|
+| 1 | Un SOLO selector «¿Con quién?» (unión de miembros de todos los grupos + externa); groupId deducido, con picker «¿En qué grupo?» solo si hay varios compartidos | §1.2 Alcance |
+| 2 | `movimientoInicial` **derivado** + casilla «Me entró dinero»; sin selector manual ni texto anti-doble-captura | §1.2 Alcance |
+| 3 | `/reintegros` con balance de stock Préstamos/Deudas, pestañas Activos/Saldados y acordeones (estética /gastos) | §1.2 Alcance |
+| 4 | Sección «Dinero del mes» (solo lectura, con selector de mes) | §1.2; **§1.5 — 4.4 absorbe «Dinero del mes» dentro de `ResumenMesCard` (sin selector duplicado)** |
+| 5 | Reintentos de suscripción acotados (solo `unavailable`, máx. 5) + botón «Reintentar» | §1.2 Alcance |
+| 6 | Entorno de 4.2: emulador local exclusivo (flag con guarda doble) + siembra (con guarda de host local) + Emulator UI en :4000 | §1.2 (Alcance/Archivos) |
+| 7 | **Sin confirmación bilateral: el otro miembro NO confirma las deudas** — supersede **PO-4** (decidida 14/10/2026, `PROPUESTA-ETAPA-3.md` §5.3; ese documento **no se modifica**: registro histórico) y **D-11a/D-11b** del HANDOFF | §1.6, §1.8, §2.5, §5 |
+| 8 | UI de 4.2: quitar «Sin confirmar» de las filas de `/reintegros`; las obligaciones de miembro **cuentan en el balance de ambas partes** | §1.2 Alcance |
+| 9 | **4.6 ELIMINADA 17/10/2026** (sin renumerar: era la última). La secuencia termina en **4.5** | §1 (secuencia), §1.8, §5, HANDOFF §4 |
+| 10 | Efectos **registrados, NO ejecutados** — el **primer paso de la próxima sesión, antes de 4.3**, es el lote de reglas que retira la confirmación, **con diff y tests para aprobación del usuario** (las reglas que se desplieguen a Producción serán **las posteriores a ese lote**): guarda de entregas `confirmadaPor != null \|\| contraparteUid == null`, rama (g) + test 3.20, H-c de la rama (c) → moot + test 3.25, `confirmadaPor` en el alta (create) + tests 3.9/3.40 y el shape H1/1a/1b del harness, chequeo `SIN_CONFIRMAR` en `submitDevolucion` + caso H3b; la extensión `['confirmacion']` en `eventos` queda **sin objeto** | §2.2, §2.4, §2.5 |
+| 11 | **Permisos — CONFIRMADOS por el usuario (17/10/2026):** (a) **pagos: por cualquiera de los dos** (implementación efectiva tras el lote de reglas de la fila 10); (b) **monto: editable solo por el registrador, con `devuelto == 0`** (rama (c) vigente, menos la condición H-c que pasa a moot); (c) **condonar y eliminar: como están hoy hasta 4.3-bis** (C1/E1 de D-8). **Consecuencia registrada de sin confirmación:** la contraparte **no puede aceptar, rechazar ni ocultar** una obligación que le crea el registrador, y **no se le avisa si el registrador edita el monto** (la edición queda solo en la bitácora) — **vinculado con H-e** (`EVIDENCIA-4.0.md` §6): sin confirmación la contraparte no tiene ningún veto sobre la obligación impuesta; **H-e sigue PENDIENTE ABIERTO** y debe resolverse antes de abrir la app al público | Lote de reglas (fila 10) · 4.3 / 4.3-bis |
+
+*Esta §11 no reabre las decisiones D-1…D-11 restantes del HANDOFF (D-11a/D-11b quedan
+supersedas por las filas 7 y 9). Fuente operativa de la cierre: `AppFinanciera/EVIDENCIA-4.2.md` §9.*
 
 ---
 
 *Fin del documento. Etapa 4 — plan técnico de implementación de Reintegros. Producido
 15/10/2026 conforme a `HANDOFF-ETAPA-4.md` §5; **corregido el 16/10/2026** (§10, autorización
-del usuario). Base de código: `10ab576`. Este documento no implementa, no modifica código ni
-datos, y no autoriza deploys.*
+del usuario); **enmendado el 17/10/2026** (§11, decisiones de cierre de 4.2 — incluye la
+eliminación de 4.6). Base de código al producirlo: `10ab576`. Este documento no implementa,
+no modifica código ni datos, y no autoriza deploys.*

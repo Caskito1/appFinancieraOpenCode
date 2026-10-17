@@ -25,7 +25,7 @@ El Organizador controla los estados y registra las decisiones; el OpenCode de Ap
 
 ## 2. Decisiones de la Ronda 1 — estructura (aprobadas; no reabrir)
 
-- **R1-1 Orden:** `4.0 → 4.1 → 4.2 → 4.3 → 4.4 → 4.5`, con 4.5 (retiro de Transferencias) al final del núcleo; **4.6 posterior a 4.5** (D-11a). Secuencia completa en §4.
+- **R1-1 Orden:** `4.0 → 4.1 → 4.2 → 4.3 → 4.4 → 4.5`, con 4.5 (retiro de Transferencias) al final del núcleo; **4.6 ELIMINADA (17/10/2026)** — el núcleo termina en 4.5 (enmienda y detalle en §4). Secuencia completa en §4.
 - **R1-2 Alcance:** incluidas **4.3-bis** (eliminar/condonar) y **4.4-bis** (bitácora); sus detalles y criterios se definen en sus subetapas.
 - **R1-3 Fuera del alcance inicial:** BottomNav y vinculación `gastoVinculadoId`. No se revoca PO-4 ni ninguna decisión funcional ya tomada.
 - **R1-4 Herramientas de pruebas:** solo análisis y propuesta, sin instalar (ver D-1).
@@ -45,8 +45,8 @@ El Organizador controla los estados y registra las decisiones; el OpenCode de Ap
 | **D-8** | Matriz: **E1** (eliminar obligación: solo registrador) + **C1** (condonar: solo el acreedor según su vista; externo: solo registrador) + **(ii)** (editar: campos no financieros siempre, `monto` bloqueado con `devuelto > 0`; solo registrador) | Alimenta `firestore.rules` de 4.0 y la subetapa 4.3-bis |
 | **D-9** | Congelaciones: principio aprobado — condonada → solo lectura + «Eliminar»; entregas congeladas; eliminada → inmutable | **CASO ABIERTO para el plan:** «pago recibido después de la condonación». **No** se aprueba por anticipado «eliminar y re-registrar»: debe comprobarse su compatibilidad con E1, C1 y la trazabilidad |
 | **D-10** | Labels: acción **«Condonar»**; estado visible **«Condonada»** (variante aprobada del sello «Condonda» de §4.4 — aplica «Condonada») | UI de 4.3-bis |
-| **D-11a** | Nueva subetapa **4.6 — Confirmación bilateral**, posterior a 4.5; **amplía el alcance inicial** porque PO-4 está decidida para la primera versión | BottomNav y vinculación de gastos siguen fuera de la Etapa 4 |
-| **D-11b** | Guardrails PO-4: (1) la contraparte **ve** la obligación pendiente de confirmación; (2) **no se registran entregas** antes de confirmar; (3) el registrador **puede editar/eliminar** antes de confirmar; después rige la matriz D-8 | Estados, consultas, labels definitivos, reglas exactas y alternativa de confirmación tácita → plan técnico de 4.6 |
+| **D-11a** | Nueva subetapa **4.6 — Confirmación bilateral**, posterior a 4.5; **amplía el alcance inicial** porque PO-4 está decidida para la primera versión | BottomNav y vinculación de gastos siguen fuera de la Etapa 4 — **SUPERADA 17/10/2026: sin confirmación bilateral; 4.6 ELIMINADA (§4)** |
+| **D-11b** | Guardrails PO-4: (1) la contraparte **ve** la obligación pendiente de confirmación; (2) **no se registran entregas** antes de confirmar; (3) el registrador **puede editar/eliminar** antes de confirmar; después rige la matriz D-8 | Estados, consultas, labels definitivos, reglas exactas y alternativa de confirmación tácita → plan técnico de 4.6 — **SIN OBJETO 17/10/2026**; los permisos que dejaba en pausa (pagos, editar monto, condonar, eliminar) quedan **confirmados** en `PROPUESTA-ETAPA-4.md` §11 fila 11 |
 
 > **Separación obligatoria:** funcionales ya decididas (PO/DC) · principios técnicos aprobados (esta tabla) · detalles que valida el plan técnico (§5). Ninguna de las tres se mezcla ni se reabre.
 
@@ -56,9 +56,9 @@ El Organizador controla los estados y registra las decisiones; el OpenCode de Ap
 
 Secuencia aprobada por el usuario (15/10/2026):
 
-**`4.0 → 4.1 → 4.2 → 4.3 → 4.3-bis → 4.4 → 4.4-bis → 4.5 → 4.6`**
+**`4.0 → 4.1 → 4.2 → 4.3 → 4.3-bis → 4.4 → 4.4-bis → 4.5`** *(enmienda 17/10/2026: **4.6 ELIMINADA** — era la última; sin renumeración)*
 
-— intercala las bis tras su subetapa base para que **4.5 corra con el módulo completo** (criterio §14) y **4.6 quede al final** (D-11a). El plan técnico **puede justificar un reordenamiento** (con su racional y sujeto a aprobación), pero **no puede modificar silenciosamente el alcance aprobado**.
+— intercala las bis tras su subetapa base para que **4.5 corra con el módulo completo** (criterio §14). **4.6, que iba al final (D-11a), fue eliminada el 17/10/2026** — sin confirmación bilateral, su núcleo quedó sin objeto (ver párrafo debajo de la tabla y `PROPUESTA-ETAPA-4.md` §11). El plan técnico **puede justificar un reordenamiento** (con su racional y sujeto a aprobación), pero **no puede modificar silenciosamente el alcance aprobado**.
 
 | # | Subetapa | Pendientes que resuelve (decisión) |
 |---|---|---|
@@ -70,11 +70,13 @@ Secuencia aprobada por el usuario (15/10/2026):
 | **4.4** | Resumen mensual y agrupaciones | — (PO-1, PO-8 A+, DC-1 ya decididos) |
 | **4.4-bis** | Bitácora | detalle P-1 (D-3) |
 | **4.5** | Retiro de Transferencias | 6 condiciones de §7.4 (ya fijadas) |
-| **4.6** | Confirmación bilateral (PO-4) | vacíos de PO-4 (D-11a, D-11b + diseño detallado) |
+| **4.6** | ~~Confirmación bilateral (PO-4)~~ **ELIMINADA 17/10/2026** | Sin confirmación (decisión 17/10/2026): los vacíos de PO-4 quedan resueltos en `PROPUESTA-ETAPA-4.md` §11 (filas 7–11) |
+
+> **Actualización 17/10/2026 (4.2 aprobada con ajustes):** UX de 4.2 (selector único «¿Con quién?», `movimientoInicial` derivado con casilla «Me entró dinero», `/reintegros` con balance Préstamos/Deudas, pestañas, acordeones y «Dinero del mes», botón «Reintentar», emulador local exclusivo + siembra + Emulator UI :4000). **Decisión de fondo: NO hay confirmación bilateral** (supersede PO-4 y D-11a/D-11b): la UI de 4.2 quita «Sin confirmar», las obligaciones de miembro **suman en el balance de ambas partes** y **4.6 queda ELIMINADA** (la secuencia termina en 4.5). Los cambios de reglas/helpers derivados (guarda de entregas, rama (g), H-c → moot, `confirmadaPor` en el alta, `SIN_CONFIRMAR` en `submitDevolucion`) están **registrados, no ejecutados**: su ejecución es el **primer paso de la próxima sesión, antes de 4.3**, con diff y tests para aprobación del usuario (las reglas que se desplieguen a Producción serán las posteriores a ese lote). Permisos (pagos, monto, condonar, eliminar) confirmados: `PROPUESTA-ETAPA-4.md` §11 fila 11. Fuente operativa: `AppFinanciera/EVIDENCIA-4.2.md` §9.
 
 P-1…P-9 y los vacíos de PO-4: todos con decisión de principio; ninguno inventado, ninguno reabierto.
 
-**Nota verificada sobre 4.6:** el «patrón de fijos» que §5.3 cita como referencia de UX de la confirmación **no existe como mecanismo en el código** (ni §11.1 describe una confirmación bilateral en fijos; `useFixedExpenses.js` solo tiene diálogos locales «Confirmar pago»/borrado). El diseño de 4.6 será **nuevo, no una copia**.
+**Nota verificada sobre 4.6:** el «patrón de fijos» que §5.3 cita como referencia de UX de la confirmación **no existe como mecanismo en el código** (ni §11.1 describe una confirmación bilateral en fijos; `useFixedExpenses.js` solo tiene diálogos locales «Confirmar pago»/borrado). El diseño de 4.6 habría sido **nuevo, no una copia** *(sin objeto desde la eliminación del 17/10/2026)*.
 
 ## 5. Entregable esperado: `PLAN-ETAPA-4.md` (raíz del repo)
 
