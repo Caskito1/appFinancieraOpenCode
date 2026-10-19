@@ -142,7 +142,7 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 > > esta subetapa quedan **sin objeto**; la secuencia termina en 4.5 (§1). El cuerpo de la
 > > tabla se conserva **solo como registro histórico**. Lo que sobrevive: los permisos que
 > > resolvía (pagos, editar monto, condonar, eliminar) → **§11 fila 11 (confirmados)**;
-> > los cambios de reglas asociados → **§11 fila 10 (registrados, NO ejecutados)**.
+> > los cambios de reglas asociados → **§11 fila 10 (APLICADOS 17/10/2026)**.
 
 Diseño detallado completo en **§5** de este documento (estados, queries, reglas, UI, alternativa
 tácita). Alcance mínimo: alta crea obligación «pendiente de confirmación» cuando la contraparte
@@ -601,13 +601,13 @@ FAIL no se maquilla ni se pospone: se diagnostica antes de cualquier despliegue.
 
 ### 2.5 Reglas de 4.6 (transición de confirmación) — **[SUPERADO 17/10/2026]**
 
-> > **⚠ SUPERADO — 17/10/2026 (4.6 eliminada, sin confirmación).** Registro histórico. Los
-> > textos afectados se modifican en el **primer paso de la próxima sesión — el lote de
-> > reglas previo a 4.3**, **siempre con diff y tests para aprobación del usuario** (las
-> > reglas que se desplieguen a Producción serán **las posteriores a ese lote**): guarda de
-> > entregas `confirmadaPor != null || contraparteUid == null` · rama (g) · condición H-c de
-> > la rama (c) (pasa a moot) · condición de `confirmadaPor` en el `create` · suite (3.9
-> > parcial, 3.20, 3.25). **No ejecutar sin aprobación** (§11 filas 10–11).
+> > **⚠ SUPERADO — 17/10/2026 (4.6 eliminada, sin confirmación).** Registro histórico. El
+> > lote de retiro de la confirmación fue **APLICADO 17/10/2026** con diff y tests aprobados
+> > por el usuario (commit `5264d2e`): guarda de entregas `confirmadaPor != null ||
+> > contraparteUid == null` **retirada** · rama (g) **retirada** · condición H-c de la
+> > rama (c) **moot** · `confirmadaPor` **prohibido** en el `create` · suite 3.9/3.20/3.25
+> > reescrita. Las reglas que se desplieguen a Producción serán **las posteriores a ese
+> > lote** (§11 filas 10–11).
 
 Ya esbozadas en §2.2 (rama create con `confirmadaPor` y rama update (g)):
 
@@ -1117,7 +1117,7 @@ secuencia, resueltas por el usuario el **17/10/2026** al aprobar la subetapa 4.2
 | 7 | **Sin confirmación bilateral: el otro miembro NO confirma las deudas** — supersede **PO-4** (decidida 14/10/2026, `PROPUESTA-ETAPA-3.md` §5.3; ese documento **no se modifica**: registro histórico) y **D-11a/D-11b** del HANDOFF | §1.6, §1.8, §2.5, §5 |
 | 8 | UI de 4.2: quitar «Sin confirmar» de las filas de `/reintegros`; las obligaciones de miembro **cuentan en el balance de ambas partes** | §1.2 Alcance |
 | 9 | **4.6 ELIMINADA 17/10/2026** (sin renumerar: era la última). La secuencia termina en **4.5** | §1 (secuencia), §1.8, §5, HANDOFF §4 |
-| 10 | Efectos **registrados, NO ejecutados** — el **primer paso de la próxima sesión, antes de 4.3**, es el lote de reglas que retira la confirmación, **con diff y tests para aprobación del usuario** (las reglas que se desplieguen a Producción serán **las posteriores a ese lote**): guarda de entregas `confirmadaPor != null \|\| contraparteUid == null`, rama (g) + test 3.20, H-c de la rama (c) → moot + test 3.25, `confirmadaPor` en el alta (create) + tests 3.9/3.40 y el shape H1/1a/1b del harness, chequeo `SIN_CONFIRMAR` en `submitDevolucion` + caso H3b; la extensión `['confirmacion']` en `eventos` queda **sin objeto** | §2.2, §2.4, §2.5 |
+| 10 | **Lote de reglas APLICADO 17/10/2026** (diff y tests aprobados por el usuario previamente; commit `5264d2e`): retirados la guarda de entregas `confirmadaPor != null \|\| contraparteUid == null`, la rama (g) + test 3.20 reescrito, la condición H-c de la rama (c) → moot + test 3.25 reescrito, `confirmadaPor` **prohibido** en el alta (create) + tests 3.9/3.40 y shape H1/1a/1b del harness, y el chequeo `SIN_CONFIRMAR` en `submitDevolucion` + caso H3b reescrito; la extensión `['confirmacion']` en `eventos` queda **sin objeto**. Las reglas que se desplieguen a Producción serán **las posteriores a ese lote** | §2.2, §2.4, §2.5 |
 | 11 | **Permisos — CONFIRMADOS por el usuario (17/10/2026):** (a) **pagos: por cualquiera de los dos** (implementación efectiva tras el lote de reglas de la fila 10); (b) **monto: editable solo por el registrador, con `devuelto == 0`** (rama (c) vigente, menos la condición H-c que pasa a moot); (c) **condonar y eliminar: como están hoy hasta 4.3-bis** (C1/E1 de D-8). **Consecuencia registrada de sin confirmación:** la contraparte **no puede aceptar, rechazar ni ocultar** una obligación que le crea el registrador, y **no se le avisa si el registrador edita el monto** (la edición queda solo en la bitácora) — **vinculado con H-e** (`EVIDENCIA-4.0.md` §6): sin confirmación la contraparte no tiene ningún veto sobre la obligación impuesta; **H-e sigue PENDIENTE ABIERTO** y debe resolverse antes de abrir la app al público | Lote de reglas (fila 10) · 4.3 / 4.3-bis |
 
 *Esta §11 no reabre las decisiones D-1…D-11 restantes del HANDOFF (D-11a/D-11b quedan
