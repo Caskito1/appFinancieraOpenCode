@@ -21,7 +21,7 @@ Scripts: `dev`, `build`, `start`, `lint` y, desde la Etapa 4, `test:rules` (regl
 ### 1. Inicialización y contexto (`lib/`)
 
 - **`lib/firebase.js`** — `initializeApp`, `getAuth`, `getFirestore`. Exporta `auth`, `googleProvider`, `db`. *(El import de `getStorage` y `export storage` fueron eliminados en **2.6**, 11/10/2026, `10ab576`; `storageBucket` permanece en el config.)*
-- **`lib/AuthContext.jsx`** — provee contexto de autenticación exponiendo `{ user, loading }`, donde `loading = user === undefined` (sesión aún no resuelta por `onAuthStateChanged`). Incluye salvaguarda de 8 s (`AUTH_RESOLVE_TIMEOUT_MS`) que, si el observer nunca emite, pasa `undefined → null` sin pisar sesiones resueltas, y un `try/catch` síncrono sobre la creación de la suscripción (corregido en **2.4**, 10/10/2026, commit `1716a19`; ver `PROPUESTA-2.4.md`). No maneja login/registro/logout: solo observa `onAuthStateChanged`. El login está en `app/login/page.jsx` (`signInWithEmailAndPassword`) y el logout en `app/home/page.jsx` (`signOut`). No hay registro implementado en el repo.
+- **`lib/AuthContext.jsx`** — provee contexto de autenticación exponiendo `{ user, loading }`, donde `loading = user === undefined` (sesión aún no resuelta por `onAuthStateChanged`). Incluye salvaguarda de 8 s (`AUTH_RESOLVE_TIMEOUT_MS`) que, si el observer nunca emite, pasa `undefined → null` sin pisar sesiones resueltas, y un `try/catch` síncrono sobre la creación de la suscripción (corregido en **2.4**, 10/10/2026, commit `1716a19`; ver `docs/propuestas/PROPUESTA-2.4.md`). No maneja login/registro/logout: solo observa `onAuthStateChanged`. El login está en `app/login/page.jsx` (`signInWithEmailAndPassword`) y el logout en `app/home/page.jsx` (`signOut`). No hay registro implementado en el repo.
 - **`lib/GroupContext.jsx`** — provee `{ groups, loadingGroups }` leyendo la colección `groups` del usuario. Con un solo grupo real hoy, `groups[0]` es el grupo usado en casi todas las suscripciones.
 
 ### 2. Capa de datos (services — suscripciones Firestore)
@@ -111,4 +111,4 @@ El usuario activa gastos fijos escribiendo **config en `fixed_expenses`** (`{exp
 - Transferencias (legacy) activas en lecturas.
 - UI con botones de alta transferencia/gastos fijos deshabilitados (lógica sin pedir).
 - PWA configurada pero sin verificación de build completo en CI (solo `dev`).
-- Código muerto acumulado (ver `REPORT-ETAPA-0.md`, sección hallazgos).
+- Código muerto acumulado (ver `docs/reportes/REPORT-ETAPA-0.md`, sección hallazgos).

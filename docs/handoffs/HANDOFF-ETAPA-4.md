@@ -2,16 +2,17 @@
 
 > Preparado por Personal System (coordinación) — 15/10/2026.
 > Documento de traspaso para el OpenCode de AppFinanciera. **Solo planificación: no implementa nada.**
-> Resultado (materializado): `PROPUESTA-ETAPA-4.md`, raíz de este repo — el nombre previsto `PLAN-ETAPA-4.md` no se usó.
+> Resultado (materializado): `docs/propuestas/PROPUESTA-ETAPA-4.md` — el nombre previsto `PLAN-ETAPA-4.md` no se usó.
 > La entrega de este HANDOFF al repo es una acción posterior, no automática (revisión del usuario previa).
 
 ## 0. Estado de coordinación (actualizado 22/10/2026)
 
 - **Etapa 3 CERRADA (15/10/2026):** `PROPUESTA-ETAPA-3.md` aprobada (`e665e3d`); PO-1…PO-8 y DC-1…DC-8 incorporadas; P-1…P-9 y vacíos de PO-4 abiertos.
 - **Etapa 4 EN IMPLEMENTACIÓN:** Ronda 1 y Ronda 2 aprobadas 15/10/2026 (este handoff); plan técnico aprobado como `PROPUESTA-ETAPA-4.md` (16/10/2026, `294bab9`/`e57f6f0`) con enmiendas 17/10/2026 (`0ed53ab`, `86aaf06`).
-- **Subetapas CERRADAS** (todas en `staging` de `AppFinanciera/`, evidencia en `AppFinanciera/EVIDENCIA-4.0.md` … `EVIDENCIA-4.3.md`): **4.0** 16/10 (`ff47291`, `63666f6`) · **4.1** 16/10 (`6519dda`, `2404140`) · **4.2** 17–19/10 (`74b9203`, `632dd65`, `5264d2e`, `41f8cb8`) · **4.3** 21–22/10 (`7d41d39`, `2e1ba5f`, `687d65b`, `7ae1021`, `280e817`, `8f2c7b6`).
+- **Subetapas CERRADAS** (todas en `staging` de `AppFinanciera/`, evidencia en `docs/evidencia/EVIDENCIA-4.0.md` … `EVIDENCIA-4.3.md`): **4.0** 16/10 (`ff47291`, `63666f6`) · **4.1** 16/10 (`6519dda`, `2404140`) · **4.2** 17–19/10 (`74b9203`, `632dd65`, `5264d2e`, `41f8cb8`) · **4.3** 21–22/10 (`7d41d39`, `2e1ba5f`, `687d65b`, `7ae1021`, `280e817`, `8f2c7b6`).
 - **Próxima subetapa: 4.3-bis (eliminar/condonar)** — pendiente de planificación y aprobación explícita (§1); 4.4, 4.4-bis y 4.5 tampoco están aprobadas.
 - Este handoff (fase de planificación, 15/10/2026) no autorizó por sí mismo código, dependencias, escrituras en Firestore, despliegues de reglas, commits ni push: cada subetapa se autorizó y cerró por separado.
+- **Documentación esperada de la etapa (tipos y nombres):** `docs/handoffs/HANDOFF-ETAPA-4.md` (1) · `docs/propuestas/PROPUESTA-ETAPA-4.md` (1) · `docs/evidencia/EVIDENCIA-<subetapa>.md` por cada subetapa de la secuencia aprobada (4.0, 4.1, 4.2, 4.3, 4.3-bis, 4.4, 4.4-bis, 4.5). Sin REPORT de etapa (definición canónica en `AGENTS.md` §Tipos de documento).
 
 ## 1. Flujo de planificación y responsabilidades (aprobado 15/10/2026)
 
@@ -73,13 +74,13 @@ Secuencia aprobada por el usuario (15/10/2026):
 | **4.5** | Retiro de Transferencias | 6 condiciones de §7.4 (ya fijadas) |
 | **4.6** | ~~Confirmación bilateral (PO-4)~~ **ELIMINADA 17/10/2026** | Sin confirmación (decisión 17/10/2026): los vacíos de PO-4 quedan resueltos en `PROPUESTA-ETAPA-4.md` §11 (filas 7–11) |
 
-> **Actualización 17/10/2026 (4.2 aprobada con ajustes):** UX de 4.2 (selector único «¿Con quién?», `movimientoInicial` derivado con casilla «Me entró dinero», `/reintegros` con balance Préstamos/Deudas, pestañas, acordeones y «Dinero del mes», botón «Reintentar», emulador local exclusivo + siembra + Emulator UI :4000). **Decisión de fondo: NO hay confirmación bilateral** (supersede PO-4 y D-11a/D-11b): la UI de 4.2 quita «Sin confirmar», las obligaciones de miembro **suman en el balance de ambas partes** y **4.6 queda ELIMINADA** (la secuencia termina en 4.5). Los cambios de reglas/helpers derivados (guarda de entregas, rama (g), H-c → moot, `confirmadaPor` prohibido en el alta, `SIN_CONFIRMAR` retirado de `submitDevolucion`) están **APLICADOS 17/10/2026** (diff y tests aprobados por el usuario; commit `5264d2e`; gates 20/20 y 44/44; las reglas que se desplieguen a Producción serán las posteriores a ese lote). Permisos (pagos, monto, condonar, eliminar) confirmados: `PROPUESTA-ETAPA-4.md` §11 fila 11. Fuente operativa: `AppFinanciera/EVIDENCIA-4.2.md` §9.
+> **Actualización 17/10/2026 (4.2 aprobada con ajustes):** UX de 4.2 (selector único «¿Con quién?», `movimientoInicial` derivado con casilla «Me entró dinero», `/reintegros` con balance Préstamos/Deudas, pestañas, acordeones y «Dinero del mes», botón «Reintentar», emulador local exclusivo + siembra + Emulator UI :4000). **Decisión de fondo: NO hay confirmación bilateral** (supersede PO-4 y D-11a/D-11b): la UI de 4.2 quita «Sin confirmar», las obligaciones de miembro **suman en el balance de ambas partes** y **4.6 queda ELIMINADA** (la secuencia termina en 4.5). Los cambios de reglas/helpers derivados (guarda de entregas, rama (g), H-c → moot, `confirmadaPor` prohibido en el alta, `SIN_CONFIRMAR` retirado de `submitDevolucion`) están **APLICADOS 17/10/2026** (diff y tests aprobados por el usuario; commit `5264d2e`; gates 20/20 y 44/44; las reglas que se desplieguen a Producción serán las posteriores a ese lote). Permisos (pagos, monto, condonar, eliminar) confirmados: `PROPUESTA-ETAPA-4.md` §11 fila 11. Fuente operativa: `docs/evidencia/EVIDENCIA-4.2.md` §9.
 
 P-1…P-9 y los vacíos de PO-4: todos con decisión de principio; ninguno inventado, ninguno reabierto.
 
 **Nota verificada sobre 4.6:** el «patrón de fijos» que §5.3 cita como referencia de UX de la confirmación **no existe como mecanismo en el código** (ni §11.1 describe una confirmación bilateral en fijos; `useFixedExpenses.js` solo tiene diálogos locales «Confirmar pago»/borrado). El diseño de 4.6 habría sido **nuevo, no una copia** *(sin objeto desde la eliminación del 17/10/2026)*.
 
-## 5. Entregable esperado: `PROPUESTA-ETAPA-4.md` (raíz del repo) — producido y aprobado el 16/10/2026; la designación prevista `PLAN-ETAPA-4.md` no se usó
+## 5. Entregable esperado: `docs/propuestas/PROPUESTA-ETAPA-4.md` — producido y aprobado el 16/10/2026; la designación prevista `PLAN-ETAPA-4.md` no se usó
 
 **Fuentes obligatorias:** `PROPUESTA-ETAPA-3.md` (§3, §3.2, §3.6, §4, §5.3, §7, §8.5, §12.6, §14) · código `AppFinanciera/` (solo lectura) · `HANDOFF-ETAPA-3.md` · `AGENTS.md` y `ROADMAP.md` del repo.
 

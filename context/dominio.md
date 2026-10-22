@@ -2,7 +2,7 @@
 
 Documento de **dominio**: qué representa cada cosa en la aplicación, independiente del detalle de implementación (para el detalle técnico ver `context/arquitectura.md`; para ubicar módulos ver `context/MAPA-APPFINANCIERA.md`).
 
-> **Origen:** integra `CONTEXTO-ETAPA3.md` (documento de uso real y visión, 19/09/2026), las decisiones funcionales del `HANDOFF-ETAPA-0-MAPA-CONTEXTO.md` y la verificación sobre el código del 23/09/2026. Este archivo es la fuente de contexto funcional para cualquier modificación futura.
+> **Origen:** integra `docs/reportes/CONTEXTO-ETAPA3.md` (documento de uso real y visión, 19/09/2026), las decisiones funcionales del `HANDOFF-ETAPA-0-MAPA-CONTEXTO.md` y la verificación sobre el código del 23/09/2026. Este archivo es la fuente de contexto funcional para cualquier modificación futura.
 
 ## 1. Principios rectores
 
@@ -85,7 +85,7 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 
 ## 5. Recuperaciones / Reintegros (Decisión funcional 4 y 5)
 
-**IMPLEMENTADO — Etapa 4 (subetapas 4.1–4.3, cerradas 22/10/2026).** Nombre técnico definitivo: **reintegro**. Diseño: `PROPUESTA-ETAPA-3.md` (Etapa 3) + `PROPUESTA-ETAPA-4.md` (plan); evidencia: `AppFinanciera/EVIDENCIA-4.0.md` … `EVIDENCIA-4.3.md`.
+**IMPLEMENTADO — Etapa 4 (subetapas 4.1–4.3, cerradas 22/10/2026).** Nombre técnico definitivo: **reintegro**. Diseño: `PROPUESTA-ETAPA-3.md` (Etapa 3) + `PROPUESTA-ETAPA-4.md` (plan); evidencia: `docs/evidencia/EVIDENCIA-4.0.md` … `EVIDENCIA-4.3.md`.
 
 - **Modelo:** `reintegros` (obligaciones, con `devuelto` acumulado) + `reintegro_devoluciones` (entregas/pagos) + bitácora `reintegros/{id}/eventos` (create-only; schema completo → 4.4-bis). Módulo en `app/reintegros/` (página `/reintegros`: balance, pestañas Activos/Saldados, acordeones); alta desde `/agregar` (`ReintegroModal`, un paso). Reutilizable desde el módulo de tarjeta futuro (§7).
 - **Regla cumplida:** la devolución **no es ingreso real** — no suma en `totalIngresos` ni en `/gastos`; reduce/cancela el saldo. Aplica a pareja, integrante del grupo o **persona externa** (contraparte sin uid en el grupo).
@@ -103,7 +103,7 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 
 ## 6. Transferencias (legacy)
 
-- La colección/lógica `transferencias` es un **intento anterior** de modelar pagos entre miembros (`CONTEXTO-ETAPA3.md` §9).
+- La colección/lógica `transferencias` es un **intento anterior** de modelar pagos entre miembros (`docs/reportes/CONTEXTO-ETAPA3.md` §9).
 - Actualmente: **no se utiliza** para la alta (botones deshabilitados en `app/agregar/page.jsx:82-107`), pero **se sigue leyendo** en `/gastos` (enviadas → gastos) y `/ingresos` (recibidas → ingresos).
 - Conceptos de la UI (dead): `alquiler`, `tarjeta`, `otros` (`useModoTransferencia.jsx:25-29`).
 
@@ -155,4 +155,4 @@ Lo que el visualizador debe respetar:
 | Fijos | `#problema` → resuelto 2.1 + 2.5 | Doble taxonomía **resuelta en 2.1** (`lib/temp.js` eliminado); doble esquema de escritura **resuelto en 2.5** (código legacy ModoGastosFijos eliminado; sin escritor desde la app) | — (Etapa 2 cerrada 11/10/2026) |
 | Transferencias | `#problema` | Legacy leído pero alta deshabilitada | 2 |
 
-Detalle completo con evidencia `archivo:línea`: `REPORT-ETAPA-0.md` (sección hallazgos).
+Detalle completo con evidencia `archivo:línea`: `docs/reportes/REPORT-ETAPA-0.md` (sección hallazgos).

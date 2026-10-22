@@ -2,7 +2,7 @@
 
 Puerta de entrada al conocimiento técnico-funcional de **AppFinanciera**. Estos archivos describen cómo funciona la aplicación **hoy** (comportamiento real verificado sobre el código el 23/09/2026; **actualización de la Etapa 4 — Reintegros: 22/10/2026**), no cómo debería funcionar.
 
-Leer este documento primero. Profundizar con `context/arquitectura.md` (cómo funciona técnicamente) y `context/dominio.md` (qué significa cada concepto de negocio). Para planificación de etapas: `ROADMAP.md`. Para el contexto funcional de origen: `CONTEXTO-ETAPA3.md` (semilla absorbida por `context/dominio.md`).
+Leer este documento primero. Profundizar con `context/arquitectura.md` (cómo funciona técnicamente) y `context/dominio.md` (qué significa cada concepto de negocio). Para planificación de etapas: `ROADMAP.md`. Para el contexto funcional de origen: `docs/reportes/CONTEXTO-ETAPA3.md` (semilla absorbida por `context/dominio.md`).
 
 ## Qué es
 
@@ -68,7 +68,7 @@ AppFinanciera/                           → aplicación (repo git propio)
 
 ### Estado Firestore — validado read-only 25/09/2026 (script `validacion-ae.sh` v3.1)
 
-Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` (custom role + IAM condition sobre `(default)`), vía **Firestore REST read-only**. Sin escrituras, sin índices, sin reglas, sin migraciones. Detalle completo en `PROPUESTA-ETAPA-1.md` §4.2.
+Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` (custom role + IAM condition sobre `(default)`), vía **Firestore REST read-only**. Sin escrituras, sin índices, sin reglas, sin migraciones. Detalle completo en `docs/propuestas/PROPUESTA-ETAPA-1.md` §4.2.
 
 - **Conteos:** `gastos` **408** · `fixed_expense_entries` **34** · `ingresos` **15** · `users` **4** · `groups` **1** · `fixed_expenses` **9** · `transferencias` **ausente** · `productos` **ausente**.
 - **`fixed_expenses`:** 100 % esquema activo (`expenseId, usuario, activo, montoDefault, createdAt`); `activo=true` 9/9; **7 `expenseId`** (candombe, celular, disney, drive, fondo_solidaridad, oca, spotify); **0 legacy · 0 híbridos** en Firestore. El esquema legacy existe solo en código.
@@ -118,9 +118,9 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 - **Gastos fijos con doble modelo** (en **código**: esquema activo + helper legacy; en **Firestore**: solo esquema activo — legacy sin documentos, validado 25/09/2026).
 - **Módulo de transferencias deshabilitado en UI** (`app/agregar/page.jsx:82-107`) pero lógica y lecturas activas.
 - **Bug de visualización de ingresos freelance/bandas — DIAGNÓSTICO CORREGIDO y RESUELTO en 2.3 (30/09/2026, commit `7d71fb5`, validado en Producción con los 8 casos).** La versión anterior de esta línea decía que el bug estaba en `FilaIngreso.jsx` (keys `la_ventolera`/`la_imbailable` vs `laventolera`/`laimbailable`): **ese desajuste existe pero era código inalcanzable**, porque `FilaIngreso` solo lo usan `SueldoSection` y `FreelanceSection` y ambas reciben `subtipo: null`. El bug **visible** (headers "Laventolera"/"Laimbailable") estaba en `BandasSection.jsx:10-11,60`, que agrupaba y renderizaba el id crudo.
-- **El módulo de ingresos no tiene edición ni borrado** (deuda funcional registrada el 30/09/2026): solo existe el alta (`submitIngreso.js`). No hay ningún `updateDoc`/`deleteDoc` sobre `ingresos`; el único `deleteDoc` de la app es de gastos (`useGastos.js:143`). Un ingreso mal cargado **no se corrige desde la app**. **No implementado**; pendiente de etapa posterior (`PROPUESTA-2.3.md` §9.1).
+- **El módulo de ingresos no tiene edición ni borrado** (deuda funcional registrada el 30/09/2026): solo existe el alta (`submitIngreso.js`). No hay ningún `updateDoc`/`deleteDoc` sobre `ingresos`; el único `deleteDoc` de la app es de gastos (`useGastos.js:143`). Un ingreso mal cargado **no se corrige desde la app**. **No implementado**; pendiente de etapa posterior (`docs/propuestas/PROPUESTA-2.3.md` §9.1).
 - **Código muerto — limpieza ejecutada en la Etapa 2 (cerrada 11/10/2026):** eliminados en 2.1 `lib/temp.js`; en **2.5** el flujo legacy de gastos fijos (`ModoGastosFijos` + carpeta `agregar/components/gastos-fijos/`); en **2.6** `lib/ingresos.js`, `carritoHelpers.js`, `fixedExpensesService.jsx`, ambos `EmptyState.jsx`, `ingresos/components/Acordeon.jsx` y el `storage` de `lib/firebase.js` (−330/0). **Conservados por decisión:** `gastosCalculations.js` (balances de Transferencias → Etapa 3), la escritura `origenCompra` (posible uso externo) y `Transferenciassections.jsx` (0 importadores, pero área Transferencias → Etapa 3/4).
-- ~~**RouteGuard espera `loading` que AuthContext no expone** (`RouteGuard.jsx:13` vs `AuthContext.jsx`)~~ → **RESUELTO en 2.4 (CERRADA 10/10/2026, commit `1716a19`, verificada en Producción):** AuthContext expone `loading: user === undefined` + salvaguarda de 8 s; `RouteGuard.jsx` quedó intacto. Detalle en `PROPUESTA-2.4.md`.
+- ~~**RouteGuard espera `loading` que AuthContext no expone** (`RouteGuard.jsx:13` vs `AuthContext.jsx`)~~ → **RESUELTO en 2.4 (CERRADA 10/10/2026, commit `1716a19`, verificada en Producción):** AuthContext expone `loading: user === undefined` + salvaguarda de 8 s; `RouteGuard.jsx` quedó intacto. Detalle en `docs/propuestas/PROPUESTA-2.4.md`.
 - `REPORT-02.md` cita rutas `organizador-app/...` inexistentes; el código real está en `AppFinanciera/`.
 
 ## Decisiones funcionales acordadas (resumen — detalle en context/dominio.md)

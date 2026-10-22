@@ -1,2 +1,3 @@
 # La app vive en su propio repo (AppFinanciera), con su propio remote.
 AppFinanciera/
+*.log

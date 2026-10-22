@@ -1123,7 +1123,7 @@ secuencia, resueltas por el usuario el **17/10/2026** al aprobar la subetapa 4.2
 | 11 | **Permisos — CONFIRMADOS por el usuario (17/10/2026):** (a) **pagos: por cualquiera de los dos** (implementación efectiva tras el lote de reglas de la fila 10); (b) **monto: editable solo por el registrador, con `devuelto == 0`** (rama (c) vigente, menos la condición H-c que pasa a moot); (c) **condonar y eliminar: como están hoy hasta 4.3-bis** (C1/E1 de D-8). **Consecuencia registrada de sin confirmación:** la contraparte **no puede aceptar, rechazar ni ocultar** una obligación que le crea el registrador, y **no se le avisa si el registrador edita el monto** (la edición queda solo en la bitácora) — **vinculado con H-e** (`EVIDENCIA-4.0.md` §6): sin confirmación la contraparte no tiene ningún veto sobre la obligación impuesta; **H-e sigue PENDIENTE ABIERTO** y debe resolverse antes de abrir la app al público | Lote de reglas (fila 10) · 4.3 / 4.3-bis |
 
 *Esta §11 no reabre las decisiones D-1…D-11 restantes del HANDOFF (D-11a/D-11b quedan
-supersedas por las filas 7 y 9). Fuente operativa de la cierre: `AppFinanciera/EVIDENCIA-4.2.md` §9.*
+supersedas por las filas 7 y 9). Fuente operativa de la cierre: `docs/evidencia/EVIDENCIA-4.2.md` §9.*
 
 ---
 
