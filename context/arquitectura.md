@@ -1,6 +1,6 @@
 # context/arquitectura.md — Cómo funciona técnicamente AppFinanciera
 
-Detalle técnico de implementación, verificado sobre el código (23/09/2026). Para el "qué" de negocio ver `context/dominio.md`; para ubicar módulos ver `context/MAPA-APPFINANCIERA.md`.
+Detalle técnico de implementación, verificado sobre el código (23/09/2026; **actualizado 22/10/2026** con la Etapa 4 — Reintegros). Para el "qué" de negocio ver `context/dominio.md`; para ubicar módulos ver `context/MAPA-APPFINANCIERA.md`.
 
 ## Stack
 
@@ -8,13 +8,13 @@ Detalle técnico de implementación, verificado sobre el código (23/09/2026). P
 |---|---|---|
 | Next.js | 16.2.4, App Router, build/dev con `--webpack` | `AppFinanciera/package.json` |
 | React / ReactDOM | 19.2.4 | `package.json` |
-| Firebase | ^12.12.1 (Auth, Firestore, Storage importado) | `package.json`, `lib/firebase.js` |
+| Firebase | ^12.12.1 (Auth, Firestore; `getStorage` eliminado en 2.6) | `package.json`, `lib/firebase.js` |
 | PWA | `next-pwa` ^5.6.0 (manifest + service worker en build) | `package.json`, `next.config.mjs`, `app/manifest.json` |
 | Estilos | Tailwind 4 (`@tailwindcss/postcss`) + `globals.css` | `package.json`, `app/globals.css` |
 | Alias | `@/*` → raíz del proyecto (`./`) | `jsconfig.json` |
 | Lint | `eslint` (sin script de typecheck) | `package.json` |
 
-Scripts: `dev`, `build`, `start`, `lint`. No hay `typecheck`; el proyecto es JavaScript (`.js`/`.jsx`), no TypeScript.
+Scripts: `dev`, `build`, `start`, `lint` y, desde la Etapa 4, `test:rules` (reglas), `harness:reintegros` (integración) y `seed:emulator` (datos del emulador), los dos primeros vía `emulators:exec`. No hay `typecheck`; el proyecto es JavaScript (`.js`/`.jsx`), no TypeScript.
 
 ## Estructura técnica por capas
 
@@ -32,6 +32,7 @@ Patrón: **`onSnapshot` + `query` en colecciones**, agrupando por usuario/grupo.
 |---|---|---|---|
 | `subscribeGastos` (`app/gastos/services/subscribeGastos.js`) | `gastos` (personal: `usuario`+`tipo="personal"`; grupo: `groupId`+`tipo="compartido"`) + `transferencias` (por `groupId`) | `orderBy("createdAt","desc")` en c/u; `onLoaded` tras completar todas las queries | `useGastos` |
 | `subscribeFixedExpenses` (`app/gastos/services/subscribeFixedExpenses.js`) | `fixed_expense_entries` por `usuario`/`periodo` (personales) y por `groupId`/`periodo` (compartidos) | Deduplica por id entre ambas | `useGastos` |
+| `subscribeReintegros` (`app/reintegros/services/subscribeReintegros.js`, 4.1) | `reintegros` + `reintegro_devoluciones` (esta última por tandas `in` de a 10, `TANDA`) | `orderBy("createdAt","desc")`; recibe `db` como parámetro (la app pasa el de `@/lib`, el harness el del emulador); `onData` solo cuando cargan ambas (fix del `emit()` en 4.3b) | `useReintegros` |
 | `subscribeIngresos` (`app/ingresos/services/subscribeIngresos.js`) | `ingresos` (por `usuario` + rango de mes) y `transferencias` (por `paraUid` + rango de mes) | `orderBy("createdAt","desc")`; emite solo cuando ambas cargaron | `useIngresos` |
 | ~~`fixedExpensesService.jsx` (LEGACY)~~ | ~~`fixed_expenses` con `compartido`+`fecha`~~ | **Eliminado en 2.6** (11/10/2026, `10ab576`; 0 importadores) | — |
 
@@ -42,6 +43,9 @@ Patrón: **`onSnapshot` + `query` en colecciones**, agrupando por usuario/grupo.
 - **`useGastos`** (`app/gastos/hooks/useGastos.js`) — orquesta las suscripciones de `/gastos`, filtra por mes (`getMonthRange`), calcula: `gastosPersonales` (personales + **transferencias enviadas re-etiquetadas como "Transferencia"**), `gastosPorGrupo` (por grupo: total del grupo y "total del usuario"), `fixedCompartidos` (`montoTotal/2`), `fixedPersonales`, `totalFixed`, y el **total mensual** (`totalGastos`).
 - **`useFixedExpenses`** (`app/gastos-fijos/hooks/useFixedExpenses.js`) — datos de `/gastos-fijos`: entradas del mes, estados, balance por gasto fijo compartido, acciones (registrar, saldar, dispensar/dar de baja). **El 50/50 está hardcodeado** (`montoTotal/2`, `participantes.length === 2`).
 - **`useIngresos`** (`app/ingresos/hooks/useIngresos.js`) — agrupa ingresos por tipo (sueldo/banda/freelance), suma **transferencias recibidas** al total de ingresos (la sección visual de transferencias está comentada en `app/ingresos/page.jsx:99-111`).
+- **`useReintegros`** (`app/reintegros/hooks/useReintegros.js`, 4.1) — suscribe `subscribeReintegros` y deriva estados/indicadores con `sentidoDelViewer` (saldo, estado, entradas/salidas del mes, reconciliación D-7 solo en dev) desde `app/reintegros/helpers/modelo.js`.
+- **`useEdiciones`** (`app/reintegros/hooks/useEdiciones.js`, 4.3b) — suscripción a los eventos `edicion/` de las obligaciones activas (una por `rid`; los eventos no admiten collection-group) para el chip «Editado»; se desuscribe al cambiar de pestaña.
+- **`useReintegroModal`** (`app/agregar/components/reintegros/hooks/useReintegroModal.js`, 4.2) — estado del alta en un paso desde `/agregar` (incluye el `rid` fijo que evita duplicados en reintentos).
 - **`useHomeData`** (`app/home/hooks/useHomeData.js`) — solo datos de saludo/quick actions; el home no muestra datos financieros.
 - **Hooks de registro** (`app/agregar/components/*/hooks/*.js`): `useModoUnico`, `useModoCompra`, `useModoIngreso`, `useModoTransferencia`, `useFixedExpense` — gestionan el estado multi-paso de cada tipo de alta.
 
@@ -55,6 +59,9 @@ Los writes viven en `app/agregar/components/*/helpers|services/submit*.js`:
 | `submitCompra.js` | `gastos` | (multi-producto) `..., origenCompra: true` — **campo escrito pero jamás leído** |
 | `submitIngreso.js` | `ingresos` | `usuario, tipo, monto, subtipo?, detalle?` |
 | `submitTransferencia.jsx` | `transferencias` | `deUid, paraUid, paraNombre, monto, concepto, detalle?` |
+| `submitReintegro.js` (`app/agregar/components/reintegros/helpers/`) | `reintegros` + `reintegros/{rid}/eventos` | transacción: `registradoPor, registradoPorNombre, contraparteUid, contraparteNombre, participantes, groupId, sentido, monto, devuelto: 0, movimientoInicial, concepto, detalle, gastoVinculadoId: null, createdAt` (+ `movimientoInicialTipo` solo en `por_cobrar`) + evento `creacion/obligacion` |
+| `submitDevolucion.js` | `reintegro_devoluciones` + `reintegros/{rid}` (`devuelto`) + `eventos` | transacción: entrega `{reintegroId, monto, realizadoPorUid, realizadoPorNombre, registradoPor, registradoPorNombre, fechaPago, detalle, createdAt}`; `devuelto += monto` exacto (acople 3.8) + evento `creacion/entrega` |
+| `editarObligacion.js` / `editarEntrega.js` (4.3b) | `reintegros` / `reintegro_devoluciones` + `eventos` | update de `monto` (obligación: solo con `devuelto == 0` y solo registrador) + evento `edicion/` |
 | ~~`fixedExpenseHelpers.js` (`submitFixedExpense`)~~ | ~~`fixed_expenses` (schema LEGACY)~~ | **Eliminado en 2.5** (11/10/2026, `3216095`; junto con todo `ModoGastosFijos` y la carpeta `agregar/components/gastos-fijos/`) |
 | `useFixedExpenses.agregarGastoPersonal` | `fixed_expenses` (config ACTIVA) | `expenseId, usuario, montoDefault, activo` |
 | `useFixedExpenses.registrarGasto/Pago/Saldar` | `fixed_expense_entries` | entries mensuales + estado/participantes |
@@ -82,12 +89,15 @@ El usuario activa gastos fijos escribiendo **config en `fixed_expenses`** (`{exp
 ### Transferencias (legacy, deshabilitada en UI pero viva en datos)
 `ModoTransferencia`/`useModoTransferencia` se alimenta de `groups.members` + `users` (lectura por doc). En `/agregar` el botón está comentado, pero el flujo completo existe en código y las colecciones `transferencias` **se siguen leyendo** en `/gastos` y `/ingresos`.
 
+### Reintegros (alta, pago, edición — 4.1–4.3)
+`/agregar` → `ReintegroModal` (un paso; `rid` fijo al abrir) → `submitReintegro` (runTransaction: doc `reintegros` + evento `creacion/obligacion`) → `subscribeReintegros` → `/reintegros` (balance, pestañas Activos/Saldados, acordeones) en vivo. **Pago:** `DevolucionModal` → `submitDevolucion` (transacción: entrega en `reintegro_devoluciones`, `devuelto += monto`, evento `creacion/entrega`). **Edición:** `EditarReintegroModal` → `editarObligacion`/`editarEntrega` (+ evento `edicion/`), chips de edición vía `useEdiciones`. Sin confirmación bilateral (decisión 17/10/2026); reglas con ámbito `reintegros`/`reintegro_devoluciones`/`eventos` (create-only).
+
 ## Decisiones/cargas técnicas importantes
 
 1. **`serverTimestamp()`** se usa en `createdAt` de gastos/ingresos/transferencias. **Los filtros de mes se calculan en local (client)** (`getMonthRange`: inicio/fin de mes local representados como `Date`). El desfase entre timezone del cliente y UTC de Firestore puede desplazar movimientos al borde de mes. → `REQUIERE_VALIDACIÓN_FIRESTORE`.
 2. **Sin schemas ni types**: no hay validación de estructura en escritura; los esquemas viven implícitos en los forms/helpers ("implicit schema"). Riesgo de doc malformados (ej. `concepto` vs `detalle` en transferencias).
-3. **Sin Firestore Rules en el repo** (no consultables).
-4. **Sin capa de pruebas**: no hay tests en `package.json` (solo `lint`).
+3. **Firestore Rules versionadas desde 4.0** (`ff47291`): `firestore.rules`, `firestore.indexes.json` y `firebase.json` en el repo (ámbito completo de la app, incl. `reintegros`, `reintegro_devoluciones` y `reintegros/{rid}/eventos` create-only). El deploy a Producción queda pendiente hasta el cierre de la Etapa 4 (orden en `EVIDENCIA-4.3.md` §6.1). → `REQUIERE_VALIDACIÓN_FIRESTORE`.
+4. **Capa de pruebas desde 4.0/4.1:** `npm run test:rules` (reglas, `tests/rules/`, 44/44) y `npm run harness:reintegros` (integración contra emulador, `tests/harness/`, 41/41) vía `emulators:exec --project demo-finanzas`; `npm run seed:emulator` crea datos de prueba. Sin typecheck (JS puro).
 5. **`fixed_expenses` tenía DOS esquemas** en la misma colección: (a) **config activo** `{expenseId, usuario, montoDefault, activo}` escrito por `useFixedExpenses` (vigente) y (b) **legacy** `{nombre, compartido, monto, fecha, balanceado, saldoPendiente}` — **el escritor legacy (`fixedExpenseHelpers`/ModoGastosFijos) fue eliminado en 2.5** (11/10/2026). Queda el riesgo solo en datos históricos preexistentes.
 6. **`subscribeIngresos` y `subscribeGastos` no exponen `onError`** (salvo console.error en fixed): si una suscripción falla (permisos/índice), la UI puede quedar en `loading` indefinido. Etapa 2.
 7. Los componentes usan `lucide-react` en `app/ingresos/components/Acordeon.jsx`, pero **`lucide-react` NO está en `package.json`** — ese archivo no se importa actualmente; si se usara rompería el build. Etapa 2.

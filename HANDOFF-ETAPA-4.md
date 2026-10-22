@@ -2,21 +2,22 @@
 
 > Preparado por Personal System (coordinación) — 15/10/2026.
 > Documento de traspaso para el OpenCode de AppFinanciera. **Solo planificación: no implementa nada.**
-> Resultado esperado: `PLAN-ETAPA-4.md` en la raíz del repo de AppFinanciera.
+> Resultado (materializado): `PROPUESTA-ETAPA-4.md`, raíz de este repo — el nombre previsto `PLAN-ETAPA-4.md` no se usó.
 > La entrega de este HANDOFF al repo es una acción posterior, no automática (revisión del usuario previa).
 
-## 0. Estado de coordinación (15/10/2026)
+## 0. Estado de coordinación (actualizado 22/10/2026)
 
 - **Etapa 3 CERRADA (15/10/2026):** `PROPUESTA-ETAPA-3.md` aprobada (`e665e3d`); PO-1…PO-8 y DC-1…DC-8 incorporadas; P-1…P-9 y vacíos de PO-4 abiertos.
-- **Etapa 4 EN PLANIFICACIÓN:** Ronda 1 (estructura) y Ronda 2 (decisiones técnicas de principio) aprobadas por el usuario el 15/10/2026. Este handoff las transporta.
-- **Implementación NO autorizada:** ninguna subetapa está aprobada; la subetapa 4.0 requiere aprobación explícita del usuario (paso 5, §1).
-- Este documento no autoriza: código, dependencias, escrituras en Firestore, despliegues de reglas, commits ni push.
+- **Etapa 4 EN IMPLEMENTACIÓN:** Ronda 1 y Ronda 2 aprobadas 15/10/2026 (este handoff); plan técnico aprobado como `PROPUESTA-ETAPA-4.md` (16/10/2026, `294bab9`/`e57f6f0`) con enmiendas 17/10/2026 (`0ed53ab`, `86aaf06`).
+- **Subetapas CERRADAS** (todas en `staging` de `AppFinanciera/`, evidencia en `AppFinanciera/EVIDENCIA-4.0.md` … `EVIDENCIA-4.3.md`): **4.0** 16/10 (`ff47291`, `63666f6`) · **4.1** 16/10 (`6519dda`, `2404140`) · **4.2** 17–19/10 (`74b9203`, `632dd65`, `5264d2e`, `41f8cb8`) · **4.3** 21–22/10 (`7d41d39`, `2e1ba5f`, `687d65b`, `7ae1021`, `280e817`, `8f2c7b6`).
+- **Próxima subetapa: 4.3-bis (eliminar/condonar)** — pendiente de planificación y aprobación explícita (§1); 4.4, 4.4-bis y 4.5 tampoco están aprobadas.
+- Este handoff (fase de planificación, 15/10/2026) no autorizó por sí mismo código, dependencias, escrituras en Firestore, despliegues de reglas, commits ni push: cada subetapa se autorizó y cerró por separado.
 
 ## 1. Flujo de planificación y responsabilidades (aprobado 15/10/2026)
 
 1. Personal System (Organizador) coordina las decisiones y prepara este `HANDOFF-ETAPA-4.md`.
 2. El handoff se entrega al OpenCode de AppFinanciera.
-3. Ese OpenCode analiza el handoff contra el diseño aprobado y el código existente, identifica inconsistencias y prepara el **plan técnico detallado** (`PLAN-ETAPA-4.md`). **No implementa todavía.**
+3. Ese OpenCode analiza el handoff contra el diseño aprobado y el código existente, identifica inconsistencias y prepara el **plan técnico detallado** (`PROPUESTA-ETAPA-4.md`). **No implementa todavía.**
 4. Revisión conjunta del plan; resolución de discrepancias.
 5. El usuario **autoriza explícitamente** el plan de la subetapa 4.0.
 6. Solo entonces comienza la implementación autorizada, con Local → Staging → Producción y sus aprobaciones.
@@ -78,7 +79,7 @@ P-1…P-9 y los vacíos de PO-4: todos con decisión de principio; ninguno inven
 
 **Nota verificada sobre 4.6:** el «patrón de fijos» que §5.3 cita como referencia de UX de la confirmación **no existe como mecanismo en el código** (ni §11.1 describe una confirmación bilateral en fijos; `useFixedExpenses.js` solo tiene diálogos locales «Confirmar pago»/borrado). El diseño de 4.6 habría sido **nuevo, no una copia** *(sin objeto desde la eliminación del 17/10/2026)*.
 
-## 5. Entregable esperado: `PLAN-ETAPA-4.md` (raíz del repo)
+## 5. Entregable esperado: `PROPUESTA-ETAPA-4.md` (raíz del repo) — producido y aprobado el 16/10/2026; la designación prevista `PLAN-ETAPA-4.md` no se usó
 
 **Fuentes obligatorias:** `PROPUESTA-ETAPA-3.md` (§3, §3.2, §3.6, §4, §5.3, §7, §8.5, §12.6, §14) · código `AppFinanciera/` (solo lectura) · `HANDOFF-ETAPA-3.md` · `AGENTS.md` y `ROADMAP.md` del repo.
 
@@ -88,10 +89,10 @@ El plan debe contener, como mínimo:
 2. `firestore.rules` propuesto — **copia exacta** de las reglas vigentes en consola + colecciones nuevas (`reintegros`, `reintegro_devoluciones`, `eventos`) —, expresiones que satisfacen D-2, D-3, D-6 y D-8, y el plan de verificación de equivalencia repo↔consola (hash/diff).
 3. **Demostración exigida por D-6:** cómo transacciones + reglas mantienen la invariante, y qué la verifica (D-7). Sin afirmaciones no demostradas.
 4. Resolución del **caso abierto D-9** (pago posterior a condonación) con análisis de compatibilidad E1/C1/trazabilidad; sin asumir «eliminar y re-registrar».
-5. Diseño detallado de **4.6** (estados, queries, UI, reglas, alternativa de confirmación tácita) para su aprobación en su momento.
-6. Propuesta de herramientas conforme **D-1** (qué, configuración, mantenimiento, aislamiento); verificar Java local y la inexistencia actual de `firebase.json`/`firestore.rules`.
+5. ~~Diseño detallado de **4.6** (estados, queries, UI, reglas, alternativa de confirmación tácita) para su aprobación en su momento.~~ **SIN OBJETO: 4.6 ELIMINADA el 17/10/2026 (§4).**
+6. Propuesta de herramientas conforme **D-1** (qué, configuración, mantenimiento, aislamiento); verificar Java local ~~y la inexistencia actual de `firebase.json`/`firestore.rules`~~ → **SUPERADO: `firebase.json`, `firestore.rules` y `firestore.indexes.json` versionados en el repo desde 4.0 (`ff47291`)**.
 7. Inconsistencias diseño↔código con evidencia `archivo:línea` (o «ninguna encontrada» explícito).
-8. Riesgos: R-4 durante la ventana sin confirmación (entre 4.3 y 4.6), R-6 (escrituras `addDoc` sin timeout), Staging y Producción comparten proyecto Firebase.
+8. Riesgos: ~~R-4 durante la ventana sin confirmación (entre 4.3 y 4.6)~~ **SIN OBJETO (4.6 eliminada 17/10/2026)**; R-6 (escrituras `addDoc` sin timeout) y Staging/Producción comparten proyecto Firebase — **vigentes**.
 9. Nada de implementación: este paso es solo plan.
 
 ## 6. Restricciones obligatorias para el destinatario
@@ -99,10 +100,10 @@ El plan debe contener, como mínimo:
 - Modo de trabajo: **análisis y planificación; no implementación.** `AppFinanciera/` intacto: sin editar código, `package.json`, configuración ni pruebas; sin refactors.
 - Sin escrituras en Firestore; solo lectura durante la investigación.
 - Sin instalación de dependencias; sin ejecutar deploys ni operaciones en Firebase.
-- Sin commits ni push durante la producción del plan; el commit de `PLAN-ETAPA-4.md` se autoriza en la revisión (paso 4).
+- Sin commits ni push durante la producción del plan; el commit de `PROPUESTA-ETAPA-4.md` se autoriza en la revisión (paso 4).
 - Toda divergencia entre diseño y código real se **documenta**, no se corrige.
 - La implementación respetará Local → Staging → Producción → Verificación con aprobaciones; 4.0 requiere aprobación explícita y separada.
 
 ## 7. Criterio de finalización de esta fase de planificación
 
-`PLAN-ETAPA-4.md` producida con todo lo de §5 y entregada para revisión (paso 4). Solo tras resolver discrepancias y aprobar explícitamente el plan de 4.0 (paso 5) se habilita cualquier implementación (paso 6).
+`PROPUESTA-ETAPA-4.md` producida con todo lo de §5 y entregada para revisión (paso 4). Solo tras resolver discrepancias y aprobar explícitamente el plan de 4.0 (paso 5) se habilita cualquier implementación (paso 6).

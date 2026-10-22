@@ -23,7 +23,7 @@ Documento de **dominio**: qué representa cada cosa en la aplicación, independi
 | **Gasto fijo personal** (`fixed_expense_entries` sin grupo + `fixed_expenses` config) | No | No | Recurrente (alquiler comp. / suscripción pers.). Cuenta 100% al usuario. |
 | **Gasto fijo compartido** (`fixed_expense_entries` con `groupId`) | **Sí** | No | Recurrente compartido (alquiler, luz, internet...). Acumula balance 50/50; se liquida; historial permanece. |
 | **Transferencia** (`transferencias`) | No (modelo actual) | Depende hoy (ver #problema) | Legacy del intento anterior de pagos entre miembros. En desuso para la UI. |
-| **Recuperación / Reintegro / adelanto / settlement** | — | **NO** | **Concepto futuro** (Etapa 3): dinero adelantado por otro (pareja, amigo, familiar, externo) y su devolución. No implementado. |
+| **Recuperación / Reintegro** (`reintegros` + `reintegro_devoluciones`) | — | **NO** | **IMPLEMENTADO (Etapa 4, 4.1–4.3):** dinero adelantado por otro (pareja, amigo, familiar, externo) y su devolución; las devoluciones **no suman como ingreso**. Nombre técnico definitivo: **reintegro**. Alta en `/agregar`, consulta en `/reintegros` (ver §5). |
 | **Tarjeta** | — | No | Módulo futuro (Etapa 4). Hoy la tarjeta se modela como gasto fijo personal (OCA) o transferencia con concepto "tarjeta". |
 
 ## 3. Comportamiento real verificado (por vista)
@@ -83,13 +83,23 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 - `#problema` ~~Doble taxonomía de fijos con discrepancias (Disney compartido vs personal)~~ → **RESUELTO en 2.1 + 2.5 (Etapa 2 cerrada 11/10/2026)**: en 2.1 se eliminó `lib/temp.js` y `fixedExpensesTaxonomia.js` quedó como única taxonomía canónica; en **2.5** se eliminó el helper legacy completo (`fixedExpensesConfig.js` y todo `agregar/components/gastos-fijos/`), de modo que la discrepancia de Disney+ **ya no tiene código que la sostenga**. Quedan solo posibles documentos legacy en datos históricos de `fixed_expenses` (sin escritor en la app).
 - `#deseado` La tarjeta (OCA) hoy es un fijo personal; cuando exista el módulo tarjeta (Etapa 4) el modelo debe reubicarse.
 
-## 5. Recuperaciones / dinero a recuperar (Decisión funcional 4 y 5)
+## 5. Recuperaciones / Reintegros (Decisión funcional 4 y 5)
 
-**No implementado.** Estado conceptual:
-- Los reintegros hoy se registran como `transferencias`: las **recibidas suman como ingreso** (`useIngresos.js:95-106`) y las **enviadas como gasto del mes** (`useGastos.js:65-74`) — lo que **infla ingresos** y no reduce el gasto original.
-- `#problema` No hay vínculo entre el gasto adelantado y su reintegro; no hay concepto de "deuda a recuperar". Contradice la regla del modelo: **reintegro/recuperación ≠ ingreso**.
-- **Requisito futuro (Etapa 3):** módulo de **dinero a recuperar** aplicable a pareja, amigo, familiar, integrante del grupo o **persona externa**. La devolución reduce/cancela el saldo y **no es ingreso real**. Debe poder reutilizarse desde el módulo de tarjeta futuro.
-- El nombre técnico definitivo aún no está decidido (recuperación / reintegro / adelanto / settlement / dinero a recuperar).
+**IMPLEMENTADO — Etapa 4 (subetapas 4.1–4.3, cerradas 22/10/2026).** Nombre técnico definitivo: **reintegro**. Diseño: `PROPUESTA-ETAPA-3.md` (Etapa 3) + `PROPUESTA-ETAPA-4.md` (plan); evidencia: `AppFinanciera/EVIDENCIA-4.0.md` … `EVIDENCIA-4.3.md`.
+
+- **Modelo:** `reintegros` (obligaciones, con `devuelto` acumulado) + `reintegro_devoluciones` (entregas/pagos) + bitácora `reintegros/{id}/eventos` (create-only; schema completo → 4.4-bis). Módulo en `app/reintegros/` (página `/reintegros`: balance, pestañas Activos/Saldados, acordeones); alta desde `/agregar` (`ReintegroModal`, un paso). Reutilizable desde el módulo de tarjeta futuro (§7).
+- **Regla cumplida:** la devolución **no es ingreso real** — no suma en `totalIngresos` ni en `/gastos`; reduce/cancela el saldo. Aplica a pareja, integrante del grupo o **persona externa** (contraparte sin uid en el grupo).
+- `#problema` (histórico): **hasta 4.1** los reintegros solo podían registrarse como `transferencias`: las recibidas **inflaban ingresos** (`useIngresos.js:95-106`) y las enviadas sumaban gasto del mes (`useGastos.js:65-74`), sin vínculo con el gasto adelantado — contradecía **reintegro ≠ ingreso**. Ese registro legacy sigue **leyéndose** hasta su retiro en **4.5** (ver §6).
+- Pendientes de la etapa: **4.3-bis** (eliminar/condonar), **4.4** (resumen mensual), **4.4-bis** (bitácora), **4.5** (retiro de Transferencias).
+
+### 5.1 Decisiones funcionales de 4.2/4.3 (aprobadas; fuente: `EVIDENCIA-4.2.md`, `EVIDENCIA-4.3.md`)
+
+1. **Sin confirmación bilateral (4.2, decisión 17/10/2026):** `confirmadaPor` está prohibido en el alta y `SIN_CONFIRMAR` se retiró; las obligaciones **suman en el balance de ambas partes** desde su creación.
+2. **Pago de devoluciones con pagador derivado (4.3a, I-8):** `DevolucionModal` no ofrece selector de pagador — paga quien corresponde según el deudor (acciones «Agregar pago» / «Saldar deuda»).
+3. **Edición de monto acotada (4.3b):** `editarObligacion` solo con `devuelto == 0` y **solo el registrador**; `editarEntrega` la puede hacer **cualquiera de las dos partes**; ambas escrituras dejan evento `edicion/` en la bitácora.
+4. **Dinero/ítem en el alta (4.3c):** tick «Me entró dinero» → campo `movimientoInicialTipo` (`dinero` o `item`), **solo en `por_cobrar`** (validado en `submitReintegro`) y **desmarcado por defecto en ambos sentidos**.
+5. **Espejo de la contraparte (4.3c, `app/reintegros/helpers/modelo.js`):** si la contraparte es miembro, `por_cobrar` con dinero refleja una **entrada** en su vista (ítem: nada) y `por_devolver` refleja una **salida** siempre; obligaciones con persona externa: **sin espejo**.
+6. **Chip Dinero/Ítem (4.3c):** `FilaReintegro` muestra el chip en Activos y Saldados; obligaciones viejas sin `movimientoInicialTipo` se muestran sin chip.
 
 ## 6. Transferencias (legacy)
 
@@ -133,7 +143,7 @@ Lo que el visualizador debe respetar:
 | # | Etiqueta | Diferencia | Etapa apunta |
 |---|---|---|---|
 | D1 | `#actual` | Fórmula total cumple, pero "tu parte" = lo pagado y fijos pendientes suman 50% | 1/3 |
-| D4 | `#problema` | Transferencias recibidas como ingreso; enviadas como gasto; sin concepto recuperación | 3 |
+| D4 | `#problema` → parcialmente resuelto (Etapa 4) | ~~Sin concepto de recuperación~~ → **Reintegros implementados (4.1–4.3): `reintegros` + `reintegro_devoluciones`, devoluciones ≠ ingreso**. Queda: `transferencias` legacy — recibidas suman como ingreso y enviadas como gasto | 4 (retiro en **4.5**) |
 | D5 | `#actual` | Tarjeta = fijo personal/transferencia; sin módulo | 4 |
 | D6a | `#actual` | "Otros" existe en gastos (único y compra) e ingreso | 2 |
 | D6b | `#problema` → resuelto 2.1 | ~~"Otros" perdido en taxonomía de gastos fijos~~ → presente en personal (`otros`) y compartido (`otros_compartido`) | — (cerrado 25/09/2026) |

@@ -12,6 +12,7 @@ Aplicación de finanzas personales (Next.js 16 + React 19 + Firebase). La aplica
    - `HANDOFF-*.md` — el de la etapa en curso, como fuente de la tarea.
 2. Las **decisiones funcionales** documentadas en `context/dominio.md` son la fuente de contexto para cualquier modificación.
 3. Los hallazgos se clasifican (`#actual | #deseado | #problema | #propuesta`) + etapa futura. No confundir "así funciona hoy" con "así debería funcionar".
+4. **Estado de etapas (22/10/2026):** Etapa 0 CERRADA (ver histórico 23/09/2026) · Etapa 1 sin cierre documentado · Etapa 2 CERRADA (11/10/2026) · Etapa 3 CERRADA (diseño, 15/10/2026) · **Etapa 4 EN CURSO — Reintegros:** subetapas 4.0–4.3 cerradas en `AppFinanciera/staging`, próxima **4.3-bis** (sin aprobar). Detalle: `ROADMAP.md` (histórico) · secuencia: `HANDOFF-ETAPA-4.md` §4 · plan: `PROPUESTA-ETAPA-4.md` · evidencia: `AppFinanciera/EVIDENCIA-4.0.md` … `EVIDENCIA-4.3.md`.
 
 ## Reglas
 
@@ -23,6 +24,22 @@ Aplicación de finanzas personales (Next.js 16 + React 19 + Firebase). La aplica
 - No modificar `AppFinanciera/` fuera de una etapa aprobada; la Etapa 0 es read-only sobre la aplicación.
 - Seguir el **flujo de ramas y despliegue** de la sección siguiente: nunca push directo a `main`; primero Staging y aprobación explícita antes de promover a Producción.
 - Sin acceso a Firestore salvo decisión explícita del usuario (marcar lo que requiera datos reales como `REQUIERE_VALIDACIÓN_FIRESTORE`).
+
+## Cierre de subetapas — checklist de documentación (aprobado 22/10/2026)
+
+Al cerrar cada subetapa, actualizar en el **mismo commit**:
+
+1. `EVIDENCIA-<subetapa>.md` — sección de cierre + gates + commit.
+2. `ROADMAP.md` §Histórico — entrada datada con commit (estilo de las existentes).
+3. Solo si la subetapa tocó su materia: `context/dominio.md` · `context/arquitectura.md` · `context/MAPA-APPFINANCIERA.md`.
+4. Solo si cambió estado global/reglas: `HANDOFF-<etapa>.md` §0 · `AGENTS.md`.
+
+Reglas del checklist:
+
+- **(a)** Si una decisión cambia después de documentarla, el doc se corrige **en el mismo commit que el código**.
+- **(b)** Si se agrega o mueve un documento, se actualiza el índice de docs (lista 1 de §«Cómo trabaja» y `ROADMAP.md`).
+- **(c)** Al cierre de cada etapa se refrescan los archivos del Proyecto en Claude: `AGENTS.md`, `ROADMAP.md`, `context/dominio.md`, el `HANDOFF` y la `PROPUESTA`/`EVIDENCIA` vigentes.
+- No editar post-cierre `PROPUESTA-*`/`REPORT-*` (histórico inmutable), salvo acotación explícita.
 
 ## Flujo de ramas y despliegue (obligatorio para todo cambio de código)
 
