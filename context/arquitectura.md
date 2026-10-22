@@ -47,7 +47,7 @@ Patrón: **`onSnapshot` + `query` en colecciones**, agrupando por usuario/grupo.
 - **`useEdiciones`** (`app/reintegros/hooks/useEdiciones.js`, 4.3b) — suscripción a los eventos `edicion/` de las obligaciones activas (una por `rid`; los eventos no admiten collection-group) para el chip «Editado»; se desuscribe al cambiar de pestaña.
 - **`useReintegroModal`** (`app/agregar/components/reintegros/hooks/useReintegroModal.js`, 4.2) — estado del alta en un paso desde `/agregar` (incluye el `rid` fijo que evita duplicados en reintentos).
 - **`useHomeData`** (`app/home/hooks/useHomeData.js`) — solo datos de saludo/quick actions; el home no muestra datos financieros.
-- **Hooks de registro** (`app/agregar/components/*/hooks/*.js`): `useModoUnico`, `useModoCompra`, `useModoIngreso`, `useModoTransferencia`, `useFixedExpense` — gestionan el estado multi-paso de cada tipo de alta.
+- **Hooks de registro** (`app/agregar/components/*/hooks/*.js`): `useModoUnico`, `useModoCompra`, `useModoIngreso`, `useModoTransferencia` — gestionan el estado multi-paso de cada tipo de alta (`useFixedExpense` **fue eliminado en 2.5** junto con `ModoGastosFijos`; alta de reintegros en `useReintegroModal`, arriba).
 
 ### 4. Capa de escritura (services submit)
 

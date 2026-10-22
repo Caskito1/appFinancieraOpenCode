@@ -24,7 +24,7 @@ Documento de **dominio**: qué representa cada cosa en la aplicación, independi
 | **Gasto fijo compartido** (`fixed_expense_entries` con `groupId`) | **Sí** | No | Recurrente compartido (alquiler, luz, internet...). Acumula balance 50/50; se liquida; historial permanece. |
 | **Transferencia** (`transferencias`) | No (modelo actual) | Depende hoy (ver #problema) | Legacy del intento anterior de pagos entre miembros. En desuso para la UI. |
 | **Recuperación / Reintegro** (`reintegros` + `reintegro_devoluciones`) | — | **NO** | **IMPLEMENTADO (Etapa 4, 4.1–4.3):** dinero adelantado por otro (pareja, amigo, familiar, externo) y su devolución; las devoluciones **no suman como ingreso**. Nombre técnico definitivo: **reintegro**. Alta en `/agregar`, consulta en `/reintegros` (ver §5). |
-| **Tarjeta** | — | No | Módulo futuro (Etapa 4). Hoy la tarjeta se modela como gasto fijo personal (OCA) o transferencia con concepto "tarjeta". |
+| **Tarjeta** | — | No | Módulo futuro (**backlog**, fuera de la Etapa 4). Hoy la tarjeta se modela como gasto fijo personal (OCA) o transferencia con concepto "tarjeta". |
 
 ## 3. Comportamiento real verificado (por vista)
 
@@ -81,7 +81,7 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 **Hallazgos:**
 - `#problema` ~~El gasto fijo **"Otros" se perdió** en el catálogo activo~~ → **RESUELTO en 2.1** (Etapa 2, 25/09/2026): "Otros" existe en el catálogo activo de personales (`otros`) y de compartidos (`otros_compartido`). Decisión funcional 6 cumplida también en gastos fijos.
 - `#problema` ~~Doble taxonomía de fijos con discrepancias (Disney compartido vs personal)~~ → **RESUELTO en 2.1 + 2.5 (Etapa 2 cerrada 11/10/2026)**: en 2.1 se eliminó `lib/temp.js` y `fixedExpensesTaxonomia.js` quedó como única taxonomía canónica; en **2.5** se eliminó el helper legacy completo (`fixedExpensesConfig.js` y todo `agregar/components/gastos-fijos/`), de modo que la discrepancia de Disney+ **ya no tiene código que la sostenga**. Quedan solo posibles documentos legacy en datos históricos de `fixed_expenses` (sin escritor en la app).
-- `#deseado` La tarjeta (OCA) hoy es un fijo personal; cuando exista el módulo tarjeta (Etapa 4) el modelo debe reubicarse.
+- `#deseado` La tarjeta (OCA) hoy es un fijo personal; cuando exista el módulo tarjeta (**backlog**, fuera de la Etapa 4) el modelo debe reubicarse.
 
 ## 5. Recuperaciones / Reintegros (Decisión funcional 4 y 5)
 
@@ -111,16 +111,16 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 
 - **No está implementada como módulo.** Uso real hoy: se usa la tarjeta → se revisan gastos → se determina la parte de la otra persona → **ajuste manual** (sin representación en la app).
 - Modelado parcial/impreciso: OCA como gasto fijo personal (`fixedExpensesTaxonomia.js:12`) y/o transferencia con concepto "tarjeta" (`useModoTransferencia.jsx:27`, `submitTransferencia.jsx:21`).
-- Futuro (Etapa 4): módulo propio — gastos con tarjeta, quién lo pagó, parte del otro, cuánto queda por recuperar, pagos/ajustes. **La devolución de la parte no es ingreso** (pertenece al modelo de recuperaciones).
+- Futuro (**backlog**, fuera de la Etapa 4): módulo propio — gastos con tarjeta, quién lo pagó, parte del otro, cuánto queda por recuperar, pagos/ajustes. **La devolución de la parte no es ingreso** (pertenece al modelo de recuperaciones).
 
 ## 8. Porcentajes de gastos fijos compartidos (Decisión funcional 7)
 
 - Hoy: **50/50 hardcodeado** en `useFixedExpenses.js:175,264-265` (`montoTotal / 2`, `corresponde: mitad`) y en `useGastos.js:97,113`. `participantes` asumidos exactamente 2.
-- `#deseado` El modelo interno debe **permitir otros porcentajes** (60/40, 70/30...) aunque la interfaz actual siga mostrando 50/50. → Etapa 1/4.
+- `#deseado` El modelo interno debe **permitir otros porcentajes** (60/40, 70/30...) aunque la interfaz actual siga mostrando 50/50. → Etapa 1 (diseño) / backlog (fuera de la Etapa 4).
 
 ## 9. Configuración futura (visión de producto, no alcance actual)
 
-Ideas (no implementar): sección "ruedita" de configuración del grupo/usuario → porcentajes de división, activar/desactivar balances en gastos diarios compartidos, editar gastos fijos, configurar participantes, reglas financieras del grupo. Posibilita que otros grupos usen distintas configs (60/40, balance activo, etc.). → Etapa 4.
+Ideas (no implementar): sección "ruedita" de configuración del grupo/usuario → porcentajes de división, activar/desactivar balances en gastos diarios compartidos, editar gastos fijos, configurar participantes, reglas financieras del grupo. Posibilita que otros grupos usen distintas configs (60/40, balance activo, etc.). → backlog (fuera de la Etapa 4).
 
 ## 10. Visualizador (reglas semánticas)
 
@@ -144,11 +144,11 @@ Lo que el visualizador debe respetar:
 |---|---|---|---|
 | D1 | `#actual` | Fórmula total cumple, pero "tu parte" = lo pagado y fijos pendientes suman 50% | 1/3 |
 | D4 | `#problema` → parcialmente resuelto (Etapa 4) | ~~Sin concepto de recuperación~~ → **Reintegros implementados (4.1–4.3): `reintegros` + `reintegro_devoluciones`, devoluciones ≠ ingreso**. Queda: `transferencias` legacy — recibidas suman como ingreso y enviadas como gasto | 4 (retiro en **4.5**) |
-| D5 | `#actual` | Tarjeta = fijo personal/transferencia; sin módulo | 4 |
+| D5 | `#actual` | Tarjeta = fijo personal/transferencia; sin módulo | backlog (fuera de la Etapa 4) |
 | D6a | `#actual` | "Otros" existe en gastos (único y compra) e ingreso | 2 |
 | D6b | `#problema` → resuelto 2.1 | ~~"Otros" perdido en taxonomía de gastos fijos~~ → presente en personal (`otros`) y compartido (`otros_compartido`) | — (cerrado 25/09/2026) |
 | D6c | `#problema` → resuelto 2.3 | ~~Ingreso "otros" se registra y suma al total, pero no se visualiza en sección ni se cuenta en "N ingresos"~~ → sección `Otros` agregada y contada; `totalIngresos` **sin cambios** | — (2.3, commit `7d71fb5`, validado en Producción con los 8 casos, 30/09/2026) |
-| D7 | `#problema` | 50/50 hardcodeado; participantes=2 | 1/4 |
+| D7 | `#problema` | 50/50 hardcodeado; participantes=2 | 1 / backlog |
 | Bandas | `#problema` → resuelto 2.3 | ~~Labels de bandas rotulados con el id crudo (`"Laventolera"`, `"Laimbailable"`)~~ → `BandasSection.jsx` mapea el id canónico al label de `BANDAS` (`useModoIngreso`). El diagnóstico correcto: el bug visible estaba en `BandasSection.jsx`, **no** en `FilaIngreso.jsx` | — (2.3, commit `7d71fb5`, validado en Producción con los 8 casos, 30/09/2026) |
 | Filas ingreso | `#problema` → resuelto 2.3 | ~~`FilaIngreso` imprime el `detalle` dos veces (título + subtítulo)~~ → título único `detalle ?? "Ingreso"` + fecha + monto | — (2.3, commit `7d71fb5`, validado en Producción con los 8 casos, 30/09/2026) |
 | Ingresos CRUD | `#problema` | El módulo de ingresos **no tiene flujo para editar ni eliminar** un ingreso: solo el alta (`submitIngreso.js`). El único `deleteDoc` de la app es de gastos (`useGastos.js:143`) y `/gastos` tiene `EditarGastoModal.jsx` | **Posterior** — sin subetapa. **NO implementado** |
