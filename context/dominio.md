@@ -90,7 +90,7 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 - **Modelo:** `reintegros` (obligaciones, con `devuelto` acumulado) + `reintegro_devoluciones` (entregas/pagos) + bitácora `reintegros/{id}/eventos` (create-only; schema completo → 4.4-bis). Módulo en `app/reintegros/` (página `/reintegros`: balance, pestañas Activos/Saldados, acordeones); alta desde `/agregar` (`ReintegroModal`, un paso). Reutilizable desde el módulo de tarjeta futuro (§7).
 - **Regla cumplida:** la devolución **no es ingreso real** — no suma en `totalIngresos` ni en `/gastos`; reduce/cancela el saldo. Aplica a pareja, integrante del grupo o **persona externa** (contraparte sin uid en el grupo).
 - `#problema` (histórico): **hasta 4.1** los reintegros solo podían registrarse como `transferencias`: las recibidas **inflaban ingresos** (`useIngresos.js:95-106`) y las enviadas sumaban gasto del mes (`useGastos.js:65-74`), sin vínculo con el gasto adelantado — contradecía **reintegro ≠ ingreso**. Ese registro legacy sigue **leyéndose** hasta su retiro en **4.5** (ver §6).
-- Pendientes de la etapa: **4.3-bis** (eliminar/condonar), **4.4** (resumen mensual), **4.4-bis** (bitácora), **4.5** (retiro de Transferencias).
+- Pendientes de la etapa: **4.3-bis CERRADA (25/10/2026, §5.2)** · **4.4** (resumen mensual — plan previo a aprobar), **4.4-bis** (bitácora), **4.5** (retiro de Transferencias).
 
 ### 5.1 Decisiones funcionales de 4.2/4.3 (aprobadas; fuente: `EVIDENCIA-4.2.md`, `EVIDENCIA-4.3.md`)
 
@@ -100,6 +100,15 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 4. **Dinero/ítem en el alta (4.3c):** tick «Me entró dinero» → campo `movimientoInicialTipo` (`dinero` o `item`), **solo en `por_cobrar`** (validado en `submitReintegro`) y **desmarcado por defecto en ambos sentidos**.
 5. **Espejo de la contraparte (4.3c, `app/reintegros/helpers/modelo.js`):** si la contraparte es miembro, `por_cobrar` con dinero refleja una **entrada** en su vista (ítem: nada) y `por_devolver` refleja una **salida** siempre; obligaciones con persona externa: **sin espejo**.
 6. **Chip Dinero/Ítem (4.3c):** `FilaReintegro` muestra el chip en Activos y Saldados; obligaciones viejas sin `movimientoInicialTipo` se muestran sin chip.
+
+### 5.2 Eliminar / perdonar (4.3-bis; decisiones finales 24/10/2026)
+
+Tres acciones sobre reintegros (helpers transaccionales, evidencia `EVIDENCIA-4.3-bis.md`): **eliminar pago** (`eliminarEntrega`, ambas partes), **eliminar obligación** (`eliminarObligacion`, solo registrador — E1) y **perdonar deuda** (`condonar`, solo acreedor C1; no es pago, no toca `devuelto` — I-12). Eliminación es **lógica** (constancia `eliminacion` / `condonacion` embebida — D-4): el doc y sus entregas se conservan como histórico (I-4) y quedan fuera de listas y cálculos (D-5, filtro cliente).
+
+1. **REGLA ESTRICTA de Cerradas (24/10/2026):** en Cerradas (liquidadas y perdonadas) **no se edita ni elimina nada**, sin importar si cerró por pago o por perdón. Sin menú ⋮ en ninguna fila de Cerradas. Las obligaciones eliminadas desde Activos siguen sin aparecer en ninguna lista (no se muestran como cerradas).
+2. **D-9 opción B RETIRADA (24/10/2026):** la excepción que permitía eliminar una perdonada (conservando ambas constancias, elegida 16/10/2026) quedó sin efecto — `eliminarObligacion` rechaza condonadas (`CONDONADA`) y liquidadas (`LIQUIDADA`) con guarda de cliente. Las reglas no se tocaron (la barrera es de cliente).
+3. **Limitación conocida (aceptada):** un último pago erróneo que liquida una obligación **no se puede corregir desde la app** (sin menú para eliminar el pago, y la obligación liquidada no se elimina). Camino previsto: re-registro estándar como obligación nueva (§5.1/4.2+4.3).
+4. **Efectos en «Dinero del mes»:** eliminar una obligación saca su movimientoInicial y sus pagos de ambos libros (registrador y espejo); eliminar un pago solo quita esa entrada/salida de su mes (`fechaPago`); perdonar no genera caja ni cambia pagos existentes (I-12), y condonadas/liquidadas siguen contando su movimientoInicial (solo `eliminacion` filtra).
 
 ## 6. Transferencias (legacy)
 

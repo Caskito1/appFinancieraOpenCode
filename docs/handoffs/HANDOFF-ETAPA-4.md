@@ -5,12 +5,12 @@
 > Resultado (materializado): `docs/propuestas/PROPUESTA-ETAPA-4.md` — el nombre previsto `PLAN-ETAPA-4.md` no se usó.
 > La entrega de este HANDOFF al repo es una acción posterior, no automática (revisión del usuario previa).
 
-## 0. Estado de coordinación (actualizado 22/10/2026)
+## 0. Estado de coordinación (actualizado 24/10/2026)
 
 - **Etapa 3 CERRADA (15/10/2026):** `PROPUESTA-ETAPA-3.md` aprobada (`e665e3d`); PO-1…PO-8 y DC-1…DC-8 incorporadas; P-1…P-9 y vacíos de PO-4 abiertos.
 - **Etapa 4 EN IMPLEMENTACIÓN:** Ronda 1 y Ronda 2 aprobadas 15/10/2026 (este handoff); plan técnico aprobado como `PROPUESTA-ETAPA-4.md` (16/10/2026, `294bab9`/`e57f6f0`) con enmiendas 17/10/2026 (`0ed53ab`, `86aaf06`).
 - **Subetapas CERRADAS** (todas en `staging` de `AppFinanciera/`, evidencia en `docs/evidencia/EVIDENCIA-4.0.md` … `EVIDENCIA-4.3.md`): **4.0** 16/10 (`ff47291`, `63666f6`) · **4.1** 16/10 (`6519dda`, `2404140`) · **4.2** 17–19/10 (`74b9203`, `632dd65`, `5264d2e`, `41f8cb8`) · **4.3** 21–22/10 (`7d41d39`, `2e1ba5f`, `687d65b`, `7ae1021`, `280e817`, `8f2c7b6`).
-- **Próxima subetapa: 4.3-bis (eliminar/condonar)** — pendiente de planificación y aprobación explícita (§1); 4.4, 4.4-bis y 4.5 tampoco están aprobadas.
+- **4.3-bis (eliminar/condonar) CERRADA 25/10/2026** (commits `1de79c8`, `f0a66af`, `beddcf3` en `staging`; docs en el repo padre): helpers `eliminarEntrega`/`eliminarObligacion`/`condonar`, `modelo.js` (Set de activas), UI (menú ⋮ con hoja `MenuAccionesSheet` en `page.jsx` + `ConfirmarAccionModal`), harness 53/53. **Decisiones finales 24/10:** regla estricta de **Cerradas** (sin edición/eliminación, sin menú) y **D-9 opción B RETIRADA**; limitación conocida aceptada (un último pago erróneo que liquida no se corrige desde la app). Evidencia: `docs/evidencia/EVIDENCIA-4.3-bis.md`. **Siguiente: 4.4 (resumen mensual) — sin aprobar; su plan primero.** 4.4-bis y 4.5 también sin aprobar.
 - Este handoff (fase de planificación, 15/10/2026) no autorizó por sí mismo código, dependencias, escrituras en Firestore, despliegues de reglas, commits ni push: cada subetapa se autorizó y cerró por separado.
 - **Documentación esperada de la etapa (tipos y nombres):** `docs/handoffs/HANDOFF-ETAPA-4.md` (1) · `docs/propuestas/PROPUESTA-ETAPA-4.md` (1) · `docs/evidencia/EVIDENCIA-<subetapa>.md` por cada subetapa de la secuencia aprobada (4.0, 4.1, 4.2, 4.3, 4.3-bis, 4.4, 4.4-bis, 4.5). Sin REPORT de etapa (definición canónica en `AGENTS.md` §Tipos de documento).
 

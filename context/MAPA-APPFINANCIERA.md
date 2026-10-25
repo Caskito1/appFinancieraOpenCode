@@ -110,6 +110,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 | Modelo de Reintegros (saldo, estado, espejo, dinero/ítem) | `app/reintegros/helpers/modelo.js` |
 | Alta de Reintegros | `app/agregar/components/reintegros/` (`ReintegroModal.jsx`, `helpers/submitReintegro.js`, `helpers/submitDevolucion.js`) |
 | Edición de montos de Reintegros | `app/agregar/components/reintegros/helpers/editar{Obligacion,Entrega}.js`, `app/reintegros/components/EditarReintegroModal.jsx` |
+| Eliminar/perdonar Reintegros (4.3-bis) | `app/agregar/components/reintegros/helpers/{eliminarEntrega,eliminarObligacion,condonar}.js`, `app/reintegros/components/ConfirmarAccionModal.jsx` (menú ⋮ en `FilaReintegro.jsx`; Cerradas sin acciones — regla 24/10/2026) |
 
 ## Estado actual / deuda técnica relevante (detalle en REPORT-ETAPA-0.md)
 
