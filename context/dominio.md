@@ -87,10 +87,10 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 
 **IMPLEMENTADO — Etapa 4 (subetapas 4.1–4.3, cerradas 22/10/2026).** Nombre técnico definitivo: **reintegro**. Diseño: `PROPUESTA-ETAPA-3.md` (Etapa 3) + `PROPUESTA-ETAPA-4.md` (plan); evidencia: `docs/evidencia/EVIDENCIA-4.0.md` … `EVIDENCIA-4.3.md`.
 
-- **Modelo:** `reintegros` (obligaciones, con `devuelto` acumulado) + `reintegro_devoluciones` (entregas/pagos) + bitácora `reintegros/{id}/eventos` (create-only; schema completo → 4.4-bis). Módulo en `app/reintegros/` (página `/reintegros`: balance, pestañas Activos/Saldados, acordeones); alta desde `/agregar` (`ReintegroModal`, un paso). Reutilizable desde el módulo de tarjeta futuro (§7).
+- **Modelo:** `reintegros` (obligaciones, con `devuelto` acumulado) + `reintegro_devoluciones` (entregas/pagos) + bitácora `reintegros/{id}/eventos` (create-only; esquema canónico en §5.3). Módulo en `app/reintegros/` (página `/reintegros`: balance, pestañas Activos/Saldados, acordeones); alta desde `/agregar` (`ReintegroModal`, un paso). Reutilizable desde el módulo de tarjeta futuro (§7).
 - **Regla cumplida:** la devolución **no es ingreso real** — no suma en `totalIngresos` ni en `/gastos`; reduce/cancela el saldo. Aplica a pareja, integrante del grupo o **persona externa** (contraparte sin uid en el grupo).
 - `#problema` (histórico): **hasta 4.1** los reintegros solo podían registrarse como `transferencias`: las recibidas **inflaban ingresos** (`useIngresos.js:95-106`) y las enviadas sumaban gasto del mes (`useGastos.js:65-74`), sin vínculo con el gasto adelantado — contradecía **reintegro ≠ ingreso**. Ese registro legacy sigue **leyéndose** hasta su retiro en **4.5** (ver §6).
-- Pendientes de la etapa: **4.3-bis CERRADA (25/10/2026, §5.2)** · **4.4** (resumen mensual — plan previo a aprobar), **4.4-bis** (bitácora), **4.5** (retiro de Transferencias).
+- Pendientes de la etapa: **4.3-bis CERRADA (25/10/2026, §5.2)** · **4.4-bis (bitácora) CERRADA (30/10/2026, §5.3)** · **4.4** (resumen mensual) **diferida**: su alcance se absorbe en la Etapa 5 (Balance consolidado) · **4.5** (retiro de Transferencias) — próxima subetapa.
 
 ### 5.1 Decisiones funcionales de 4.2/4.3 (aprobadas; fuente: `EVIDENCIA-4.2.md`, `EVIDENCIA-4.3.md`)
 
@@ -112,6 +112,18 @@ Tres acciones sobre reintegros (helpers transaccionales, evidencia `EVIDENCIA-4.
 2. **D-9 opción B RETIRADA (24/10/2026):** la excepción que permitía eliminar una perdonada (conservando ambas constancias, elegida 16/10/2026) quedó sin efecto — `eliminarObligacion` rechaza condonadas (`CONDONADA`) y liquidadas (`LIQUIDADA`) con guarda de cliente. Las reglas no se tocaron (la barrera es de cliente).
 3. **Limitación conocida (aceptada):** un último pago erróneo que liquida una obligación **no se puede corregir desde la app** (sin menú para eliminar el pago, y la obligación liquidada no se elimina). Camino previsto: re-registro estándar como obligación nueva (§5.1/4.2+4.3).
 4. **Efectos en «Dinero del mes»:** eliminar una obligación saca su movimientoInicial y sus pagos de ambos libros (registrador y espejo); eliminar un pago solo quita esa entrada/salida de su mes (`fechaPago`); perdonar no genera caja ni cambia pagos existentes (I-12), y condonadas/liquidadas siguen contando su movimientoInicial (solo `eliminacion` filtra).
+
+### 5.3 Bitácora — esquema canónico (P-1 aprobada 30/10/2026; detalle en `EVIDENCIA-4.4-bis.md`)
+
+Bitácora `reintegros/{rid}/eventos`, **create-only desde 4.0** (sin `update` ni `delete`; sin migración posible). Cada acción escribe **exactamente un** evento **dentro de su `runTransaction`**.
+
+**Capa 1 — obligatorios (todos los tipos):** `registradoPor` · `tipo` (`creacion`|`edicion`|`eliminacion`|`condonacion`) · `entidad` (`obligacion`|`entrega`) · `createdAt` (serverTimestamp; no lo exigen las reglas ⇒ invariante de aplicación verificada en harness).
+
+**Capa 2 — por tipo/entidad:** `creacion/obligacion` → `monto`, `sentido` · `creacion/entrega` → `entregaId`, `monto` · `edicion/obligacion` → `montoAnterior`, `montoNuevo` · `edicion/entrega` → `entregaId`, `montoAnterior`, `montoNuevo` · `eliminacion/obligacion` → `monto`, `devuelto`, `motivo` · `eliminacion/entrega` → `entregaId`, `montoEliminado`, `motivo` · `condonacion/obligacion` → `monto`, `devuelto`, `motivo` · `condonacion/entrega` → **no aplica** (perdonar es sobre la deuda, no sobre un pago).
+
+**Capa 3 — aditivo y tolerante:** ningún evento previo se reescribe ni se completa; los campos extra se toleran sin leerse (`reintegroId`; **`montoEliminado` es el alias heredado de `monto`** en `eliminacion/entrega`: un lector usa `monto ?? montoEliminado`); `motivo` se escribe con `null` explícito (distinto de ausente); la bitácora **no es la fuente del saldo** (`devuelto` es snapshot de auditoría — D-6). **Omisiones deliberadas:** PII (nombres, contraparte, participantes), campos que no son objeto de la acción (concepto, detalle, movimientoInicial/Tipo, gastoVinculadoId, fechaPago), `devuelto` en `creacion` (el alta nace en 0) y en `edicion` (derivable), snapshots completos, `rid` (está en la ruta) y el tipo `confirmacion` (sin objeto desde 17/10/2026).
+
+**Limitación conocida (aceptada):** un participante **puede** escribir un evento sin acción — las reglas solo verifican participante + `registradoPor == uid()` + tipo/entidad, no que la acción haya ocurrido. **No altera saldos ni montos** (la bitácora no alimenta cálculos; el único consumidor, `useEdiciones`, solo pinta el chip «Editado»), solo el historial. El acople acción↔evento es de aplicación + harness. **Sin vista de bitácora en v1.**
 
 ## 6. Transferencias (legacy)
 

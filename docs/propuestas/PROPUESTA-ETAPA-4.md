@@ -126,6 +126,14 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 | **Done verificable** | Caso 15 de §14.1: create-only (update/delete rechazados en emulador); cada acción emite exactamente un evento; rollback deja eventos consistentes; harness PASS |
 | **Evidencia esperada** | Harness de bitácora |
 
+> **Enmienda datada 30/10/2026 (§1.6):** la fuente del esquema de bitácora es
+> `PROPUESTA-ETAPA-3.md` **§3.6.b** («Bitácora de eventos (P-1)»), **no §3.5**
+> («Alternativas evaluadas»). Además, en «Archivos a editar»: **`eventos.js` no
+> existe** — la decisión de 4.1 (ajuste 8, `EVIDENCIA-4.1.md` §11) fue que cada
+> helper escriba su evento dentro de su propia transacción; **4.4-bis la ratifica**
+> (no se crea helper compartido). P-1 quedó **aprobada** el 30/10/2026: esquema
+> canónico en `context/dominio.md` §5.3 y `docs/evidencia/EVIDENCIA-4.4-bis.md` §2.
+
 ### 1.7 Subetapa 4.5 — Retiro de Transferencias (paso separado)
 
 | | |
