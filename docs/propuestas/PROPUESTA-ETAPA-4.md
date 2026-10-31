@@ -133,6 +133,13 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 > helper escriba su evento dentro de su propia transacción; **4.4-bis la ratifica**
 > (no se crea helper compartido). P-1 quedó **aprobada** el 30/10/2026: esquema
 > canónico en `context/dominio.md` §5.3 y `docs/evidencia/EVIDENCIA-4.4-bis.md` §2.
+>
+> **Alcance de la enmienda:** declara **superados** también **§1.1** de la Etapa 4
+> (listaba `eventos.js` como «helper de bitácora» y «archivo a crear» de 4.1: nunca
+> se creó) y **§9(b)** (mantenía el «schema exacto del evento» como pendiente con
+> fuente §3.5: P-1 quedó aprobada y la fuente es §3.6.b). El cuerpo de esas
+> secciones no se reescribe (inmutabilidad de la propuesta); esta nota es la
+> corrección vigente.
 
 ### 1.7 Subetapa 4.5 — Retiro de Transferencias (paso separado)
 
