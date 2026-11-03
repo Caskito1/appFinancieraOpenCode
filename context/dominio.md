@@ -22,7 +22,7 @@ Documento de **dominio**: qué representa cada cosa en la aplicación, independi
 | **Gasto compartido diario** (`gastos`, `tipo="compartido"`) | **No** | No | Gasto visible para ambos; registro/historial; NO deuda. |
 | **Gasto fijo personal** (`fixed_expense_entries` sin grupo + `fixed_expenses` config) | No | No | Recurrente (alquiler comp. / suscripción pers.). Cuenta 100% al usuario. |
 | **Gasto fijo compartido** (`fixed_expense_entries` con `groupId`) | **Sí** | No | Recurrente compartido (alquiler, luz, internet...). Acumula balance 50/50; se liquida; historial permanece. |
-| **Transferencia** (`transferencias`) | No (modelo actual) | Depende hoy (ver #problema) | Legacy del intento anterior de pagos entre miembros. En desuso para la UI. |
+| **Transferencia** (`transferencias`) | No | No | **RETIRADA en 4.5 (03/11/2026):** legacy del intento anterior de pagos entre miembros. Código eliminado; la app ya no lee ni escribe la colección (los datos, si existen, quedan intactos). |
 | **Recuperación / Reintegro** (`reintegros` + `reintegro_devoluciones`) | — | **NO** | **IMPLEMENTADO (Etapa 4, 4.1–4.3):** dinero adelantado por otro (pareja, amigo, familiar, externo) y su devolución; las devoluciones **no suman como ingreso**. Nombre técnico definitivo: **reintegro**. Alta en `/agregar`, consulta en `/reintegros` (ver §5). |
 | **Tarjeta** | — | No | Módulo futuro (**backlog**, fuera de la Etapa 4). Hoy la tarjeta se modela como gasto fijo personal (OCA) o transferencia con concepto "tarjeta". |
 
@@ -33,7 +33,7 @@ Documento de **dominio**: qué representa cada cosa en la aplicación, independi
 **Fórmula deseada (acordada):** `total mensual = gastos personales + parte del usuario de gastos compartidos diarios + 50% de gastos fijos compartidos + 100% de gastos fijos personales`.
 
 **Verificado en código** (`useGastos.js`):
-- `totalPersonales` = personales + **transferencias enviadas** convertidas en "Transferencia" (`useGastos.js:76,116`).
+- `totalPersonales` = **solo gastos personales reales** (4.5 retiró las transferencias enviadas que se sumaban como "Transferencia").
 - `totalGruposUsuario` = suma de **lo que el usuario pagó** en gastos compartidos diarios (no "su parte teórica"): `useGastos.js:87-89,117`.
 - `totalFixed` = fijos `montoTotal / 2` si compartido, `montoTotal` si personal: `useGastos.js:110-114`.
 - `totalGastos` = `totalPersonales + totalGruposUsuario + totalFixed` (`useGastos.js:120`).
@@ -65,7 +65,7 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 ### 3.4 Ingresos (Decisión funcional 6 / bug freelance)
 
 - Tipos: `sueldo`, `banda`, `freelance`, `otros` (`PasoTipoIngreso.jsx:18-129`, `useModoIngreso.js:62-67`).
-- `totalIngresos` = ingresos del mes + **transferencias recibidas sumadas como ingreso** (`useIngresos.js:85-110`). La **sección visual de transferencias recibidas está comentada** (`app/ingresos/page.jsx:99-111`), pero el total igual las incluye.
+- `totalIngresos` = **solo ingresos reales** (4.5 retiró las transferencias recibidas que se sumaban como ingreso; I-1).
 - `#actual` **Bug de bandas - DIAGNÓSTICO CORREGIDO Y RESUELTO en 2.3 (30/09/2026, commit `7d71fb5`, validado en Producción con los 8 casos).** La documentación anterior atribuyó el bug a un desajuste de ids entre `FilaIngreso.jsx:6-12` (`la_ventolera`/`la_imbailable`/`tapelao`) y `useModoIngreso.js:9-19` (`laventolera`/`laimbailable`/`tapelao`). El desajuste **existe**, pero era **código inalcanzable**: `FilaIngreso` solo lo usan `SueldoSection` y `FreelanceSection`, y ambas reciben documentos con `subtipo: null`, así que `TIPO_LABEL` nunca se consultaba con una clave de banda (ni con `sueldo`/`freelance`). El bug **visible** estaba en `BandasSection.jsx:10-11,60`: agrupaba por el id crudo y lo renderizaba con CSS `capitalize`, por eso se veía **"Laventolera"** y **"Laimbailable"** (y "Tapelao" por casualidad). **Resuelto** mapeando el id canónico al label de `BANDAS` (`useModoIngreso`) solo para mostrar; los ids que se escriben (`laventolera`/`laimbailable`/`tapelao`) siguen siendo los canónicos y **no se cambian**. El `TIPO_LABEL` muerto fue **eliminado**.
 - `#actual` **Fila de ingreso - RESUELTO en 2.3 (30/09/2026, commit `7d71fb5`, validado en Producción con los 8 casos).** Antes titulaba con `TIPO_LABEL[subtipo] ?? detalle ?? "Ingreso"` **y** repetía el `detalle` como subtítulo, así que en `freelance` (donde el `detalle` es requerido) el nombre del proyecto salía **dos veces**. Ahora la fila es **título `detalle ?? "Ingreso"` + fecha + monto**; el subtítulo se eliminó por ser inalcanzable (con `detalle` null o string no vacío, `detalle === titulo` siempre).
 - `#actual` **`otros` era invisible - RESUELTO en 2.3 (30/09/2026, commit `7d71fb5`, validado en Producción con los 8 casos).** Antes: `PasoTipoIngreso.jsx:114-129` lo ofrecía y `useIngresos.js` lo sumaba a `totalIngresos`, pero **no había sección que lo mostrara** ni `page.jsx:65-70` lo contaba en "N ingresos": la plata entraba al total, no se veía en ninguna lista y no estaba en el conteo. **Causa raíz:** `subscribeIngresos.js:30-48` filtra por `usuario` + rango de `createdAt`, **no por `tipo`**, así que los documentos de `otros` ya venían en `ingresos` y ya sumaban, eran *contados pero invisibles*. **Resuelto** con la sección `OtrosSection` (con `empty`) + `ingresosOtros` + su conteo. **Invariante cerrado:** todo peso dentro de `Total ingresos` es visible en alguna sección **y** está contado en "N ingresos". `totalIngresos` **no se modificó** (`useIngresos.js:85-110` intacto).
@@ -92,8 +92,8 @@ Cierre mensual: los balances se resuelven en el uso real; la app debe conservar 
 
 - **Modelo:** `reintegros` (obligaciones, con `devuelto` acumulado) + `reintegro_devoluciones` (entregas/pagos) + bitácora `reintegros/{id}/eventos` (create-only; esquema canónico en §5.3). Módulo en `app/reintegros/` (página `/reintegros`: balance, pestañas Activos/Saldados, acordeones); alta desde `/agregar` (`ReintegroModal`, un paso). Reutilizable desde el módulo de tarjeta futuro (§7).
 - **Regla cumplida:** la devolución **no es ingreso real** — no suma en `totalIngresos` ni en `/gastos`; reduce/cancela el saldo. Aplica a pareja, integrante del grupo o **persona externa** (contraparte sin uid en el grupo).
-- `#problema` (histórico): **hasta 4.1** los reintegros solo podían registrarse como `transferencias`: las recibidas **inflaban ingresos** (`useIngresos.js:95-106`) y las enviadas sumaban gasto del mes (`useGastos.js:65-74`), sin vínculo con el gasto adelantado — contradecía **reintegro ≠ ingreso**. Ese registro legacy sigue **leyéndose** hasta su retiro en **4.5** (ver §6).
-- Pendientes de la etapa: **4.3-bis CERRADA (25/10/2026, §5.2)** · **4.4-bis (bitácora) CERRADA (30/10/2026, §5.3)** · **4.4** (resumen mensual) **diferida**: su alcance se absorbe en la Etapa 5 (Balance consolidado) · **4.5** (retiro de Transferencias) — próxima subetapa.
+- `#problema` (histórico): **hasta 4.1** los reintegros solo podían registrarse como `transferencias`: las recibidas **inflaban ingresos** (`useIngresos.js:95-106`) y las enviadas sumaban gasto del mes (`useGastos.js:65-74`), sin vínculo con el gasto adelantado — contradecía **reintegro ≠ ingreso**. Ese registro legacy fue **retirado en 4.5 (03/11/2026)**: ya no se lee ni se escribe (ver §6).
+- Pendientes de la etapa: **4.3-bis CERRADA (25/10/2026, §5.2)** · **4.4-bis (bitácora) CERRADA (30/10/2026, §5.3)** · **4.4** (resumen mensual) **diferida**: su alcance se absorbe en la Etapa 5 (Balance consolidado) · **4.5 CERRADA (03/11/2026, §6)** — retiro de Transferencias; **núcleo de la Etapa 4 completo**.
 
 ### 5.1 Decisiones funcionales de 4.2/4.3 (aprobadas; fuente: `EVIDENCIA-4.2.md`, `EVIDENCIA-4.3.md`)
 
@@ -128,16 +128,16 @@ Bitácora `reintegros/{rid}/eventos`, **create-only desde 4.0** (sin `update` ni
 
 **Limitación conocida (aceptada):** un participante **puede** escribir un evento sin acción — las reglas solo verifican participante + `registradoPor == uid()` + tipo/entidad, no que la acción haya ocurrido. **No altera saldos ni montos** (la bitácora no alimenta cálculos; el único consumidor, `useEdiciones`, solo pinta el chip «Editado»), solo el historial. El acople acción↔evento es de aplicación + harness. **Sin vista de bitácora en v1.**
 
-## 6. Transferencias (legacy)
+## 6. Transferencias (legacy) — RETIRADAS en 4.5 (03/11/2026)
 
-- La colección/lógica `transferencias` es un **intento anterior** de modelar pagos entre miembros (`docs/reportes/CONTEXTO-ETAPA3.md` §9).
+- La colección/lógica `transferencias` es un **intento anterior** de modelar pagos entre miembros (`docs/reportes/CONTEXTO-ETAPA3.md` §9). **El código se eliminó en 4.5 (03/11/2026)**; la colección no se lee ni se escribe.
 - Actualmente: **no se utiliza** para la alta (botones deshabilitados en `app/agregar/page.jsx:82-107`), pero **se sigue leyendo** en `/gastos` (enviadas → gastos) y `/ingresos` (recibidas → ingresos).
-- Conceptos de la UI (dead): `alquiler`, `tarjeta`, `otros` (`useModoTransferencia.jsx:25-29`).
+- Conceptos de la UI (código eliminado en 4.5): `alquiler`, `tarjeta`, `otros`.
 
 ## 7. Tarjeta (Decisión funcional 5)
 
 - **No está implementada como módulo.** Uso real hoy: se usa la tarjeta → se revisan gastos → se determina la parte de la otra persona → **ajuste manual** (sin representación en la app).
-- Modelado parcial/impreciso: OCA como gasto fijo personal (`fixedExpensesTaxonomia.js:12`) y/o transferencia con concepto "tarjeta" (`useModoTransferencia.jsx:27`, `submitTransferencia.jsx:21`).
+- Modelado parcial/impreciso: OCA como gasto fijo personal (`fixedExpensesTaxonomia.js:12`) y/o transferencia con concepto "tarjeta" (código retirado en 4.5).
 - Futuro (**backlog**, fuera de la Etapa 4): módulo propio — gastos con tarjeta, quién lo pagó, parte del otro, cuánto queda por recuperar, pagos/ajustes. **La devolución de la parte no es ingreso** (pertenece al modelo de recuperaciones).
 
 ## 8. Porcentajes de gastos fijos compartidos (Decisión funcional 7)
@@ -170,7 +170,7 @@ Lo que el visualizador debe respetar:
 | # | Etiqueta | Diferencia | Etapa apunta |
 |---|---|---|---|
 | D1 | `#actual` | Fórmula total cumple, pero "tu parte" = lo pagado y fijos pendientes suman 50% | 1/3 |
-| D4 | `#problema` → parcialmente resuelto (Etapa 4) | ~~Sin concepto de recuperación~~ → **Reintegros implementados (4.1–4.3): `reintegros` + `reintegro_devoluciones`, devoluciones ≠ ingreso**. Queda: `transferencias` legacy — recibidas suman como ingreso y enviadas como gasto | 4 (retiro en **4.5**) |
+| D4 | `#problema` → parcialmente resuelto (Etapa 4) | ~~Sin concepto de recuperación~~ → **Reintegros implementados (4.1–4.3): `reintegros` + `reintegro_devoluciones`, devoluciones ≠ ingreso**. **Retiradas en 4.5 (03/11/2026): ya no suman** | 4 (cerrada) |
 | D5 | `#actual` | Tarjeta = fijo personal/transferencia; sin módulo | backlog (fuera de la Etapa 4) |
 | D6a | `#actual` | "Otros" existe en gastos (único y compra) e ingreso | 2 |
 | D6b | `#problema` → resuelto 2.1 | ~~"Otros" perdido en taxonomía de gastos fijos~~ → presente en personal (`otros`) y compartido (`otros_compartido`) | — (cerrado 25/09/2026) |
@@ -180,6 +180,6 @@ Lo que el visualizador debe respetar:
 | Filas ingreso | `#problema` → resuelto 2.3 | ~~`FilaIngreso` imprime el `detalle` dos veces (título + subtítulo)~~ → título único `detalle ?? "Ingreso"` + fecha + monto | — (2.3, commit `7d71fb5`, validado en Producción con los 8 casos, 30/09/2026) |
 | Ingresos CRUD | `#problema` | El módulo de ingresos **no tiene flujo para editar ni eliminar** un ingreso: solo el alta (`submitIngreso.js`). El único `deleteDoc` de la app es de gastos (`useGastos.js:143`) y `/gastos` tiene `EditarGastoModal.jsx` | **Posterior** — sin subetapa. **NO implementado** |
 | Fijos | `#problema` → resuelto 2.1 + 2.5 | Doble taxonomía **resuelta en 2.1** (`lib/temp.js` eliminado); doble esquema de escritura **resuelto en 2.5** (código legacy ModoGastosFijos eliminado; sin escritor desde la app) | — (Etapa 2 cerrada 11/10/2026) |
-| Transferencias | `#problema` | Legacy leído pero alta deshabilitada | 2 |
+| Transferencias | `#problema` → **RESUELTO en 4.5 (03/11/2026)** | Código retirado; la colección queda intacta pero la app no la lee ni escribe | 4 (cerrada) |
 
 Detalle completo con evidencia `archivo:línea`: `docs/reportes/REPORT-ETAPA-0.md` (sección hallazgos).

@@ -45,8 +45,8 @@ AppFinanciera/                           → aplicación (repo git propio)
 | `/home` | Pantalla de inicio (saludo, quick actions) | Activo |
 | `/gastos` | Gastos del mes (personales, por grupo, fijos) + total | Activo |
 | `/gastos-fijos` | Administrador de gastos fijos (detalle, estados, balance) | Activo |
-| `/ingresos` | Ingresos del mes (sueldo, bandas, freelance, otros) + total (incluye transferencias recibidas, cuya sección está comentada) | Activo (bug freelance resuelto en 2.3) |
-| `/agregar` | Registro de movimientos | Activo (gasto único, compra, ingreso, **reintegro**; transferencias y gastos fijos deshabilitados en UI) |
+| `/ingresos` | Ingresos del mes (sueldo, bandas, freelance, otros) + total (**solo ingresos reales**; transferencias retiradas en 4.5) | Activo (bug freelance resuelto en 2.3) |
+| `/agregar` | Registro de movimientos | Activo (gasto único, compra, ingreso, **reintegro**; gastos fijos deshabilitados en UI; transferencias retiradas en 4.5) |
 | `/reintegros` | Reintegros: balance Préstamos/Deudas, pestañas Activos/Saldados, acordeones, pagos y edición de monto | Activo (desde 4.2/4.3) |
 | `/pendientes` | Ruta existente | Botón deshabilitado (sin acceso desde la UI) |
 
@@ -59,11 +59,11 @@ AppFinanciera/                           → aplicación (repo git propio)
 | `reintegros` | Obligaciones de reintegro (`sentido: por_cobrar`/`por_devolver`, `devuelto` acumulado) — desde 4.2 | `submitReintegro`, `editarObligacion` | `subscribeReintegros`, `useReintegros`, `useEdiciones` |
 | `reintegro_devoluciones` | Entregas/pagos sobre una obligación — desde 4.2 | `submitDevolucion`, `editarEntrega` | `subscribeReintegros` |
 | `reintegros/{rid}/eventos` | Bitácora (creación/edición/eliminación/condonación de obligaciones y entregas) — **create-only**, sin edición ni borrado (D-3) | misma transacción de `submit*`/`editar*`/`eliminar*`/`condonar` | `useEdiciones` |
-| `transferencias` | Transferencias entre miembros (legacy/deshabilitado en UI) — **colección ausente en Firestore** (validado 25/09/2026): **código legacy sin datos** | `submitTransferencia`, `useModoTransferencia` | `subscribeGastos`, `subscribeIngresos` |
+| `transferencias` | Transferencias entre miembros (legacy) — **RETIRADA en 4.5 (03/11/2026)**: código eliminado; la app no la lee ni escribe. Colección **ausente en Firestore** (validado 25/09/2026) y sin migración; reglas de consola conservadas | — (sin escritor) | — (sin lectores) |
 | `fixed_expenses` | Gastos fijos — **datos actuales 100 % esquema activo** (`{expenseId, usuario, montoDefault, activo}`, validado 25/09/2026); el esquema legacy **ya no tiene escritor en código** (helper eliminado en 2.5, `3216095`) | `useFixedExpenses` (config) | `useFixedExpenses` (config activo) |
 | `fixed_expense_entries` | Entradas mensuales de gastos fijos (modelo ACTIVO de /gastos-fijos) | `useFixedExpenses` (registrar/saldar/dispensa) | `subscribeFixedExpenses`, `useFixedExpenses` |
-| `groups` | Grupos (1 solo grupo hoy) | — (solo lectura) | `GroupContext`, `useModoTransferencia` |
-| `users` | Usuarios del grupo | — (solo lectura) | `useModoTransferencia` — **inconsistencia documentada: campo `uid`/`iud` según doc (hallazgo posterior)** |
+| `groups` | Grupos (1 solo grupo hoy) | — (solo lectura) | `GroupContext` |
+| `users` | Usuarios del grupo | — (solo lectura) | `GroupContext` / `ReintegroModal` — **inconsistencia documentada: campo `uid`/`iud` según doc (hallazgo posterior)** |
 | `productos` | Productos custom — **colección ausente en Firestore** (validado 25/09/2026) | — | reclamada por `taxonomia.js:4` (referencia, sin merge) |
 
 ### Estado Firestore — validado read-only 25/09/2026 (script `validacion-ae.sh` v3.1)
@@ -84,7 +84,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 **`reintegros`**: `{ registradoPor, registradoPorNombre, contraparteUid: string|null, contraparteNombre, participantes[], groupId: string|null, sentido: "por_cobrar"|"por_devolver", monto, devuelto, movimientoInicial, movimientoInicialTipo?: "dinero"|"item", concepto, detalle: string|null, gastoVinculadoId: null, createdAt: serverTimestamp() }` — al condonar/eliminar (4.3-bis) suma las constancias `condonacion: {…}` / `eliminacion: {…}` (D-4)
 **`reintegro_devoluciones`**: `{ reintegroId, monto, realizadoPorUid: string|null, realizadoPorNombre, registradoPor, registradoPorNombre, fechaPago, detalle: string|null, createdAt: serverTimestamp() }`
 **`reintegros/{rid}/eventos`**: `{ registradoPor, tipo: "creacion"|"edicion"|"eliminacion"|"condonacion", entidad: "obligacion"|"entrega", createdAt: serverTimestamp() }` + campos por tipo (4.4-bis, 30/10/2026): `creacion/obligacion` → `monto`, `sentido` · `creacion/entrega` → `entregaId`, `monto` · `edicion/*` → `montoAnterior`, `montoNuevo` (+ `entregaId`) · `eliminacion/*` y `condonacion/obligacion` → `monto` (**`montoEliminado`** en `eliminacion/entrega`, alias heredado), `devuelto` (salvo entrega), `motivo`; `eliminacion/entrega` incluye además `entregaId`. Create-only, esquema aditivo y tolerante (los eventos previos no se completan); **se escriben ya los 4 tipos**. Detalle: `context/dominio.md` §5.3.
-**`transferencias`**: `{ deUid, paraUid, paraNombre, monto, concepto: "alquiler"|"tarjeta"|"otros", detalle?, createdAt, groupId }`
+**`transferencias`** (legacy, retirada en 4.5): `{ deUid, paraUid, paraNombre, monto, concepto: "alquiler"|"tarjeta"|"otros", detalle?, createdAt, groupId }` — esquema histórico; la app ya no lo lee ni escribe.
 **`fixed_expenses`** (config ACTIVA): `{ expenseId, usuario, montoDefault?, activo, createdAt }`
 **`fixed_expenses`** (LEGACY — **sin escritor desde 2.5**; posible residuo en datos históricos): `{ nombre, compartido, monto, fecha?, balanceado, saldoPendiente, ... }`
 **`fixed_expense_entries`** (activo): `{ fixedExpenseId, nombre, periodo, montoTotal, vencimiento?, pagoHasta?, paidByUid?, paidByNombre?, usuario, groupId?, participantes[], estado: "sin_registrar"|"pendiente_pago"|"pendiente_saldar"|"saldado"|"pagado_hasta", createdAt: serverTimestamp() }`
@@ -114,13 +114,13 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 
 ## Estado actual / deuda técnica relevante (detalle en REPORT-ETAPA-0.md)
 
-- **Reintegros IMPLEMENTADOS (Etapa 4: 4.0–4.3-bis y 4.4-bis cerradas; 4.5 pendiente):** módulo en `app/reintegros/` + alta en `/agregar`; colecciones `reintegros`, `reintegro_devoluciones` y bitácora `reintegros/{rid}/eventos`; las devoluciones **no suman como ingreso** (reintegro ≠ ingreso). ~~Reintegros no existían como concepto~~ → **queda solo el caso `transferencias` legacy:** recibidas siguen sumando como **ingreso** y enviadas como **gasto personal del mes** (`useIngresos.js:95-106`, `useGastos.js:65-74`) hasta su retiro en **4.5**.
+- **Reintegros IMPLEMENTADOS (Etapa 4: 4.0–4.3-bis, 4.4-bis, 4.5-fecha y 4.5 cerradas):** módulo en `app/reintegros/` + alta en `/agregar`; colecciones `reintegros`, `reintegro_devoluciones` y bitácora `reintegros/{rid}/eventos`; las devoluciones **no suman como ingreso** (reintegro ≠ ingreso). ~~Reintegros no existían como concepto~~ → **`transferencias` legacy retirada en 4.5 (03/11/2026):** ya no suman como ingreso ni como gasto; la colección queda intacta pero sin lectores ni escritores.
 - **50/50 hardcodeado** en totales y registro de fijos compartidos; `participantes` asumidos en 2.
 - **Gastos fijos con doble modelo** (en **código**: esquema activo + helper legacy; en **Firestore**: solo esquema activo — legacy sin documentos, validado 25/09/2026).
-- **Módulo de transferencias deshabilitado en UI** (`app/agregar/page.jsx:82-107`) pero lógica y lecturas activas.
+- ~~**Módulo de transferencias deshabilitado en UI** pero lógica y lecturas activas~~ → **RETIRADO en 4.5 (03/11/2026, `f4a1cd7`):** sin alta, sin lecturas, sin UI.
 - **Bug de visualización de ingresos freelance/bandas — DIAGNÓSTICO CORREGIDO y RESUELTO en 2.3 (30/09/2026, commit `7d71fb5`, validado en Producción con los 8 casos).** La versión anterior de esta línea decía que el bug estaba en `FilaIngreso.jsx` (keys `la_ventolera`/`la_imbailable` vs `laventolera`/`laimbailable`): **ese desajuste existe pero era código inalcanzable**, porque `FilaIngreso` solo lo usan `SueldoSection` y `FreelanceSection` y ambas reciben `subtipo: null`. El bug **visible** (headers "Laventolera"/"Laimbailable") estaba en `BandasSection.jsx:10-11,60`, que agrupaba y renderizaba el id crudo.
-- **El módulo de ingresos no tiene edición ni borrado** (deuda funcional registrada el 30/09/2026): solo existe el alta (`submitIngreso.js`). No hay ningún `updateDoc`/`deleteDoc` sobre `ingresos`; el único `deleteDoc` de la app es de gastos (`useGastos.js:143`). Un ingreso mal cargado **no se corrige desde la app**. **No implementado**; pendiente de etapa posterior (`docs/propuestas/PROPUESTA-2.3.md` §9.1).
-- **Código muerto — limpieza ejecutada en la Etapa 2 (cerrada 11/10/2026):** eliminados en 2.1 `lib/temp.js`; en **2.5** el flujo legacy de gastos fijos (`ModoGastosFijos` + carpeta `agregar/components/gastos-fijos/`); en **2.6** `lib/ingresos.js`, `carritoHelpers.js`, `fixedExpensesService.jsx`, ambos `EmptyState.jsx`, `ingresos/components/Acordeon.jsx` y el `storage` de `lib/firebase.js` (−330/0). **Conservados por decisión:** `gastosCalculations.js` (balances de Transferencias → Etapa 3), la escritura `origenCompra` (posible uso externo) y `Transferenciassections.jsx` (0 importadores, pero área Transferencias → Etapa 3/4).
+- ~~**El módulo de ingresos no tiene edición ni borrado**~~ → **RESUELTO en 4.5-fecha (03/11/2026, `6c708ef`):** `EditarIngresoModal` + `editarIngreso`/`eliminarIngreso` sobre `ingresos`; conectado a Sueldo/Bandas/Freelance/Otros.
+- **Código muerto — limpieza ejecutada en la Etapa 2 (cerrada 11/10/2026):** eliminados en 2.1 `lib/temp.js`; en **2.5** el flujo legacy de gastos fijos (`ModoGastosFijos` + carpeta `agregar/components/gastos-fijos/`); en **2.6** `lib/ingresos.js`, `carritoHelpers.js`, `fixedExpensesService.jsx`, ambos `EmptyState.jsx`, `ingresos/components/Acordeon.jsx` y el `storage` de `lib/firebase.js` (−330/0). **Conservado por decisión:** la escritura `origenCompra` (posible uso externo). **`gastosCalculations.js` y `Transferenciassections.jsx` fueron eliminados en 4.5 (03/11/2026)** junto con el resto del código de Transferencias.
 - ~~**RouteGuard espera `loading` que AuthContext no expone** (`RouteGuard.jsx:13` vs `AuthContext.jsx`)~~ → **RESUELTO en 2.4 (CERRADA 10/10/2026, commit `1716a19`, verificada en Producción):** AuthContext expone `loading: user === undefined` + salvaguarda de 8 s; `RouteGuard.jsx` quedó intacto. Detalle en `docs/propuestas/PROPUESTA-2.4.md`.
 - `REPORT-02.md` cita rutas `organizador-app/...` inexistentes; el código real está en `AppFinanciera/`.
 
@@ -135,7 +135,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 7. Porcentajes fijos: hoy 50/50, modelo no limitado a 50/50.
 8. Firestore: acceso read-only autorizado y **ejecutado el 25/09/2026** (Service Account + REST, script `validacion-ae.sh` v3.1); **sin escrituras**.
 9. Históricos: no se modifican.
-10. `transferencias`: **fuera del modelo funcional** (6.1 cerrada); colección ausente en Firestore.
+10. `transferencias`: **fuera del modelo funcional** (6.1 cerrada) y **código retirado en 4.5 (03/11/2026)**; colección ausente en Firestore.
 11. Gastos fijos: **Disney+ = PERSONAL** (6.3, decisión cerrada).
 12. "Otros" disponible en gastos fijos **personales y compartidos** (6.4, decisión cerrada). **Implementada en 2.1** (25/09/2026): personal `otros` y compartido `otros_compartido`, ambos `Otros` 📦 mensual.
 

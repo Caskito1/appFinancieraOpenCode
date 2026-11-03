@@ -183,6 +183,19 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 | **Done verificable** | Las 6 condiciones cumplidas y checklist firmado; greps 0 restos; build/lint OK; totales correctos; I-1 verificado; PASS en Staging y verificación en Producción |
 | **Evidencia esperada** | Checklist + greps + diff revisado + verificación en Producción |
 
+> **Enmienda datada 03/11/2026 (§1.7) — cierre de 4.5:** **CERRADA** con el commit
+> `f4a1cd7` (7 archivos eliminados, 7 editados; `origenCompra`, reglas de
+> `transferencias` e índices sin cambios). Las 6 condiciones de §7.4 se cumplieron:
+> diff revisado y aprobado; greps con 0 restos (3 coincidencias de prosa en
+> Reintegros); totales idénticos con `transferencias` vacía; gates reglas **71/71**,
+> `test:gastos` **8/8**, harness **57/57**, lint 4/0, build OK; **I-1** verificado con
+> el fixture; aprobación explícita antes de las eliminaciones. **Verificación funcional
+> local aprobada por el usuario.** El gate read-only del proyecto real no pudo
+> ejecutarse (sesión CLI vencida) → `REQUIERE_VALIDACIÓN_FIRESTORE` para el conteo.
+> **Staging y deploy de reglas siguen diferidos al cierre de la Etapa 4** (junto con
+> `gastos`/`ingresos` y el BLOQUE B). Con 4.5 **el núcleo de la Etapa 4 queda completo**.
+> Evidencia: `docs/evidencia/EVIDENCIA-4.5.md`.
+
 ### 1.8 Subetapa 4.6 — Confirmación bilateral (PO-4, D-11a/D-11b) — **[ELIMINADA 17/10/2026]**
 
 > > **❌ ELIMINADA — decisión del usuario 17/10/2026:** no hay confirmación bilateral (el
