@@ -141,6 +141,23 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 > secciones no se reescribe (inmutabilidad de la propuesta); esta nota es la
 > corrección vigente.
 
+> **Enmienda datada 03/11/2026 (§1.6) — apertura de 4.5-fecha:** el usuario
+> aprueba una subetapa propia **previa a 4.5** (no se reusa `4.5-bis`,
+> cancelada el 30/10/2026) para incorporar la **fecha del gasto diario**.
+> Alcance: `fecha` (Timestamp) en alta modo único, alta modo compra y edición;
+> período/mes derivado de `fecha` con **fallback a `createdAt`**; `createdAt`
+> como auditoría inmutable; `fecha` **opcional en reglas** (compatibilidad) y
+> obligatoria en la app; **una fecha por compra**; rango de reglas
+> **2020-01-01 … `request.time + 1 día`**; **sin migración ni backfill**.
+> **Paso 0:** diff consola vs repo desde el **texto pegado de la consola**
+> (sin Rules API); si hay delta, commit de sincronización previo y tests de
+> reglas contra el texto real. **Contrato para 5.1:** `balanceDelMes` debe
+> derivar el período de `fecha` con fallback a `createdAt` y **no puede usar
+> `where("fecha", …)`** (excluiría los documentos sin `fecha`). Reglas,
+> promoción y deploy se autorizan por separado. Esta enmienda **no modifica**
+> el alcance de 4.5 (§1.7), que se ejecuta después. Evidencia:
+> `docs/evidencia/EVIDENCIA-4.5-fecha.md`.
+
 ### 1.7 Subetapa 4.5 — Retiro de Transferencias (paso separado)
 
 | | |

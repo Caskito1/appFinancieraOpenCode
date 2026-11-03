@@ -79,7 +79,7 @@ Ejecutado desde Cloud Shell con Service Account `firestore-validacion-readonly` 
 
 ### Esquema resumido de documentos
 
-**`gastos`**: `{ usuario, tipo: "personal"|"compartido", monto, detalle, categoria, grupo, productoId?, origenCompra?, createdAt: serverTimestamp() }`
+**`gastos`**: `{ usuario, tipo: "personal"|"compartido", monto, detalle, categoria, grupo, productoId?, origenCompra?, fecha?: Timestamp, createdAt: serverTimestamp() }` — **`fecha` (4.5-fecha):** fecha real del gasto; el período se deriva de `fecha` con **fallback a `createdAt`** (históricos sin `fecha`). `createdAt` es auditoría inmutable.
 **`ingresos`**: `{ usuario, tipo: "sueldo"|"banda"|"freelance", monto, subtipo?, detalle?, createdAt: serverTimestamp() }`
 **`reintegros`**: `{ registradoPor, registradoPorNombre, contraparteUid: string|null, contraparteNombre, participantes[], groupId: string|null, sentido: "por_cobrar"|"por_devolver", monto, devuelto, movimientoInicial, movimientoInicialTipo?: "dinero"|"item", concepto, detalle: string|null, gastoVinculadoId: null, createdAt: serverTimestamp() }` — al condonar/eliminar (4.3-bis) suma las constancias `condonacion: {…}` / `eliminacion: {…}` (D-4)
 **`reintegro_devoluciones`**: `{ reintegroId, monto, realizadoPorUid: string|null, realizadoPorNombre, registradoPor, registradoPorNombre, fechaPago, detalle: string|null, createdAt: serverTimestamp() }`
