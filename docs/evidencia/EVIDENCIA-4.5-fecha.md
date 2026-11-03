@@ -1,7 +1,8 @@
 # EVIDENCIA-4.5-fecha — Fecha del gasto diario (período por `fecha`, fallback `createdAt`)
 
-**Estado:** **IMPLEMENTACIÓN COMPLETA — cierre pendiente.** Commit de código en `AppFinanciera/staging`: **`9d350d2`** (local, **sin push**). Gates corridos: `test:gastos` **8/8**, `harness:reintegros` **57/57**, `test:rules` **44/44** (reglas **sin cambios**), lint baseline 4 (0 nuevos), build OK.
-**Pendiente para cerrar:** (1) **Paso 0 / reglas** — falta el **texto de la consola** (Firebase Console → Firestore → Rules) para diffear y, si corresponde, hacer el commit de sincronización + el cambio de `gastos`; (2) **verificación funcional en Staging** (requiere push, autorización aparte).
+**Estado:** **IMPLEMENTACIÓN COMPLETA — cierre pendiente.** Commits en `AppFinanciera/staging` (locales, **sin push**): **`9d350d2`** (app + tests unitarios) y **`bbd3345`** (reglas de `gastos` + 14 tests). Gates: `test:rules` **58/58**, `test:gastos` **8/8**, `harness:reintegros` **57/57**, lint baseline 4 (0 nuevos), build OK.
+**Paso 0 CERRADO (03/11/2026):** el texto de consola pegado por el usuario **coincide** con el BLOQUE A del repo ⇒ **sin delta, sin commit de sincronización**.
+**Pendiente para cerrar:** (1) **verificación funcional en Staging** (requiere push, autorización aparte); (2) **deploy de reglas**, junto con el BLOQUE B de Reintegros al cierre de la Etapa 4.
 Repo: `AppFinanciera/` · rama `staging` · sin tocar `main` · **0 escrituras en Firestore real**.
 
 ---
@@ -81,14 +82,20 @@ Los totales (`TotalMesCard`, `totalGastos`, `totalTransacciones`) no se tocaron:
 
 ---
 
-## 4. Reglas — Paso 0 (PENDIENTE)
+## 4. Reglas — Paso 0 (CERRADO: sin delta) + enmienda 4.5-fecha
 
-**No se modificó `firestore.rules` en este commit.** El Paso 0 no puede cerrarse sin el **texto pegado de la consola** (decisión 03/11/2026: sin Rules API con credenciales).
+### 4.1 Paso 0 — diff consola vs repo
 
-- Si el texto de consola **coincide** con el repo: no hay commit de sincronización; se aplica solo el cambio de `gastos`.
-- Si **difiere**: primero un **commit de sincronización** con el texto real y el delta documentado; después el cambio de `gastos`. Los tests de reglas se escriben contra el texto real.
+El usuario pegó el **texto completo de Firebase Console → Firestore → Rules** (03/11/2026). Resultado:
 
-**Cambio previsto (no aplicado aún), sobre el texto vigente:**
+- **BLOQUE A (reglas vigentes) = copia del repo:** helpers, `groups`, `gastos`, `ingresos`, `transferencias`, `fixed_expenses`, `fixed_expense_entries`, `users` coinciden. **Sin delta ⇒ sin commit de sincronización.**
+- **Único delta del repo: BLOQUE B (Reintegros)**, ya versionado como “PROPUESTO” y **no desplegado** — coincide con la advertencia de `ROADMAP.md` (Reintegros no se usa en Staging hasta el cierre de la Etapa 4).
+
+**Hallazgo (corrige la premisa del pedido):** las reglas desplegadas **no** exigían `createdAt == request.time` en create ni `createdAt == resource.data.createdAt` en update. El bloque `gastos` solo validaba `usuario`/`tipo`/`groupId`; el update, solo el dueño. **No hay whitelist de campos** ⇒ `fecha` ya estaba permitida y la verificación funcional **no depende** del deploy de reglas.
+
+### 4.2 Enmienda aplicada (decisión b, 03/11/2026)
+
+Además de `fecha`, se formaliza la auditoría que el diseño asume (`createdAt` inmutable):
 
 ```js
 function fechaGastoValida(f) {
@@ -96,16 +103,18 @@ function fechaGastoValida(f) {
     && f >= timestamp.date(2020, 1, 1)
     && f <= request.time + duration.value(1, 'd');
 }
-
-// create:  ... && (!('fecha' in request.resource.data) || fechaGastoValida(request.resource.data.fecha))
-//          && request.resource.data.createdAt == request.time        (conservar si ya está en consola)
-// update:  ... && request.resource.data.createdAt == resource.data.createdAt
-//          && (!('fecha' in request.resource.data) || fechaGastoValida(request.resource.data.fecha))
+// create:  fecha opcional + `createdAt == request.time`
+// update:  `createdAt` inmutable (defensivo si el doc no lo tiene) + fecha válida
+// delete:  regla separada (en un delete `request.resource` es null)
 ```
 
-`fecha` **opcional** en reglas: un cliente viejo en caché sigue creando sin `fecha` y el fallback lo cubre.
+- **`fecha` opcional en reglas** (compatibilidad con clientes viejos); obligatoria en la app.
+- **Update y delete separados:** leer `request.resource.data` en un delete denegaría el borrado.
+- **Forma defensiva del update** (`!('createdAt' in resource.data) || …`): un documento histórico cargado por consola sin `createdAt` sigue siendo editable.
+- **Sin whitelist de campos:** `tipo`/`groupId` siguen mutables (el modal permite personal↔compartido); `usuario`/`monto`/etc. también — **deuda preexistente** (§7), fuera del alcance de 4.5-fecha.
+- **Header del BLOQUE A** actualizado con nota datada: la copia de consola quedó **verificada sin cambios** el 03/11/2026 y la enmienda es solo de `gastos`.
 
-**Riesgo a vigilar en Staging:** si las reglas desplegadas validan un **conjunto cerrado de campos** (`hasOnly`) en `gastos`, el nuevo campo `fecha` haría fallar el alta. El texto versionado no tiene esa validación; se confirma con el diff del Paso 0.
+**Deploy:** pendiente, junto con el BLOQUE B en el cierre de la Etapa 4. Producción funciona sin este cambio (no hay whitelist de campos).
 
 ---
 
@@ -134,6 +143,29 @@ Nuevo script: `npm run test:gastos` (`node --experimental-detect-module --test t
 - **Fix mínimo (solo test):** el rango se deriva del mes real (`ahora.getFullYear()/getMonth()`), conservando el intento del caso (“createdAt = ahora”). Sin cambios de lógica de producto.
 - **Para el Organizador:** cualquier test que mezcle `Timestamp.now()` con un mes fijo es una bomba de calendario; este era el único del harness (los demás fijan `createdAt` explícito).
 
+### 5.3 Reglas — nuevo `tests/rules/gastos.rules.test.mjs` (14/14)
+
+Contra el `firestore.rules` del repo (mismo patrón que el archivo de Reintegros):
+
+| # | Caso | Esperado |
+|---|---|---|
+| 1 | create con `fecha` de un mes anterior | allow |
+| 2 | create **sin** `fecha` (cliente viejo) | allow |
+| 3 | create con `fecha` de hoy (medianoche local) | allow |
+| 4 | create con `fecha` string | deny |
+| 5 | create con `fecha` anterior a 2020 | deny |
+| 6 | create con `fecha` > `request.time + 1 día` | deny |
+| 7 | create con `createdAt` explícito (≠ `request.time`) | deny |
+| 8 | create con `usuario` ajeno | deny |
+| 9 | create compartido con grupo del que soy miembro | allow |
+| 10 | update propio: cambia `fecha`, `createdAt` intacto | allow |
+| 11 | update que mueve `createdAt` | deny |
+| 12 | update con `fecha` inválida | deny |
+| 13 | update de un gasto ajeno | deny |
+| 14 | **delete propio** (regresión de la separación update/delete) | allow |
+
+`npm run test:rules` pasa a `node --test --test-concurrency=1 tests/rules/`: los dos archivos inicializan el emulador y se pisarían con `clearFirestore`/ruleset en paralelo. Total: **44 + 14 = 58**.
+
 ---
 
 ## 6. Gates (03/11/2026)
@@ -142,7 +174,7 @@ Nuevo script: `npm run test:gastos` (`node --experimental-detect-module --test t
 |---|---|
 | `npm run test:gastos` | **8/8** (fail 0) |
 | `npm run harness:reintegros` | **57/57** (fail 0, exit 0) — incluye el fix de H29 |
-| `npm run test:rules` | **44/44** (fail 0) — `firestore.rules` **sin cambios** |
+| `npm run test:rules` | **58/58** (fail 0) — 44 de Reintegros + 14 de `gastos` (4.5-fecha) |
 | `npm run lint` | baseline exacta 4 (`useIngresos.js:39`, `GroupContext.jsx:17`, `HomeHeader.jsx:28`, `page.js:10`), **0 nuevos** |
 | `npm run build` | `✓ Compiled successfully`, 10 páginas, exit 0 |
 | Escrituras en Firestore real | **0** (todo local; sin push) |
@@ -155,6 +187,7 @@ Nuevo script: `npm run test:gastos` (`node --experimental-detect-module --test t
 - **Gastos de octubre cargados por consola:** si tienen `createdAt` de octubre, se ven por fallback; si el lote se cargó también con `fecha` (recomendado), quedan canónicos desde el origen.
 - **Cliente viejo / PWA en caché:** sigue creando sin `fecha` (reglas lo permitirán) y aparece por `createdAt`.
 - **`REQUIERE_VALIDACIÓN_FIRESTORE` (read-only, no bloqueante):** contar documentos de `gastos` sin `fecha` **y** sin `createdAt` (serían invisibles antes y después; el fix no puede inventarles fecha).
+- **Deuda preexistente (no se corrige acá):** en producción, el update de `gastos` solo valida el dueño; `usuario`, `tipo`, `groupId`, `monto` y el resto siguen siendo mutables. La enmienda de 4.5-fecha protege **solo** `createdAt` y el tipo/rango de `fecha`. Un endurecimiento por campo (whitelist) corresponde al gate de seguridad de la etapa, no a esta subetapa.
 
 ---
 
@@ -176,7 +209,7 @@ Documentado en `ROADMAP.md` (Etapa 5), `context/dominio.md` (§3.1) y `context/a
 - [x] Código + tests + gates locales.
 - [x] Docs de apertura (HANDOFF §0/§4, PROPUESTA §1.6, AGENTS, ROADMAP).
 - [x] `context/dominio.md`, `context/arquitectura.md`, `context/MAPA-APPFINANCIERA.md`.
-- [ ] **Paso 0 / reglas** (texto de consola → diff → sincronización si hay delta → cambio de `gastos` → tests de reglas `44 + N`).
+- [x] **Paso 0 / reglas** — sin delta; enmienda de `gastos` aplicada (`bbd3345`) + 14 tests (58/58). **Deploy pendiente** (con BLOQUE B, cierre de Etapa 4).
 - [ ] **Push a `staging`** (autorización aparte) y **verificación funcional**: alta con fecha de octubre estando en noviembre → aparece en octubre, **no** en noviembre, suma en el total de octubre; edición que mueve de mes; doc legacy sin `fecha` visible por fallback.
 - [ ] Entrada datada en `ROADMAP.md` §Histórico con el commit de cierre (al cerrar).
 
