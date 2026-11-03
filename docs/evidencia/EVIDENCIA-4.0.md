@@ -61,11 +61,11 @@
 | **H-b** | `sentido` editable en la rama (d); `movimientoInicial` también editable; `concepto` podía vaciarse | **RESUELTO** — rama (d) reescrita como **lista blanca** (`hasOnly(['concepto','contraparteNombre','registradoPorNombre'])`). Todo lo demás congelado por defecto: `sentido`, `movimientoInicial`, monto, devuelto, constancias, confirmación, `gastoVinculadoId` y cualquier campo futuro. Cada campo exige `is string` (como el alta) y `concepto.size() > 0`. `movimientoInicial` congelado explícitamente (registro de qué movimiento se generó al alta). `concepto` congelado post-confirmación (parte del acuerdo bilateral) — decisión explícita del 16/10/2026. | 3.24: sentido→rechazado; movimientoInicial→rechazado; concepto vacío→rechazado; campo `foo` (fuera de lista)→rechazado; `contraparteNombre` no-string→rechazado; `registradoPorNombre` no-string→rechazado; editado por contraparte→rechazado; sobre condonada→rechazado; positivos de los 3 campos editables. |
 | **H-c** | `monto` editable tras confirmar | **RESUELTO** — rama (c) exige `resource.data.get('confirmadaPor', null) == null`. Se usa `.get()` con default para no romper obligaciones **externas** donde el campo no existe en el documento. Decisión: congelar el monto post-confirmación (no resetear la confirmación). | 3.25: miembro confirmado→rechazado; miembro pendiente (campo en null)→aceptado; externa (campo ausente)→aceptado. |
 
-## 6. Hallazgo H-e — pendiente abierto (spike 4.1, 16/10/2026)
+## 6. Hallazgo H-e — ARCHIVADO / ACEPTADO para uso privado (03/11/2026)
 
 | ID | Hallazgo | Estado |
 |---|---|---|
-| **H-e** | A puede crear una obligación con `contraparteUid` de un tercero B sin relación previa (sin que B lo sepa ni lo acepte). Las reglas no validan que exista vínculo entre A y B. | **PENDIENTE ABIERTO — a decidir antes de abrir la app al público.** Confirmado empíricamente en spike 4.1 (E11: ACEPTADO). Corrección requiere diseño de red de confianza / aceptación de contraparte (fuera de alcance de 4.1). |
+| **H-e** | A puede crear una obligación con `contraparteUid` de un tercero B sin relación previa (sin que B lo sepa ni lo acepte). Las reglas no validan que exista vínculo entre A y B. | **ARCHIVADO / ACEPTADO PARA USO PRIVADO (03/11/2026).** El uso es privado, entre personas conocidas; **no se resuelve ahora**. Se retoma **solo si se decide abrir la app a terceros**, con un diseño de red de confianza / aceptación de contraparte. Confirmado empíricamente en spike 4.1 (E11: ACEPTADO). |
 
 **Equivalencia Bloque A vs backup de consola (re-verificada antes del push):** diff vacío
 (solo difieren los dos `}` de cierre de `service`/`match` que viven al final del archivo,

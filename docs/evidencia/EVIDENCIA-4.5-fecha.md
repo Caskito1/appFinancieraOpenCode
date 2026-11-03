@@ -279,6 +279,6 @@ Entorno: emuladores **Firestore + Auth** (`--project finanzas-app-1c5f6`), `npm 
 - [x] **Push a Staging + verificación en Staging: HECHO (03/11/2026, `f4a1cd7`)** — 4.5-fecha (6 casos) + 4.5 (2 casos) + `/reintegros` con las reglas desplegadas; aprobado por el usuario.
 - [x] **Deploy de reglas: HECHO (03/11/2026)** — ruleset `4dfd2608…` (BLOQUE A + enmienda + BLOQUE B) e índice R1' `READY`.
 
-**Pendientes:** ninguno de 4.5-fecha. **H-e** sigue abierto (no bloquea el cierre, sí la apertura pública).
+**Pendientes:** ninguno de 4.5-fecha. **H-e** archivado / aceptado para uso privado (03/11/2026); se retoma solo si se abre la app a terceros.
 
 **Siguiente:** 4.5 (retiro de Transferencias) — **CERRADA el 03/11/2026**; con ella se cerró la Etapa 4 (`EVIDENCIA-4.5.md` §10).

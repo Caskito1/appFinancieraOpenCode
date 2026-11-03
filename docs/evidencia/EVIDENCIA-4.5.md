@@ -159,6 +159,6 @@ Entorno: emuladores Firestore + Auth (`--project finanzas-app-1c5f6`), `npm run 
 
 **Estado final:** `main` == `staging` == **`2247484`** == Producción. Reglas desplegadas (BLOQUE A + enmienda `gastos`/`ingresos` + BLOQUE B). Índice R1' `READY`. **Sin migración de datos**; la colección `transferencias` no existe (0 docs) y `origenCompra` quedó intacto.
 
-**Pendiente abierto (no bloquea el cierre):** **H-e** — una obligación impuesta a un tercero sin vínculo. Debe resolverse **antes de abrir la app al público** (`EVIDENCIA-4.0.md` §6).
+**H-e — ARCHIVADO / ACEPTADO PARA USO PRIVADO (03/11/2026):** una obligación impuesta a un tercero sin vínculo. El uso es privado, entre personas conocidas; **no se resuelve ahora**. Se retoma **solo si se decide abrir la app a terceros**, con un diseño de red de confianza / aceptación de contraparte (`EVIDENCIA-4.0.md` §6).
 
 **Backup de la ventana:** el texto de consola se guardó en `C:\Users\Usuario\AppData\Local\Temp\opencode\rules-consola-backup-2026-11-03.txt` (fuera del repo). El backup referenciado en `firestore.rules` (`temp/opencode/rules-consola-backup-2026-10-16.txt`) **no existía** y se regeneró con el texto de consola del 03/11.

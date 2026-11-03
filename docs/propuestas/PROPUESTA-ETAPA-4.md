@@ -202,7 +202,8 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 > reglas desplegadas (ruleset `4dfd2608…`, 468 líneas == repo); `/reintegros` PASS;
 > promoción `10ab576..2247484` (fast-forward) → **`main` == `staging` == `2247484`
 > == Producción**. Fix UI del menú contextual: `63ed6cc` → **`2247484`** (portal).
-> **H-e sigue abierto** (resolver antes de abrir la app al público). Sin migración
+> **H-e archivado / aceptado para uso privado (03/11/2026)**; se retoma solo si
+> se abre la app a terceros. Sin migración
 > de datos. Detalle: `docs/evidencia/EVIDENCIA-4.5.md` §10.
 
 ### 1.8 Subetapa 4.6 — Confirmación bilateral (PO-4, D-11a/D-11b) — **[ELIMINADA 17/10/2026]**
@@ -1188,7 +1189,7 @@ secuencia, resueltas por el usuario el **17/10/2026** al aprobar la subetapa 4.2
 | 8 | UI de 4.2: quitar «Sin confirmar» de las filas de `/reintegros`; las obligaciones de miembro **cuentan en el balance de ambas partes** | §1.2 Alcance |
 | 9 | **4.6 ELIMINADA 17/10/2026** (sin renumerar: era la última). La secuencia termina en **4.5** | §1 (secuencia), §1.8, §5, HANDOFF §4 |
 | 10 | **Lote de reglas APLICADO 17/10/2026** (diff y tests aprobados por el usuario previamente; commit `5264d2e`): retirados la guarda de entregas `confirmadaPor != null \|\| contraparteUid == null`, la rama (g) + test 3.20 reescrito, la condición H-c de la rama (c) → moot + test 3.25 reescrito, `confirmadaPor` **prohibido** en el alta (create) + tests 3.9/3.40 y shape H1/1a/1b del harness, y el chequeo `SIN_CONFIRMAR` en `submitDevolucion` + caso H3b reescrito; la extensión `['confirmacion']` en `eventos` queda **sin objeto**. Las reglas que se desplieguen a Producción serán **las posteriores a ese lote** | §2.2, §2.4, §2.5 |
-| 11 | **Permisos — CONFIRMADOS por el usuario (17/10/2026):** (a) **pagos: por cualquiera de los dos** (implementación efectiva tras el lote de reglas de la fila 10); (b) **monto: editable solo por el registrador, con `devuelto == 0`** (rama (c) vigente, menos la condición H-c que pasa a moot); (c) **condonar y eliminar: como están hoy hasta 4.3-bis** (C1/E1 de D-8). **Consecuencia registrada de sin confirmación:** la contraparte **no puede aceptar, rechazar ni ocultar** una obligación que le crea el registrador, y **no se le avisa si el registrador edita el monto** (la edición queda solo en la bitácora) — **vinculado con H-e** (`EVIDENCIA-4.0.md` §6): sin confirmación la contraparte no tiene ningún veto sobre la obligación impuesta; **H-e sigue PENDIENTE ABIERTO** y debe resolverse antes de abrir la app al público | Lote de reglas (fila 10) · 4.3 / 4.3-bis |
+| 11 | **Permisos — CONFIRMADOS por el usuario (17/10/2026):** (a) **pagos: por cualquiera de los dos** (implementación efectiva tras el lote de reglas de la fila 10); (b) **monto: editable solo por el registrador, con `devuelto == 0`** (rama (c) vigente, menos la condición H-c que pasa a moot); (c) **condonar y eliminar: como están hoy hasta 4.3-bis** (C1/E1 de D-8). **Consecuencia registrada de sin confirmación:** la contraparte **no puede aceptar, rechazar ni ocultar** una obligación que le crea el registrador, y **no se le avisa si el registrador edita el monto** (la edición queda solo en la bitácora) — **vinculado con H-e** (`EVIDENCIA-4.0.md` §6): sin confirmación la contraparte no tiene ningún veto sobre la obligación impuesta; **H-e quedó ARCHIVADO / ACEPTADO para uso privado (03/11/2026)**; se retoma solo si se abre la app a terceros | Lote de reglas (fila 10) · 4.3 / 4.3-bis |
 
 *Esta §11 no reabre las decisiones D-1…D-11 restantes del HANDOFF (D-11a/D-11b quedan
 supersedas por las filas 7 y 9). Fuente operativa de la cierre: `docs/evidencia/EVIDENCIA-4.2.md` §9.*
