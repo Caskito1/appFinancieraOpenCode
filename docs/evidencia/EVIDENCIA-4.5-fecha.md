@@ -1,14 +1,15 @@
-# EVIDENCIA-4.5-fecha — Fecha del gasto diario (período por `fecha`, fallback `createdAt`)
+# EVIDENCIA-4.5-fecha — Fecha del gasto y del ingreso diario (período por `fecha`, fallback `createdAt`)
 
-**Estado:** **IMPLEMENTACIÓN COMPLETA — cierre pendiente.** Commits en `AppFinanciera/staging` (locales, **sin push**): **`9d350d2`** (app + tests unitarios) y **`bbd3345`** (reglas de `gastos` + 14 tests). Gates: `test:rules` **58/58**, `test:gastos` **8/8**, `harness:reintegros` **57/57**, lint baseline 4 (0 nuevos), build OK.
+**Estado:** **IMPLEMENTACIÓN COMPLETA — cierre pendiente.** Commits en `AppFinanciera/staging` (locales, **sin push**): **`9d350d2`** (gastos: app + tests unitarios), **`bbd3345`** (reglas de `gastos` + 14 tests) y **`6c708ef`** (ingresos: fecha + edit/delete + reglas + 13 tests). Gates: `test:rules` **71/71**, `test:gastos` **8/8**, `harness:reintegros` **57/57**, lint baseline 4 (0 nuevos), build OK.
 **Paso 0 CERRADO (03/11/2026):** el texto de consola pegado por el usuario **coincide** con el BLOQUE A del repo ⇒ **sin delta, sin commit de sincronización**.
 **Pendiente para cerrar:** (1) **verificación funcional en Staging** (requiere push, autorización aparte); (2) **deploy de reglas**, junto con el BLOQUE B de Reintegros al cierre de la Etapa 4.
 Repo: `AppFinanciera/` · rama `staging` · sin tocar `main` · **0 escrituras en Firestore real**.
 
 ---
 
-## 1. Alcance (aprobado 03/11/2026)
+## 1. Alcance (aprobado 03/11/2026; ampliado el 03/11/2026 a ingresos)
 
+**Gastos:**
 - **Campo `fecha` (Timestamp)** en el gasto diario: alta modo único, alta modo compra y edición.
 - **Período/mes derivado de `fecha`**, con **fallback a `createdAt`** en los documentos históricos.
 - **`createdAt` queda como auditoría inmutable** (nunca se escribe desde la edición).
@@ -17,6 +18,13 @@ Repo: `AppFinanciera/` · rama `staging` · sin tocar `main` · **0 escrituras e
 - **`fecha` opcional en reglas** (compatibilidad con clientes viejos), **obligatoria en la app**.
 - **Sin dependencias nuevas**; **`subscribeGastos.js` sin cambios** (el fallback depende de no cambiar la query).
 
+**Ingresos (ampliación 03/11/2026):**
+- **Campo `fecha` (Timestamp)** en el alta de ingreso (mismo criterio: medianoche local, `max=hoy`).
+- **Edit y delete nuevos** (`EditarIngresoModal`): monto, detalle, tipo/subtipo y `fecha` editables; `createdAt` nunca se envía. Conectado a Sueldo, Bandas, Freelance y Otros.
+- **`subscribeIngresos` sin rango por `createdAt`**: trae todo y el período se filtra/ordena en cliente con `fechaEfectiva`. **Las transferencias de `/ingresos` no cambian.**
+- **Reglas `ingresos`**: mismo esquema que `gastos` (`fecha` opcional con rango, `createdAt` inmutable, update/delete separados).
+- **Sin tocar** `transferencias`, `fixed_expenses` ni `reintegros`.
+
 ---
 
 ## 2. Criterio de fecha (modelo)
@@ -24,7 +32,8 @@ Repo: `AppFinanciera/` · rama `staging` · sin tocar `main` · **0 escrituras e
 | Caso | Comportamiento |
 |---|---|
 | Gasto nuevo (app 4.5-fecha) | `fecha` = Timestamp a **medianoche local** del día elegido; `createdAt` = `serverTimestamp()` (auditoría) |
-| Documento histórico sin `fecha` | Se lee con **fallback a `createdAt`** — mismo comportamiento que antes del cambio |
+| Ingreso nuevo (app 4.5-fecha) | Mismo criterio que el gasto: `fecha` a medianoche local + `createdAt` de auditoría |
+| Documento histórico sin `fecha` (gasto o ingreso) | Se lee con **fallback a `createdAt`** — mismo comportamiento que antes del cambio |
 | Documento sin `fecha` ni `createdAt` | `fechaEfectiva` → `null`; no aparece en ningún mes (no se inventa fecha) |
 | Edición de un documento histórico | El modal inicializa con `createdAt`; al guardar agrega `fecha` (**upgrade perezoso**, sin backfill) |
 | Transferencias | Sin `fecha`: siguen entrando por `createdAt` (fallback), sin cambio de comportamiento |
@@ -80,6 +89,23 @@ Los totales (`TotalMesCard`, `totalGastos`, `totalTransacciones`) no se tocaron:
 
 `app/gastos/components/EditarGastoModal.jsx`: input de fecha inicializado con `isoDeFecha(gasto.fecha ?? gasto.createdAt)`; `canSave` exige fecha; el payload agrega `fecha` y **nunca** `createdAt`.
 
+### 3.6 Ingresos (ampliación 03/11/2026, commit `6c708ef`)
+
+| Archivo | Cambio |
+|---|---|
+| `app/agregar/components/ingresos/hooks/useModoIngreso.js` | Estado `fecha` (`hoyISO`) + `setFecha` |
+| `app/agregar/components/ingresos/sections/PasoDetalleIngreso.jsx` | `<input type="date" max={hoyISO()}>` (paso detalle) |
+| `app/agregar/components/ModoIngreso.jsx` | `canSubmit` exige `fecha`; pasa `fechaISO` |
+| `app/agregar/components/ingresos/helpers/submitIngreso.js` | `fecha: Timestamp.fromDate(fechaLocal(fechaISO))`; `createdAt: serverTimestamp()` intacto |
+| `app/ingresos/services/subscribeIngresos.js` | **Se quitó el rango por `createdAt`** de la query de ingresos (`where usuario` + `orderBy createdAt`); el período se deriva en cliente. **Transferencias sin cambios** |
+| `app/ingresos/hooks/useIngresos.js` | `ingresosMes` filtrado por `fechaEfectiva` y ordenado por `porFechaDesc`; secciones y `totalIngresos` derivan de `ingresosMes`; **nuevos** `editarIngreso`/`eliminarIngreso` + `editingIngreso` |
+| `app/ingresos/components/EditarIngresoModal.jsx` (**nuevo**) | Modal de edición (patrón `EditarGastoModal`): monto, detalle, tipo/subtipo, **fecha**; `createdAt` nunca se envía; delete con confirmación |
+| `app/ingresos/components/FilaIngreso.jsx` | Muestra `fechaEfectiva`; menú ⋯ / long-press con Editar y Eliminar; prop `compact` para Bandas |
+| `app/ingresos/sections/{Sueldo,Bandas,Freelance,Otros}Section.jsx` | Reciben `onEdit`/`onDelete`; Bandas reutiliza `FilaIngreso` (compact) |
+| `app/ingresos/page.jsx` | Estado `editingIngreso` + render del modal; acciones conectadas a las 4 secciones |
+
+**Índices:** la query nueva (`usuario` == + `orderBy("createdAt")`) usa el **mismo índice compuesto** que la anterior (que además tenía rango); no se agrega ninguno.
+
 ---
 
 ## 4. Reglas — Paso 0 (CERRADO: sin delta) + enmienda 4.5-fecha
@@ -95,14 +121,15 @@ El usuario pegó el **texto completo de Firebase Console → Firestore → Rules
 
 ### 4.2 Enmienda aplicada (decisión b, 03/11/2026)
 
-Además de `fecha`, se formaliza la auditoría que el diseño asume (`createdAt` inmutable):
+Además de `fecha`, se formaliza la auditoría que el diseño asume (`createdAt` inmutable). El helper se llama **`fechaValida`** y lo comparten `gastos` e `ingresos`:
 
 ```js
-function fechaGastoValida(f) {
+function fechaValida(f) {
   return f is timestamp
     && f >= timestamp.date(2020, 1, 1)
     && f <= request.time + duration.value(1, 'd');
 }
+// gastos e ingresos:
 // create:  fecha opcional + `createdAt == request.time`
 // update:  `createdAt` inmutable (defensivo si el doc no lo tiene) + fecha válida
 // delete:  regla separada (en un delete `request.resource` es null)
@@ -164,7 +191,25 @@ Contra el `firestore.rules` del repo (mismo patrón que el archivo de Reintegros
 | 13 | update de un gasto ajeno | deny |
 | 14 | **delete propio** (regresión de la separación update/delete) | allow |
 
-`npm run test:rules` pasa a `node --test --test-concurrency=1 tests/rules/`: los dos archivos inicializan el emulador y se pisarían con `clearFirestore`/ruleset en paralelo. Total: **44 + 14 = 58**.
+### 5.4 Reglas de ingresos — nuevo `tests/rules/ingresos.rules.test.mjs` (13/13)
+
+| # | Caso | Esperado |
+|---|---|---|
+| 1 | create con `fecha` de un mes anterior | allow |
+| 2 | create **sin** `fecha` (cliente viejo) | allow |
+| 3 | create con `fecha` de hoy (medianoche local) | allow |
+| 4 | create con `fecha` string | deny |
+| 5 | create con `fecha` anterior a 2020 | deny |
+| 6 | create con `fecha` > `request.time + 1 día` | deny |
+| 7 | create con `createdAt` explícito (≠ `request.time`) | deny |
+| 8 | create con `usuario` ajeno | deny |
+| 9 | update propio: cambia `fecha`, `createdAt` intacto | allow |
+| 10 | update que mueve `createdAt` | deny |
+| 11 | update con `fecha` inválida | deny |
+| 12 | update de un ingreso ajeno | deny |
+| 13 | **delete propio** (regresión de la separación update/delete) | allow |
+
+`npm run test:rules` usa `node --test --test-concurrency=1 tests/rules/`: los tres archivos inicializan el emulador y se pisarían con `clearFirestore`/ruleset en paralelo. Total: **44 (Reintegros) + 14 (gastos) + 13 (ingresos) = 71**.
 
 ---
 
@@ -174,7 +219,7 @@ Contra el `firestore.rules` del repo (mismo patrón que el archivo de Reintegros
 |---|---|
 | `npm run test:gastos` | **8/8** (fail 0) |
 | `npm run harness:reintegros` | **57/57** (fail 0, exit 0) — incluye el fix de H29 |
-| `npm run test:rules` | **58/58** (fail 0) — 44 de Reintegros + 14 de `gastos` (4.5-fecha) |
+| `npm run test:rules` | **71/71** (fail 0) — 44 de Reintegros + 14 de `gastos` + 13 de `ingresos` (4.5-fecha) |
 | `npm run lint` | baseline exacta 4 (`useIngresos.js:39`, `GroupContext.jsx:17`, `HomeHeader.jsx:28`, `page.js:10`), **0 nuevos** |
 | `npm run build` | `✓ Compiled successfully`, 10 páginas, exit 0 |
 | Escrituras en Firestore real | **0** (todo local; sin push) |
@@ -183,21 +228,22 @@ Contra el `firestore.rules` del repo (mismo patrón que el archivo de Reintegros
 
 ## 7. Compatibilidad y datos
 
-- **Sin migración.** Los documentos sin `fecha` se leen por `createdAt`: comportamiento idéntico al anterior.
+- **Sin migración.** Los documentos sin `fecha` (gastos **e ingresos**) se leen por `createdAt`: comportamiento idéntico al anterior.
 - **Gastos de octubre cargados por consola:** si tienen `createdAt` de octubre, se ven por fallback; si el lote se cargó también con `fecha` (recomendado), quedan canónicos desde el origen.
-- **Cliente viejo / PWA en caché:** sigue creando sin `fecha` (reglas lo permitirán) y aparece por `createdAt`.
-- **`REQUIERE_VALIDACIÓN_FIRESTORE` (read-only, no bloqueante):** contar documentos de `gastos` sin `fecha` **y** sin `createdAt` (serían invisibles antes y después; el fix no puede inventarles fecha).
-- **Deuda preexistente (no se corrige acá):** en producción, el update de `gastos` solo valida el dueño; `usuario`, `tipo`, `groupId`, `monto` y el resto siguen siendo mutables. La enmienda de 4.5-fecha protege **solo** `createdAt` y el tipo/rango de `fecha`. Un endurecimiento por campo (whitelist) corresponde al gate de seguridad de la etapa, no a esta subetapa.
+- **Cliente viejo / PWA en caché:** sigue creando sin `fecha` (reglas lo permiten) y aparece por `createdAt`. Un cliente viejo de `/ingresos` seguía consultando por rango de `createdAt`: al no desplegarse el cambio de query, ese cliente **no se ve afectado** (la app nueva no depende de la query).
+- **`REQUIERE_VALIDACIÓN_FIRESTORE` (read-only, no bloqueante):** contar documentos de `gastos` e `ingresos` sin `fecha` **y** sin `createdAt` (serían invisibles antes y después; el fix no puede inventarles fecha).
+- **Deuda preexistente (no se corrige acá):** en producción, el update de `gastos`/`ingresos` solo valida el dueño; `usuario`, `tipo`, `groupId`, `monto` y el resto siguen siendo mutables. La enmienda de 4.5-fecha protege **solo** `createdAt` y el tipo/rango de `fecha`. Un endurecimiento por campo (whitelist) corresponde al gate de seguridad de la etapa, no a esta subetapa.
+- **Ingresos: CRUD cerrado.** La deuda “el módulo de ingresos no tiene CRUD” (registrada el 30/09/2026) queda **resuelta** por `6c708ef` (edit + delete). La deuda de `subscribeIngresos` sin `onError` **no** se toca (sigue fuera de alcance).
 
 ---
 
 ## 8. Contrato para la Etapa 5 (5.1)
 
-`balanceDelMes(mes, uid)` **debe** derivar el período con el mismo criterio: `fecha`, con **fallback a `createdAt`**.
+`balanceDelMes(mes, uid)` **debe** derivar el período con el mismo criterio, **tanto para gastos como para ingresos**: `fecha`, con **fallback a `createdAt`**.
 
 **No puede resolverse con `where("fecha", ">=", inicio)`**: ese query **excluye los documentos sin `fecha`** (el fallback se rompe a nivel de query, no de filtro). Opciones válidas para 5.1:
 
-1. filtrar en cliente como hace hoy `/gastos` (traer y filtrar), o
+1. filtrar en cliente como hacen hoy `/gastos` e `/ingresos` (traer y filtrar), o
 2. introducir `periodo: "YYYY-MM"` **con backfill** en ese momento (decisión de 5.1, no de esta subetapa).
 
 Documentado en `ROADMAP.md` (Etapa 5), `context/dominio.md` (§3.1) y `context/arquitectura.md`.
@@ -206,11 +252,13 @@ Documentado en `ROADMAP.md` (Etapa 5), `context/dominio.md` (§3.1) y `context/a
 
 ## 9. Cierre (PENDIENTE)
 
-- [x] Código + tests + gates locales.
+- [x] Código + tests + gates locales (gastos `9d350d2`; ingresos `6c708ef`).
 - [x] Docs de apertura (HANDOFF §0/§4, PROPUESTA §1.6, AGENTS, ROADMAP).
 - [x] `context/dominio.md`, `context/arquitectura.md`, `context/MAPA-APPFINANCIERA.md`.
-- [x] **Paso 0 / reglas** — sin delta; enmienda de `gastos` aplicada (`bbd3345`) + 14 tests (58/58). **Deploy pendiente** (con BLOQUE B, cierre de Etapa 4).
-- [ ] **Push a `staging`** (autorización aparte) y **verificación funcional**: alta con fecha de octubre estando en noviembre → aparece en octubre, **no** en noviembre, suma en el total de octubre; edición que mueve de mes; doc legacy sin `fecha` visible por fallback.
+- [x] **Paso 0 / reglas** — sin delta; enmienda de `gastos` (`bbd3345`) e `ingresos` (`6c708ef`) + 27 tests (71/71). **Deploy pendiente** (con BLOQUE B, cierre de Etapa 4).
+- [ ] **Push a `staging`** (autorización aparte; bloqueado por decisión del usuario hasta completar ingresos) y **verificación funcional conjunta**:
+  - gastos: alta con fecha de octubre estando en noviembre → aparece en octubre, **no** en noviembre, suma en el total de octubre; edición que mueve de mes; doc legacy sin `fecha` visible por fallback.
+  - ingresos: alta con fecha de octubre → aparece en octubre y suma en el total de octubre; **edit que abre, cambia la fecha y mueve el ingreso de mes**; delete; doc legacy sin `fecha` visible por fallback.
 - [ ] Entrada datada en `ROADMAP.md` §Histórico con el commit de cierre (al cerrar).
 
 **Siguiente:** 4.5 (retiro de Transferencias), sin cambios en su alcance.

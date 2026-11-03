@@ -144,7 +144,13 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 > **Enmienda datada 03/11/2026 (§1.6) — apertura de 4.5-fecha:** el usuario
 > aprueba una subetapa propia **previa a 4.5** (no se reusa `4.5-bis`,
 > cancelada el 30/10/2026) para incorporar la **fecha del gasto diario**.
-> Alcance: `fecha` (Timestamp) en alta modo único, alta modo compra y edición;
+> **Ampliación datada 03/11/2026:** el alcance incluye también el **ingreso
+> diario** — `fecha` en el alta y **edit/delete nuevos** (`EditarIngresoModal`),
+> `subscribeIngresos` sin rango por `createdAt` (período en cliente con
+> `fechaEfectiva`) y reglas de `ingresos` con el mismo esquema que `gastos`.
+> **No se tocan** transferencias, `fixed_expenses` ni reintegros.
+> Alcance: `fecha` (Timestamp) en alta modo único, alta modo compra, edición de
+> gasto y alta/edición de ingreso;
 > período/mes derivado de `fecha` con **fallback a `createdAt`**; `createdAt`
 > como auditoría inmutable; `fecha` **opcional en reglas** (compatibilidad) y
 > obligatoria en la app; **una fecha por compra**; rango de reglas

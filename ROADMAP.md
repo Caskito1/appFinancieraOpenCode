@@ -59,7 +59,7 @@ La obtención de datos para Finanzas puede ser manual al inicio. Lo importante e
 
 ## Backlog futuro de la aplicación (NO es trabajo aprobado)
 
-**Etapa 5 — Balance consolidado (numeración de trabajo; propuesta, no abierta):** una sola lectura mensual de ingresos, egresos y reintegros, con el esquema de la ficha mensual. Definición y subetapas 5.1–5.4 en `personal-system/context/AppFinanciera.md` §**Etapa 5 — Balance consolidado**; `HANDOFF-ETAPA-5.md` se escribirá al abrir la etapa, cuando cierre la Etapa 4. Absorbe el alcance de la 4.4 diferida. **Dependencia 4.5-fecha (03/11/2026):** la 5.1 (`balanceDelMes(mes, uid)`) debe derivar el período de `fecha` con **fallback a `createdAt`** y **no puede usar `where("fecha", …)`** (excluiría los documentos sin `fecha`).
+**Etapa 5 — Balance consolidado (numeración de trabajo; propuesta, no abierta):** una sola lectura mensual de ingresos, egresos y reintegros, con el esquema de la ficha mensual. Definición y subetapas 5.1–5.4 en `personal-system/context/AppFinanciera.md` §**Etapa 5 — Balance consolidado**; `HANDOFF-ETAPA-5.md` se escribirá al abrir la etapa, cuando cierre la Etapa 4. Absorbe el alcance de la 4.4 diferida. **Dependencia 4.5-fecha (03/11/2026):** la 5.1 (`balanceDelMes(mes, uid)`) debe derivar el período de `fecha` con **fallback a `createdAt`** —tanto en **gastos** como en **ingresos**— y **no puede usar `where("fecha", …)`** (excluiría los documentos sin `fecha`).
 
 Funcionalidades propias futuras (estadísticas de gastos, visualizaciones, mejoras de UX u otros módulos) son **ejemplos conceptuales**: quedan como backlog de la aplicación y se deciden posteriormente, sin incorporarlas al alcance de estas etapas salvo que sean necesarias para alcanzar el mínimo funcional.
 
