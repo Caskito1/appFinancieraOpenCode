@@ -124,7 +124,7 @@ Entorno: emuladores Firestore + Auth (`--project finanzas-app-1c5f6`), `npm run 
 2. **`/ingresos` con una sola query**: si esa query falla (índice/permisos), el loading infinito sigue siendo la deuda preexistente (`subscribeIngresos` sin `onError`). No se agrava.
 3. **`subscribeIngresos` ya no depende de `selectedMonth`**: cambiar de mes no re-suscribe; el filtro por `fechaEfectiva` sigue en `useIngresos`.
 4. **`gastosCalculations.js` eliminado**: 0 importadores; su semántica legacy contradecía D-2.
-5. **`main` sin tocar**: la promoción y el deploy de reglas son parte del cierre de la Etapa 4 (aprobaciones separadas).
+5. **`main`**: al cierre de 4.5 estaba sin tocar; la promoción y el deploy de reglas se ejecutaron en el **cierre de la Etapa 4** (§10).
 
 ---
 
@@ -139,4 +139,26 @@ Entorno: emuladores Firestore + Auth (`--project finanzas-app-1c5f6`), `npm run 
 - [x] Código (`f4a1cd7`) + docs (este commit).
 - [x] `ROADMAP.md` §Histórico, `AGENTS.md`, `HANDOFF-ETAPA-4.md` §0/§4, `PROPUESTA-ETAPA-4.md` §1.7 y `context/*`.
 
-**Con esto el núcleo de la Etapa 4 queda completo.** Siguiente: **cierre de la Etapa 4** (pasos separados y con aprobación propia): push a `staging`, verificación diferida de 4.5-fecha, deploy de reglas (`gastos`/`ingresos` + BLOQUE B) y promoción a `main` con verificación en Producción.
+**Con esto el núcleo de la Etapa 4 queda completo.**
+
+---
+
+## 10. Cierre de la Etapa 4 (03/11/2026)
+
+**Ventana ejecutada, verificada y aprobada por el usuario. La Etapa 4 queda CERRADA.**
+
+| Paso | Resultado |
+|---|---|
+| **A** — Gate `transferencias` real | **No existe (0 docs)** → delta de totales **0** |
+| **B** — Push a `staging` + verificación | `f4a1cd7`; 4.5-fecha (gasto/ingreso de octubre, edit que mueve de mes, legacy sin `fecha`) y 4.5 (sin transferencias, I-1) → **PASS** del usuario |
+| **C** — Índice | R1' (`reintegros`: `participantes` CONTAINS + `createdAt` DESC) desplegado y **READY** (3m20s) |
+| **C** — Reglas | Deploy OK; ruleset `projects/finanzas-app-1c5f6/rulesets/4dfd2608-b9df-48ac-8d2c-e372852b11bd`; **468 líneas desplegadas == `firestore.rules` del repo (MATCH)**. Warnings no bloqueantes: `dev` sin uso y `get` en el cuerpo de esa función muerta |
+| **D** — `/reintegros` con reglas | **PASS**: carga sin `permission-denied` ni `failed-precondition`; smoke con “PRUEBA 4.5” y limpieza |
+| **E** — Promoción | `10ab576..2247484 staging -> main` (**fast-forward**); `origin/main` == `origin/staging` == `2247484` == Producción; aprobado por el usuario |
+| Fix UI del menú | `63ed6cc` (primer intento, insuficiente con varias secciones abiertas) → **`2247484`** (portal a `document.body`, final); verificado visualmente por el usuario |
+
+**Estado final:** `main` == `staging` == **`2247484`** == Producción. Reglas desplegadas (BLOQUE A + enmienda `gastos`/`ingresos` + BLOQUE B). Índice R1' `READY`. **Sin migración de datos**; la colección `transferencias` no existe (0 docs) y `origenCompra` quedó intacto.
+
+**Pendiente abierto (no bloquea el cierre):** **H-e** — una obligación impuesta a un tercero sin vínculo. Debe resolverse **antes de abrir la app al público** (`EVIDENCIA-4.0.md` §6).
+
+**Backup de la ventana:** el texto de consola se guardó en `C:\Users\Usuario\AppData\Local\Temp\opencode\rules-consola-backup-2026-11-03.txt` (fuera del repo). El backup referenciado en `firestore.rules` (`temp/opencode/rules-consola-backup-2026-10-16.txt`) **no existía** y se regeneró con el texto de consola del 03/11.

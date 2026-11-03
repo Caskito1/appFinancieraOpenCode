@@ -2,7 +2,7 @@
 
 **Estado:** **CERRADA 03/11/2026.** Commits en `AppFinanciera/staging` (locales, **sin push**): **`9d350d2`** (gastos: app + tests unitarios), **`bbd3345`** (reglas de `gastos` + 14 tests) y **`6c708ef`** (ingresos: fecha + edit/delete + reglas + 13 tests) + **este commit** (docs del repo padre). Gates: `test:rules` **71/71**, `test:gastos` **8/8**, `harness:reintegros` **57/57**, lint baseline 4 (0 nuevos), build OK. **Verificación funcional local aprobada por el usuario** (§9).
 **Paso 0 CERRADO (03/11/2026):** el texto de consola pegado por el usuario **coincide** con el BLOQUE A del repo ⇒ **sin delta, sin commit de sincronización**.
-**Diferido al cierre de la Etapa 4 (no bloqueante):** (1) **push a Staging + verificación en Staging**; (2) **deploy de reglas**, junto con el BLOQUE B de Reintegros.
+**Ejecutado en el cierre de la Etapa 4 (03/11/2026):** push a Staging + verificación en Staging y deploy de reglas (BLOQUE B + `gastos`/`ingresos`) — detalle en `EVIDENCIA-4.5.md` §10.
 Repo: `AppFinanciera/` · rama `staging` · sin tocar `main` · **0 escrituras en Firestore real**.
 
 ---
@@ -276,10 +276,9 @@ Entorno: emuladores **Firestore + Auth** (`--project finanzas-app-1c5f6`), `npm 
 - [x] **Paso 0 / reglas** — sin delta; enmienda de `gastos` (`bbd3345`) e `ingresos` (`6c708ef`) + 27 tests (71/71).
 - [x] **Verificación funcional local** — 7/7 casos, aprobada por el usuario (§9).
 - [x] Entrada datada en `ROADMAP.md` §Histórico (este commit).
-- [x] **Push a Staging + verificación en Staging: DIFERIDO al cierre de la Etapa 4** — no es un pendiente bloqueante de 4.5-fecha. Motivo: se hará **junto con el BLOQUE B (Reintegros) y el deploy de reglas**, que hoy no están desplegados; adelantar el push no aportaría validación nueva (la verificación funcional ya se hizo en Local sobre los mismos emuladores).
+- [x] **Push a Staging + verificación en Staging: HECHO (03/11/2026, `f4a1cd7`)** — 4.5-fecha (6 casos) + 4.5 (2 casos) + `/reintegros` con las reglas desplegadas; aprobado por el usuario.
+- [x] **Deploy de reglas: HECHO (03/11/2026)** — ruleset `4dfd2608…` (BLOQUE A + enmienda + BLOQUE B) e índice R1' `READY`.
 
-**Pendientes que quedan (ambos al cierre de la Etapa 4):**
-1. Push a `staging` + verificación en Staging de gastos + ingresos (junto con el BLOQUE B).
-2. Deploy de reglas (`gastos`/`ingresos` + BLOQUE B).
+**Pendientes:** ninguno de 4.5-fecha. **H-e** sigue abierto (no bloquea el cierre, sí la apertura pública).
 
-**Siguiente:** 4.5 (retiro de Transferencias), última del núcleo, sin cambios en su alcance.
+**Siguiente:** 4.5 (retiro de Transferencias) — **CERRADA el 03/11/2026**; con ella se cerró la Etapa 4 (`EVIDENCIA-4.5.md` §10).

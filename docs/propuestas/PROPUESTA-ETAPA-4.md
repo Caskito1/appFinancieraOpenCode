@@ -195,6 +195,15 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 > **Staging y deploy de reglas siguen diferidos al cierre de la Etapa 4** (junto con
 > `gastos`/`ingresos` y el BLOQUE B). Con 4.5 **el núcleo de la Etapa 4 queda completo**.
 > Evidencia: `docs/evidencia/EVIDENCIA-4.5.md`.
+>
+> **Cierre de la Etapa 4 (03/11/2026):** 4.5 fue la última subetapa del núcleo.
+> Ventana ejecutada y aprobada: `transferencias` real **0 docs** (delta 0); push a
+> `staging` (`f4a1cd7`) + verificación de 4.5-fecha y 4.5; índice **R1' `READY`**;
+> reglas desplegadas (ruleset `4dfd2608…`, 468 líneas == repo); `/reintegros` PASS;
+> promoción `10ab576..2247484` (fast-forward) → **`main` == `staging` == `2247484`
+> == Producción**. Fix UI del menú contextual: `63ed6cc` → **`2247484`** (portal).
+> **H-e sigue abierto** (resolver antes de abrir la app al público). Sin migración
+> de datos. Detalle: `docs/evidencia/EVIDENCIA-4.5.md` §10.
 
 ### 1.8 Subetapa 4.6 — Confirmación bilateral (PO-4, D-11a/D-11b) — **[ELIMINADA 17/10/2026]**
 
