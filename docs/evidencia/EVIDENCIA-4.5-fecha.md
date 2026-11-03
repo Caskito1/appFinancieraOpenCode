@@ -1,8 +1,8 @@
 # EVIDENCIA-4.5-fecha — Fecha del gasto y del ingreso diario (período por `fecha`, fallback `createdAt`)
 
-**Estado:** **IMPLEMENTACIÓN COMPLETA — cierre pendiente.** Commits en `AppFinanciera/staging` (locales, **sin push**): **`9d350d2`** (gastos: app + tests unitarios), **`bbd3345`** (reglas de `gastos` + 14 tests) y **`6c708ef`** (ingresos: fecha + edit/delete + reglas + 13 tests). Gates: `test:rules` **71/71**, `test:gastos` **8/8**, `harness:reintegros` **57/57**, lint baseline 4 (0 nuevos), build OK.
+**Estado:** **CERRADA 03/11/2026.** Commits en `AppFinanciera/staging` (locales, **sin push**): **`9d350d2`** (gastos: app + tests unitarios), **`bbd3345`** (reglas de `gastos` + 14 tests) y **`6c708ef`** (ingresos: fecha + edit/delete + reglas + 13 tests) + **este commit** (docs del repo padre). Gates: `test:rules` **71/71**, `test:gastos` **8/8**, `harness:reintegros` **57/57**, lint baseline 4 (0 nuevos), build OK. **Verificación funcional local aprobada por el usuario** (§9).
 **Paso 0 CERRADO (03/11/2026):** el texto de consola pegado por el usuario **coincide** con el BLOQUE A del repo ⇒ **sin delta, sin commit de sincronización**.
-**Pendiente para cerrar:** (1) **verificación funcional en Staging** (requiere push, autorización aparte); (2) **deploy de reglas**, junto con el BLOQUE B de Reintegros al cierre de la Etapa 4.
+**Diferido al cierre de la Etapa 4 (no bloqueante):** (1) **push a Staging + verificación en Staging**; (2) **deploy de reglas**, junto con el BLOQUE B de Reintegros.
 Repo: `AppFinanciera/` · rama `staging` · sin tocar `main` · **0 escrituras en Firestore real**.
 
 ---
@@ -250,15 +250,36 @@ Documentado en `ROADMAP.md` (Etapa 5), `context/dominio.md` (§3.1) y `context/a
 
 ---
 
-## 9. Cierre (PENDIENTE)
+## 9. Verificación funcional local (aprobada por el usuario, 03/11/2026)
 
-- [x] Código + tests + gates locales (gastos `9d350d2`; ingresos `6c708ef`).
+Entorno: emuladores **Firestore + Auth** (`--project finanzas-app-1c5f6`), `npm run seed:emulator` (usuarios + grupo + fixture) y un seed **temporal fuera del repo** con dos documentos **legacy sin `fecha`** (`gastos/legacy-gasto-oct` $5.000 · `createdAt` 15/10/2026; `ingresos/legacy-ingreso-oct` $20.000 · `createdAt` 20/10/2026). Dev server con `.env.development.local` (`NEXT_PUBLIC_USE_EMULATOR=true`) y aviso `[EMULADOR]` confirmado en el log. **0 escrituras al proyecto real.**
+
+| # | Caso probado | Resultado |
+|---|---|---|
+| a | Alta de **gasto** con fecha de octubre estando en noviembre → aparece en octubre, **no** en noviembre, suma en el total de octubre | **PASS** |
+| b | Alta de **ingreso** con fecha de octubre → aparece en octubre y suma; no en noviembre | **PASS** |
+| c | **Editar un gasto** y moverlo de mes → se mueve de sección y de total | **PASS** |
+| d | **Editar un ingreso** y moverlo de mes → se mueve de sección y de total | **PASS** |
+| e | **Borrar un ingreso** → desaparece y el total baja | **PASS** |
+| f | **Legacy sin `fecha`** (gasto $5.000 e ingreso $20.000) visibles en octubre por fallback; no en noviembre | **PASS** |
+| g | **Selector de mes** octubre ↔ noviembre sin mezclar filas ni totales | **PASS** |
+
+**Aprobación:** el usuario validó los 7 casos en Local. No se pusheó ni se desplegó nada.
+
+---
+
+## 10. Cierre (03/11/2026)
+
+- [x] Código + tests + gates locales (gastos `9d350d2`; reglas gastos `bbd3345`; ingresos `6c708ef`).
 - [x] Docs de apertura (HANDOFF §0/§4, PROPUESTA §1.6, AGENTS, ROADMAP).
 - [x] `context/dominio.md`, `context/arquitectura.md`, `context/MAPA-APPFINANCIERA.md`.
-- [x] **Paso 0 / reglas** — sin delta; enmienda de `gastos` (`bbd3345`) e `ingresos` (`6c708ef`) + 27 tests (71/71). **Deploy pendiente** (con BLOQUE B, cierre de Etapa 4).
-- [ ] **Push a `staging`** (autorización aparte; bloqueado por decisión del usuario hasta completar ingresos) y **verificación funcional conjunta**:
-  - gastos: alta con fecha de octubre estando en noviembre → aparece en octubre, **no** en noviembre, suma en el total de octubre; edición que mueve de mes; doc legacy sin `fecha` visible por fallback.
-  - ingresos: alta con fecha de octubre → aparece en octubre y suma en el total de octubre; **edit que abre, cambia la fecha y mueve el ingreso de mes**; delete; doc legacy sin `fecha` visible por fallback.
-- [ ] Entrada datada en `ROADMAP.md` §Histórico con el commit de cierre (al cerrar).
+- [x] **Paso 0 / reglas** — sin delta; enmienda de `gastos` (`bbd3345`) e `ingresos` (`6c708ef`) + 27 tests (71/71).
+- [x] **Verificación funcional local** — 7/7 casos, aprobada por el usuario (§9).
+- [x] Entrada datada en `ROADMAP.md` §Histórico (este commit).
+- [x] **Push a Staging + verificación en Staging: DIFERIDO al cierre de la Etapa 4** — no es un pendiente bloqueante de 4.5-fecha. Motivo: se hará **junto con el BLOQUE B (Reintegros) y el deploy de reglas**, que hoy no están desplegados; adelantar el push no aportaría validación nueva (la verificación funcional ya se hizo en Local sobre los mismos emuladores).
 
-**Siguiente:** 4.5 (retiro de Transferencias), sin cambios en su alcance.
+**Pendientes que quedan (ambos al cierre de la Etapa 4):**
+1. Push a `staging` + verificación en Staging de gastos + ingresos (junto con el BLOQUE B).
+2. Deploy de reglas (`gastos`/`ingresos` + BLOQUE B).
+
+**Siguiente:** 4.5 (retiro de Transferencias), última del núcleo, sin cambios en su alcance.

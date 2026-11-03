@@ -163,6 +163,14 @@ fast-forward) → verificación. Ninguna inicia sin su aprobación explícita.
 > promoción y deploy se autorizan por separado. Esta enmienda **no modifica**
 > el alcance de 4.5 (§1.7), que se ejecuta después. Evidencia:
 > `docs/evidencia/EVIDENCIA-4.5-fecha.md`.
+>
+> **Cierre 03/11/2026:** 4.5-fecha **CERRADA** con los commits `9d350d2`
+> (gastos), `bbd3345` (reglas de gastos) y `6c708ef` (ingresos: fecha +
+> edit/delete + reglas). Gates: reglas **71/71**, `test:gastos` **8/8**,
+> harness **57/57**, lint 4/0, build OK. **Verificación funcional local
+> aprobada por el usuario** (7/7). **Push a Staging y deploy de reglas
+> DIFERIDOS al cierre de la Etapa 4** (junto con el BLOQUE B de Reintegros).
+> Siguiente: **4.5** (retiro de Transferencias), última del núcleo.
 
 ### 1.7 Subetapa 4.5 — Retiro de Transferencias (paso separado)
 
